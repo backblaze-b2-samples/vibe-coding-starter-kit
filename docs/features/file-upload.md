@@ -26,19 +26,26 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 
 ## Flow
 - User drops or selects files in dropzone
-- Client validates file presence
+- Client validates file size (max 100MB) and type — rejected files show toast with reason
 - XHR sends multipart POST to `/upload` with progress events
-- API validates file size (<= 100MB) and content type (allowlist)
-- API generates unique key: `uploads/{uuid12}_{filename}`
+- API checks `Content-Length` header early to reject oversized requests before reading body
+- API validates content type against allowlist
+- API sanitizes filename (strips path components, null bytes, unsafe chars, limits to 200 chars)
+- API validates file extension matches declared MIME type
+- API reads file in 1MB chunks with streaming size enforcement (max 100MB)
+- API rejects empty files
+- API generates unique key: `uploads/{uuid12}_{sanitized_filename}`
 - API calls `put_object` to B2
 - API extracts file metadata (checksums, image dimensions, PDF info)
 - API returns `FileUploadResponse`
 - Client shows toast and updates progress state
 
 ## Edge Cases
-- File exceeds 100MB → API returns 413
+- File exceeds 100MB → client-side rejection toast + API returns 413 if bypassed
 - File type not in allowlist → API returns 415
+- File extension mismatches MIME type → API returns 415
 - No filename provided → API returns 400
+- Empty file → API returns 400
 - B2 unreachable → API returns 500
 - Upload aborted by user → XHR abort, error state in UI
 

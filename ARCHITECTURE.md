@@ -37,16 +37,22 @@
 
 ## Trust Boundaries
 
-- **Frontend → API** — CORS-restricted, origin allowlist via `API_CORS_ORIGINS`
+- **Frontend → API** — CORS-restricted to configured origins, scoped to `GET/POST/DELETE/OPTIONS` methods
 - **API → B2** — authenticated via `B2_APPLICATION_KEY_ID` + `B2_APPLICATION_KEY`, signature v4
-- **Client → B2** — presigned URLs for direct download (time-limited)
+- **Client → B2** — presigned URLs for download (10-min expiry, `Content-Disposition: attachment`)
+
+## Security
+
+- **Upload validation**: filename sanitization (path traversal, null bytes, unsafe chars), MIME/extension consistency check, chunked streaming with size enforcement (100MB), content-type allowlist, empty file rejection
+- **File key validation**: all file endpoints require keys to start with allowed prefixes (`uploads/`), path traversal patterns rejected
+- **Download safety**: presigned URLs force `Content-Disposition: attachment` to prevent inline rendering of user-uploaded content
 
 ## Data Flows
 
-- **Upload**: Browser → `POST /upload` (multipart) → API validates size/type → `put_object` to B2 → metadata extracted → response with file info + metadata
+- **Upload**: Browser → `POST /upload` (multipart) → API sanitizes filename, validates size/type/extension → `put_object` to B2 → metadata extracted → response with file info + metadata
 - **List**: Browser → `GET /files` → API calls `list_objects_v2` → returns file list
-- **Download**: Browser → `GET /files/{key}/download` → API generates presigned URL → browser redirects to B2
-- **Delete**: Browser → `DELETE /files/{key}` → API calls `delete_object` on B2
+- **Download**: Browser → `GET /files/{key}/download` → API validates key → generates presigned URL (attachment) → browser downloads from B2
+- **Delete**: Browser → `DELETE /files/{key}` → API validates key → calls `delete_object` on B2
 
 ## Core Features
 

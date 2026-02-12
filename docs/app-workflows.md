@@ -11,8 +11,9 @@
 
 - User navigates to `/upload`
 - User drags files into dropzone or clicks to browse
-- System validates file size (max 100MB) and type
+- System validates file size (max 100MB) and type client-side — rejected files show toast with reason
 - System uploads each file with real-time progress bar
+- API sanitizes filename, validates MIME/extension match, enforces size via chunked streaming
 - System shows success/error toast per file
 - On success, system returns file metadata (size, type, checksums, image dimensions, PDF info)
 - User can clear completed uploads
@@ -20,11 +21,11 @@
 ## Browse Files
 
 - User navigates to `/files`
-- System lists all files with filename, size, type, upload date
-- User clicks action menu on a file row
+- System lists all files in a tree view with expand/collapse folders (most recent first)
+- User hovers a file row to reveal action buttons
 - User can preview (images inline, PDFs in iframe, others show metadata)
-- User can download (presigned URL opens in new tab)
-- User can delete (file removed from B2, row removed from table)
+- User can download (presigned URL forces attachment download)
+- User can delete (file removed from B2, row removed from tree)
 - User can refresh the file list
 
 ## Toggle Dark Mode

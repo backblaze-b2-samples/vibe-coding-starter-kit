@@ -2,6 +2,15 @@
 
 Starter kit for vibe coders building apps with file uploads and object storage. This full-stack dashboard template integrates with **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)** Cloud Storage and includes secure upload flows, file browsing, and basic storage management. Launch faster with a ready-to-deploy UI instead of wiring storage from scratch.
 
+## Vibe Coding Ready
+
+This repo is designed for AI-assisted development. Clone it, point your coding agent at it, and start building.
+
+- **[CLAUDE.md](CLAUDE.md)** — tells Claude Code (and compatible agents) the project structure, doc read order, test commands, and coding conventions. Your agent understands the codebase from the first prompt.
+- **[AGENTS.md](AGENTS.md)** — rules for any coding agent: file naming, commit style, doc update requirements, PR checklist. Keeps AI-generated code consistent with the rest of the project.
+
+The feature docs in `docs/features/` give agents full context on each module — inputs, outputs, flows, edge cases — so they can add features or fix bugs without guessing.
+
 ## Core Features
 
 - [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress

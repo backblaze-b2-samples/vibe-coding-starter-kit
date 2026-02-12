@@ -47,7 +47,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full system layout.
 ### Install
 
 ```bash
-git clone https://github.com/backblaze-b2-samples/vibe-coding-starter-kit.git && cd oss-starter-kit
+git clone https://github.com/backblaze-b2-samples/vibe-coding-starter-kit.git && cd vibe-coding-starter-kit
 pnpm install
 cd services/api && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ```

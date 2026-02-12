@@ -1,6 +1,6 @@
-# OSS Starter Kit
+# Vibe Coding OSS Starter Kit
 
-Full-stack file management dashboard for **Backblaze B2** via S3-compatible API. Built for developers who need a ready-to-deploy upload and storage UI.
+Starter kit for vibe coders building apps with file uploads and object storage. This full-stack dashboard template integrates with **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)** Cloud Storage and includes secure upload flows, file browsing, and basic storage management. Launch faster with a ready-to-deploy UI instead of wiring storage from scratch.
 
 ## Core Features
 
@@ -38,7 +38,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full system layout.
 ### Install
 
 ```bash
-git clone https://github.com/backblaze-b2-samples/oss-starter-kit.git && cd oss-starter-kit
+git clone https://github.com/backblaze-b2-samples/vibe-coding-starter-kit.git && cd oss-starter-kit
 pnpm install
 cd services/api && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ```

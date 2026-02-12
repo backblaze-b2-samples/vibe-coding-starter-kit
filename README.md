@@ -31,7 +31,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full system layout.
 
 - Node.js >= 20, pnpm >= 9
 - Python >= 3.11
-- Backblaze B2 account with a bucket + application key
+- **[Backblaze B2 Account](https://www.backblaze.com/sign-up/cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)** (free tier available)
+  - Create a bucket
+  - Generate an Application Key with `readFiles`, `writeFiles` permissions
 
 ### Install
 

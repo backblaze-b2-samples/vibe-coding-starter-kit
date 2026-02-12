@@ -83,4 +83,4 @@ See [AGENTS.md](AGENTS.md) for coding conventions, documentation rules, and PR r
 
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) for details.

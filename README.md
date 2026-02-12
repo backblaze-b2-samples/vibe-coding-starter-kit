@@ -22,14 +22,14 @@ The feature docs in `docs/features/` give agents full context on each module —
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for full system layout.
 
-- **apps/web/** — Next.js 15 frontend (App Router, Tailwind v4, shadcn/ui)
+- **apps/web/** — Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
 - **services/api/** — FastAPI backend (boto3 → B2 S3)
 - **packages/shared/** — shared TypeScript types
 - **infra/railway/** — deployment instructions
 
 ## Tech Stack
 
-- TypeScript, Next.js 15, React 19, Tailwind v4, shadcn/ui, Recharts
+- TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, Recharts
 - Python 3.11+, FastAPI, boto3, Pydantic v2, Pillow, PyPDF2
 - Backblaze B2 (S3-compatible object storage)
 - pnpm workspaces (monorepo)
@@ -42,7 +42,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full system layout.
 - Python >= 3.11
 - **[Backblaze B2 Account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)** (free tier available)
   - Create a bucket
-  - Generate an Application Key with `readFiles`, `writeFiles` permissions
+  - Generate an Application Key with `readFiles`, `writeFiles`, `deleteFiles` permissions
 
 ### Install
 

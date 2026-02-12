@@ -38,7 +38,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full system layout.
 ### Install
 
 ```bash
-git clone <repo-url> && cd oss-starter-kit
+git clone https://github.com/backblaze-b2-samples/oss-starter-kit.git && cd oss-starter-kit
 pnpm install
 cd services/api && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ```

@@ -13,8 +13,9 @@ List, preview, download, and delete files stored in Backblaze B2.
 - `apps/web/src/components/files/file-metadata-panel.tsx` — structured metadata display
 - `apps/web/src/lib/file-tree.ts` — `buildFileTree()` converts flat S3 keys to folder/file hierarchy
 - `apps/web/src/lib/api-client.ts` — `getFiles()`, `getDownloadUrl()`, `deleteFile()`
-- `services/api/app/routes/files.py` — list, get, download, delete endpoints (key prefix validation on all key-based routes)
-- `services/api/app/services/b2_s3.py` — `list_files()`, `get_file_metadata()`, `get_presigned_url()`, `delete_file()`
+- `services/api/app/runtime/files.py` — HTTP handlers for list, get, download, delete
+- `services/api/app/service/files.py` — business logic, key validation
+- `services/api/app/repo/b2_client.py` — `list_files()`, `get_file_metadata()`, `get_presigned_url()`, `delete_file()`
 
 ## Inputs
 - prefix: string (optional filter for file listing)

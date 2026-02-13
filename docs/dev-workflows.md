@@ -3,18 +3,18 @@
 ## New Feature
 
 - [ ] Create plan in `plans/YYYY-MM-DD-short-title.md`
-- [ ] Implement feature
-- [ ] Add/update tests (when test harness exists)
+- [ ] Implement feature (respect layering: types -> config -> repo -> service -> runtime)
+- [ ] Add/update tests
 - [ ] Update `docs/features/<feature>.md`
 - [ ] Update `docs/app-workflows.md` if user flow changes
 - [ ] Update `ARCHITECTURE.md` if system boundary changes
 - [ ] Update `README.md` if setup or scope changes
-- [ ] Run `pnpm build` and `pnpm lint`
+- [ ] Run `pnpm build`, `pnpm lint`, `pnpm lint:api`, `pnpm test:api`
 - [ ] Submit PR
 
 ## Bugfix
 
-- [ ] Add failing test first (when test harness exists)
+- [ ] Add failing test first
 - [ ] Confirm failure
 - [ ] Implement fix
 - [ ] Rerun tests until green
@@ -25,7 +25,7 @@
 
 - [ ] Create plan if multi-file
 - [ ] Implement refactor
-- [ ] Run full test suite
+- [ ] Run full test suite (`pnpm test:api`, `pnpm check:structure`)
 - [ ] Verify no behavior change (or update docs if intentional)
 - [ ] Submit PR
 
@@ -51,16 +51,22 @@
 ### Test Types
 - Unit: pure logic
 - Integration: boundaries (HTTP handlers, external API calls)
+- Structural: layering rules, import boundaries, file size limits
 - E2E: highest-value user workflows only
 
 ### Test Placement
-- Frontend: `apps/web/__tests__/` (when created)
-- Backend: `services/api/tests/` (when created)
+- Frontend: `apps/web/e2e/` (Playwright)
+- Backend: `services/api/tests/`
 
 ### Commands
-- Lint: `pnpm lint`
-- Build: `pnpm build`
-- Backend: `cd services/api && pytest` (when test harness exists)
+```bash
+pnpm lint              # frontend lint
+pnpm build             # frontend build
+pnpm lint:api          # backend lint (ruff)
+pnpm test:api          # backend tests (pytest)
+pnpm check:structure   # structural boundary tests
+pnpm test:e2e          # Playwright e2e tests
+```
 
 ### When to Run
 - After behavior change: run relevant subset

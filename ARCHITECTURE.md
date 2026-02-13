@@ -7,14 +7,61 @@
   - File upload with drag-and-drop, progress tracking
   - File browser with preview, download, delete
   - Dark mode via `next-themes`
-- **services/api/** — FastAPI backend
+- **services/api/** — FastAPI backend (layered architecture)
   - REST API for file upload, listing, deletion
   - B2 S3 integration via boto3
   - File metadata extraction (images, PDFs)
   - Health check endpoint with B2 connectivity verification
+  - Structured JSON logging with request tracing
+  - Prometheus-format metrics endpoint
 - **packages/shared/** — TypeScript type definitions
   - Mirrors Pydantic models from the API
   - Consumed by `apps/web/` as workspace dependency
+
+## Backend Layering
+
+The API follows a strict layered architecture:
+
+```
+types/     Pydantic models — no logic, no imports from other layers
+  |
+config/    Settings (pydantic-settings) — depends only on types
+  |
+repo/      Data access (boto3 B2 client) — no business logic
+  |
+service/   Business logic — calls repo, returns types
+  |
+runtime/   FastAPI routes — calls service, never repo directly
+```
+
+### Layering Rules
+
+1. Dependencies flow downward only: `types` -> `config` -> `repo` -> `service` -> `runtime`
+2. No backward imports (e.g., service must not import from runtime)
+3. `boto3` only allowed in `repo/` layer
+4. All boundary data uses Pydantic models (no raw dicts across layers)
+5. Each file stays under 300 lines
+
+### Directory Structure
+
+```
+services/api/
+  main.py                  App entrypoint, middleware, router registration
+  app/
+    types/                 Pydantic models (FileMetadata, UploadStats, etc.)
+    config/                Settings loaded from environment
+    repo/                  B2 S3 client (data access layer)
+    service/               Business logic (upload, files, metadata)
+    runtime/               FastAPI route handlers
+  tests/                   pytest tests (structural + integration)
+```
+
+## Boundary Invariants
+
+- **No external SDK leakage**: `boto3` is only imported in `app/repo/`. All other layers interact with B2 through the repo interface.
+- **No raw dicts at boundaries**: All data crossing layer boundaries uses typed Pydantic models.
+- **No mutable globals**: Configuration is read-only after init. No module-level mutable state shared between layers.
+- **Validated inputs**: All HTTP inputs validated by FastAPI/Pydantic. All file keys validated against prefix allowlist.
 
 ## Deployment
 
@@ -37,22 +84,25 @@
 
 ## Trust Boundaries
 
-- **Frontend → API** — CORS-restricted to configured origins, scoped to `GET/POST/DELETE/OPTIONS` methods
-- **API → B2** — authenticated via `B2_APPLICATION_KEY_ID` + `B2_APPLICATION_KEY`, signature v4
-- **Client → B2** — presigned URLs for download (10-min expiry, `Content-Disposition: attachment`)
+See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 
-## Security
-
-- **Upload validation**: filename sanitization (path traversal, null bytes, unsafe chars), MIME/extension consistency check, chunked streaming with size enforcement (100MB), content-type allowlist, empty file rejection
-- **File key validation**: all file endpoints require keys to start with allowed prefixes (`uploads/`), path traversal patterns rejected
-- **Download safety**: presigned URLs force `Content-Disposition: attachment` to prevent inline rendering of user-uploaded content
+- **Frontend -> API** — CORS-restricted to configured origins
+- **API -> B2** — authenticated via application keys, signature v4
+- **Client -> B2** — presigned URLs for download (10-min expiry, forced attachment)
 
 ## Data Flows
 
-- **Upload**: Browser → `POST /upload` (multipart) → API sanitizes filename, validates size/type/extension → `put_object` to B2 → metadata extracted → response with file info + metadata
-- **List**: Browser → `GET /files` → API calls `list_objects_v2` → returns file list
-- **Download**: Browser → `GET /files/{key}/download` → API validates key → generates presigned URL (attachment) → browser downloads from B2
-- **Delete**: Browser → `DELETE /files/{key}` → API validates key → calls `delete_object` on B2
+- **Upload**: Browser -> `POST /upload` (multipart) -> API validates -> service orchestrates -> repo writes to B2 -> metadata extracted -> response
+- **List**: Browser -> `GET /files` -> service calls repo -> returns file list
+- **Download**: Browser -> `GET /files/{key}/download` -> service validates key -> repo generates presigned URL -> browser downloads
+- **Delete**: Browser -> `DELETE /files/{key}` -> service validates key -> repo deletes from B2
+
+## Observability
+
+- Structured JSON logging on all requests with `request_id`
+- Request timing middleware (logs duration per request)
+- `/metrics` endpoint (Prometheus format: request count, latency, upload count)
+- `/health` endpoint (B2 connectivity check)
 
 ## Core Features
 
@@ -60,3 +110,9 @@
 - [File Browser](docs/features/file-browser.md)
 - [Dashboard](docs/features/dashboard.md)
 - [Metadata Extraction](docs/features/metadata-extraction.md)
+
+## References
+
+- [docs/SECURITY.md](docs/SECURITY.md) — security principles and implementation
+- [docs/RELIABILITY.md](docs/RELIABILITY.md) — reliability expectations
+- [docs/golden-principles.md](docs/golden-principles.md) — architectural invariants

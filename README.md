@@ -2,30 +2,68 @@
 
 Starter kit for vibe coders building apps with file uploads and object storage. This full-stack dashboard template integrates with **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)** Cloud Storage and includes secure upload flows, file browsing, and basic storage management. Launch faster with a ready-to-deploy UI instead of wiring storage from scratch.
 
-## Vibe Coding Ready
+## Agent-First Architecture
 
-This repo is designed for AI-assisted development. Clone it, point your coding agent at it, and start building.
+This repo is optimized for coding agents. Clone it, point your agent at it, and start building.
 
-- **[CLAUDE.md](CLAUDE.md)** — tells Claude Code (and compatible agents) the project structure, doc read order, test commands, and coding conventions. Your agent understands the codebase from the first prompt.
-- **[AGENTS.md](AGENTS.md)** — rules for any coding agent: file naming, commit style, doc update requirements, PR checklist. Keeps AI-generated code consistent with the rest of the project.
+The structure follows the principle that **repository knowledge is the system of record**. Anything an agent can't access in-context doesn't exist — so everything it needs to reason about the codebase is versioned, co-located, and discoverable from the repo itself.
 
-The feature docs in `docs/features/` give agents full context on each module — inputs, outputs, flows, edge cases — so they can add features or fix bugs without guessing.
+### How it works
+
+**AGENTS.md is a map, not a manual.** A short (~90 line) entry point gives agents the repository layout, architectural invariants, and pointers to deeper docs. Agents start with a small, stable surface and progressively disclose context as needed — rather than being overwhelmed by a monolithic instruction file.
+
+**Architecture is enforced mechanically, not by convention.** Layering rules, import boundaries, file size limits, and SDK containment are verified by structural tests and lints that run on every change. When rules are enforceable by code, agents follow them reliably.
+
+**The knowledge base is structured for progressive disclosure:**
+
+```
+AGENTS.md              Map — repo layout, invariants, where to look next
+CLAUDE.md              Operational — workflow, self-validation, merge philosophy
+ARCHITECTURE.md        System layout, layering rules, data flows
+docs/
+  features/            Feature specs (inputs, outputs, flows, edge cases)
+  golden-principles.md Architectural invariants
+  SECURITY.md          Security principles
+  RELIABILITY.md       Reliability expectations
+  QUALITY_SCORE.md     Quality checklist
+  exec-plans/          Execution plans (active + completed)
+  design-docs/         Architectural decision records
+```
+
+### Key design decisions
+
+| Principle | Implementation |
+|-----------|---------------|
+| Give agents a map, not an encyclopedia | AGENTS.md < 100 lines, points to deeper docs |
+| Enforce invariants mechanically | Structural tests + ruff + ESLint verify boundaries |
+| Encode golden principles in-repo | `docs/golden-principles.md` — no cultural memory required |
+| Strict layered architecture | `types -> config -> repo -> service -> runtime`, enforced by tests |
+| Prefer boring, composable libraries | stdlib logging over frameworks, Pydantic over ad-hoc validation |
+| Contain external SDKs | `boto3` only in `repo/` layer — verified by structural test |
+| Keep files agent-sized | 300-line limit per file, enforced by test |
+| Docs updated with code | Same-PR requirement prevents documentation rot |
+| Structured observability | JSON logging, `/metrics` endpoint, request tracing |
+
+This approach draws from [OpenAI's experience building with Codex](https://openai.com/index/harness-engineering/): agents work best in environments with strict boundaries, predictable structure, and progressive context disclosure.
 
 ## Core Features
 
+**Application**
 - [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress
 - [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
 - [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
 - [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
 
-## Architecture
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for full system layout.
-
-- **apps/web/** — Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
-- **services/api/** — FastAPI backend (boto3 → B2 S3)
-- **packages/shared/** — shared TypeScript types
-- **infra/railway/** — deployment instructions
+**Quality & Observability**
+- Structural tests — verify layering rules, import boundaries, SDK containment, file size limits
+- Integration tests — health endpoint and metrics endpoint via async test client
+- E2E tests — Playwright scaffolding for browser-driven smoke tests
+- Backend linting — ruff with strict rules (no `print()`, import ordering, bugbear)
+- Frontend linting — ESLint with strict equality, no unused vars, no console
+- Pre-commit hooks — ruff + format checks + file size limits on every commit
+- Structured JSON logging — every request traced with `request_id` and timing
+- `/health` endpoint — B2 connectivity check
+- `/metrics` endpoint — Prometheus-format counters (request count, latency, uploads)
 
 ## Tech Stack
 
@@ -78,19 +116,14 @@ The frontend auto-connects to `http://localhost:8000` in dev. For production, se
 
 - `pnpm lint` — lint frontend
 - `pnpm build` — type check + build
-- No test suites exist yet — test harness setup is pending
-
-## Documentation
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) — system layout, data flows, trust boundaries
-- [docs/app-workflows.md](docs/app-workflows.md) — user journeys
-- [docs/dev-workflows.md](docs/dev-workflows.md) — engineering workflows
-- [docs/features/](docs/features/) — feature specifications
-- [AGENTS.md](AGENTS.md) — coding agent rules and conventions
+- `pnpm lint:api` — lint backend (ruff)
+- `pnpm test:api` — backend tests (pytest)
+- `pnpm check:structure` — structural boundary tests
+- `pnpm test:e2e` — Playwright e2e tests
 
 ## Contributing
 
-See [AGENTS.md](AGENTS.md) for coding conventions, documentation rules, and PR requirements.
+Start with [AGENTS.md](AGENTS.md). It's the map — everything else is discoverable from there.
 
 ## License
 

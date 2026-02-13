@@ -35,21 +35,3 @@ class FileMetadataDetail(BaseModel):
     duration_seconds: float | None = None
     codec: str | None = None
     bitrate: int | None = None
-
-
-class FileUploadResponse(BaseModel):
-    key: str
-    filename: str
-    size_bytes: int
-    size_human: str
-    content_type: str
-    uploaded_at: datetime
-    url: str | None = None
-    metadata: FileMetadataDetail | None = None
-
-
-class UploadStats(BaseModel):
-    total_files: int
-    total_size_bytes: int
-    total_size_human: str
-    uploads_today: int

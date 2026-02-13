@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { FileMetadataDetail } from "@vibe-coding-starter-kit/shared";
 
@@ -61,7 +60,7 @@ export function FileMetadataPanel({ metadata }: FileMetadataPanelProps) {
         )}
 
         {/* PDF metadata */}
-        {metadata.pdf_pages != null && (
+        {metadata.pdf_pages !== null && (
           <>
             <Separator />
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -78,7 +77,7 @@ export function FileMetadataPanel({ metadata }: FileMetadataPanelProps) {
         )}
 
         {/* Audio/Video metadata */}
-        {metadata.duration_seconds != null && (
+        {metadata.duration_seconds !== null && (
           <>
             <Separator />
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">

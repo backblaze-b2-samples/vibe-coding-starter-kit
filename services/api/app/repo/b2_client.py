@@ -6,7 +6,7 @@ import boto3
 from botocore.config import Config
 
 from app.config import settings
-from app.models import FileMetadata
+from app.types import FileMetadata
 
 
 def _humanize_bytes(size: int) -> str:
@@ -105,7 +105,6 @@ def list_files(prefix: str = "", max_keys: int = 1000) -> list[FileMetadata]:
                 url=url,
             )
         )
-    # Most recent first
     files.sort(key=lambda f: f.uploaded_at, reverse=True)
     return files
 
@@ -145,12 +144,15 @@ def delete_file(key: str) -> bool:
         return False
 
 
-def get_presigned_url(key: str, filename: str | None = None, expires_in: int = 600) -> str:
+def get_presigned_url(
+    key: str, filename: str | None = None, expires_in: int = 600
+) -> str:
     client = get_s3_client()
     params: dict = {"Bucket": settings.b2_bucket_name, "Key": key}
-    # Force download as attachment to prevent inline rendering (XSS mitigation)
     if filename:
-        params["ResponseContentDisposition"] = f'attachment; filename="{filename}"'
+        params["ResponseContentDisposition"] = (
+            f'attachment; filename="{filename}"'
+        )
     else:
         params["ResponseContentDisposition"] = "attachment"
     return client.generate_presigned_url(

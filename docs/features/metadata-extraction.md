@@ -8,7 +8,7 @@ Extract rich metadata from uploaded files and return it alongside upload results
 - UI: upload results, file metadata panel
 
 ## Core Functions
-- `services/api/app/services/metadata.py` — `extract_metadata()`, `_extract_image_metadata()`, `_extract_pdf_metadata()`
+- `services/api/app/service/metadata.py` — `extract_metadata()`, `_extract_image_metadata()`, `_extract_pdf_metadata()`
 - `apps/web/src/components/files/file-metadata-panel.tsx` — displays metadata in structured card
 
 ## Inputs

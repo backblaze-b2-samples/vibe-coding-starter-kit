@@ -13,6 +13,29 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Generated shadcn/ui components — do not modify or lint strictly
+  {
+    files: ["src/components/ui/**"],
+    rules: {
+      "react-hooks/purity": "off",
+    },
+  },
+  {
+    rules: {
+      // Stricter rules for agent-generated code quality
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-debugger": "error",
+      "no-alert": "error",
+      "prefer-const": "error",
+      "no-var": "error",
+      "eqeqeq": ["error", "always"],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;

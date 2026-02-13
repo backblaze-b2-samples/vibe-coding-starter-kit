@@ -2,7 +2,7 @@ import hashlib
 import io
 from datetime import datetime
 
-from app.models import FileMetadataDetail
+from app.types import FileMetadataDetail
 
 
 def _humanize_bytes(size: int) -> str:
@@ -29,7 +29,6 @@ def _extract_image_metadata(file_data: bytes) -> dict:
         if raw_exif:
             for tag_id, value in raw_exif.items():
                 tag = TAGS.get(tag_id, tag_id)
-                # Convert bytes to string for JSON serialization
                 if isinstance(value, bytes):
                     try:
                         value = value.decode("utf-8", errors="replace")

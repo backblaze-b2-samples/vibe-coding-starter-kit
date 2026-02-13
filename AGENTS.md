@@ -1,96 +1,86 @@
-# Agent Rules
+# AGENTS.md
 
-## Project Conventions
+## 1. Repository Map
 
-### Structure
-- Monorepo: pnpm workspaces (`apps/*`, `packages/*`)
-- Frontend: `apps/web/` — Next.js 16, App Router, Tailwind v4, shadcn/ui
-- Backend: `services/api/` — FastAPI, boto3 for B2 S3
-- Shared types: `packages/shared/`
+```
+apps/web/          Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
+services/api/      FastAPI backend (layered: types/config/repo/service/runtime)
+packages/shared/   Shared TypeScript types
+docs/              System of record (features, security, reliability, principles)
+infra/railway/     Deployment config
+plans/             Temporary reasoning artifacts (not source of truth)
+```
 
-### Frontend
-- Tailwind v4: config via CSS `@theme` blocks, NOT `tailwind.config.ts`
-- Colors: OKLch format
-- Dark mode: `next-themes` with `@custom-variant dark (&:is(.dark *))`
-- Components: shadcn/ui — do not modify generated component files in `src/components/ui/`
-- Animations: `tw-animate-css` (not `tailwindcss-animate`)
+## 2. Architectural Invariants
 
-### Backend
-- Python 3.11+, FastAPI
-- boto3 with `signature_version=s3v4` for B2 S3
-- Pydantic v2 for models and settings
-- Config loaded via `pydantic-settings` from environment
+**Backend layering**: `types` -> `config` -> `repo` -> `service` -> `runtime`
 
-## Documentation Rules
+- No backward imports across layers
+- No `boto3` outside `repo/`
+- No business logic in route handlers (`runtime/`)
+- All external APIs wrapped in `repo/` adapters
+- All request/response data validated at boundary (Pydantic models)
+- No shared mutable state across layers
 
-- Docs MUST be updated in the same PR as code changes
-- New doc files MUST NOT be created unless explicitly instructed
-- Feature behavior changes → `docs/features/<feature>.md`
-- User flow changes → `docs/app-workflows.md`
-- System boundary changes → `ARCHITECTURE.md`
-- Dev or testing process changes → `docs/dev-workflows.md`
-- Setup or scope changes → `README.md`
+**Frontend**: shadcn/ui components in `src/components/ui/` are generated — never modify them.
 
-## Doc Update Mapping
+## 3. Quality Expectations
 
-| Change Type | Update Location |
-|-------------|-----------------|
-| Feature logic, inputs, outputs, tests | `docs/features/<feature>.md` |
-| User journeys | `docs/app-workflows.md` |
-| System layout, deployments, integrations | `ARCHITECTURE.md` |
-| Dev or testing process | `docs/dev-workflows.md` |
-| Setup or tech stack summary | `README.md` |
-| Temporary reasoning | `plans/` |
+- Structured JSON logging only — no `print()` statements
+- No raw SDK calls outside `repo/` layer
+- Files stay under 300 lines
+- Tests added or updated for every behavior change
+- Docs updated in same PR as code changes
+- Lint clean before merge
 
-## Planning Rules
+## 4. Mechanical Enforcement
 
-- Multi-file changes require a plan written to `plans/`
-- Plans are temporary — never a source of truth
-- Plans are referenced in PRs, optional to keep post-merge
+These rules are enforced by code, not convention:
 
-## Testing Rules
+| Rule | Enforced by |
+|------|-------------|
+| No backward imports | `tests/test_structure.py::test_no_backward_imports` |
+| No boto3 outside repo/ | `tests/test_structure.py::test_boto3_only_in_repo` |
+| File size < 300 lines | `tests/test_structure.py::test_file_size_limits` |
+| All layers exist | `tests/test_structure.py::test_all_layers_exist` |
+| No bare print() | `ruff` rule T20 |
+| Import ordering | `ruff` rule I001 |
+| Frontend strict equality | `eslint` rule eqeqeq |
+| No unused vars | `eslint` + `ruff` rules |
 
-- Tests MUST be added or updated for any behavior change
-- Tests MUST NOT be weakened or bypassed unless explicitly instructed
-- Relevant test subset MUST run after changes
-- Full test suite MUST run before PR (or reason documented)
+Run: `pnpm check:structure` / `pnpm lint:api` / `pnpm lint`
 
-### TDD Guidance
+## 5. Golden Principles
 
-- Agents SHOULD use TDD when: behavior is well-defined, a bug is reproducible, core logic is touched
-- Agents MAY implement first when: work is UI-only, behavior is exploratory, no test harness exists
+1. Prefer repository adapters over raw SDK usage
+2. Validate all external input at boundaries
+3. No implicit type assumptions — use typed models
+4. Prefer boring, composable libraries over clever abstractions
+5. Favor determinism — no `Math.random` in business logic
+6. Do not rely on cultural memory — encode rules mechanically
+7. Keep files small enough for agent context windows
 
-### Test Commands
+Full list: [docs/golden-principles.md](docs/golden-principles.md)
 
-- Frontend lint: `pnpm lint`
-- Full build check: `pnpm build`
-- Backend (when test harness exists): `cd services/api && pytest`
-- No test suites exist yet — test harness setup is pending
+## 6. Where to Find More Context
 
-### Bugfix Rule
+| Topic | Location |
+|-------|----------|
+| System layout, data flows, boundaries | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Security principles | [docs/SECURITY.md](docs/SECURITY.md) |
+| Reliability expectations | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
+| Quality checklist | [docs/QUALITY_SCORE.md](docs/QUALITY_SCORE.md) |
+| Feature specifications | [docs/features/](docs/features/) |
+| User journeys | [docs/app-workflows.md](docs/app-workflows.md) |
+| Engineering workflows | [docs/dev-workflows.md](docs/dev-workflows.md) |
+| Execution plans | [docs/exec-plans/](docs/exec-plans/) |
+| Design decisions | [docs/design-docs/](docs/design-docs/) |
 
-1. Add failing test first
-2. Confirm failure
-3. Implement fix
-4. Rerun tests until green
+## 7. When Unsure
 
-## Pull Request Requirements
-
-All changes MUST be submitted via PR with:
-
-- Summary
-- Feature doc links (if applicable)
-- Tests run (subset + full)
-- Docs updated (explicit list)
-- Risks / assumptions
-- Manual validation steps
-- Plan reference (if used)
-
-## Run Commands
-
-- `pnpm dev` — start both frontend and backend
-- `pnpm dev:web` — frontend only
-- `pnpm dev:api` — backend only
-- `pnpm build` — build frontend
-- `pnpm lint` — lint frontend
-- `cd services/api && uvicorn main:app --reload` — backend directly
+- Prefer boring, stable libraries
+- Prefer small PRs over large changes
+- Add tests with every change
+- Never bypass lint rules without explicit instruction
+- If documentation and implementation conflict, update docs in the same PR
+- Ask before making destructive or irreversible changes

@@ -6,7 +6,11 @@
     "dev:web": "pnpm --filter @vibe-coding-starter-kit/web dev",
     "dev:api": "cd services/api && uvicorn main:app --reload --port 8000",
     "build": "pnpm --filter @vibe-coding-starter-kit/web build",
-    "lint": "pnpm --filter @vibe-coding-starter-kit/web lint"
+    "lint": "pnpm --filter @vibe-coding-starter-kit/web lint",
+    "lint:api": "cd services/api && .venv/bin/ruff check .",
+    "test:api": "cd services/api && .venv/bin/python -m pytest",
+    "check:structure": "cd services/api && .venv/bin/python -m pytest tests/test_structure.py -v",
+    "test:e2e": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

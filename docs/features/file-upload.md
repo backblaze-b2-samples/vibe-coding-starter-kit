@@ -12,9 +12,10 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - `apps/web/src/components/upload/dropzone.tsx` — drag-and-drop via `react-dropzone`
 - `apps/web/src/components/upload/upload-progress.tsx` — per-file progress bars
 - `apps/web/src/lib/api-client.ts` — `uploadFile()` using XHR for progress events
-- `services/api/app/routes/upload.py` — validates and uploads to B2
-- `services/api/app/services/b2_s3.py` — `upload_file()` via boto3 `put_object`
-- `services/api/app/services/metadata.py` — `extract_metadata()` after upload
+- `services/api/app/runtime/upload.py` — HTTP handler, reads file chunks
+- `services/api/app/service/upload.py` — validates and orchestrates upload
+- `services/api/app/repo/b2_client.py` — `upload_file()` via boto3 `put_object`
+- `services/api/app/service/metadata.py` — `extract_metadata()` after upload
 
 ## Inputs
 - file: `File` (from browser, multipart form data)

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.services.b2_s3 import check_connectivity
+from app.repo import check_connectivity
 
 router = APIRouter()
 

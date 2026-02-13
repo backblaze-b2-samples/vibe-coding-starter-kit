@@ -12,8 +12,9 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 - `apps/web/src/components/dashboard/recent-uploads-table.tsx` — last 10 uploads
 - `apps/web/src/components/dashboard/upload-chart.tsx` — bar chart of uploads per day
 - `apps/web/src/lib/api-client.ts` — `getFileStats()`, `getFiles()`
-- `services/api/app/routes/files.py` — `GET /files/stats`
-- `services/api/app/services/b2_s3.py` — `get_upload_stats()`
+- `services/api/app/runtime/files.py` — `GET /files/stats` handler
+- `services/api/app/service/files.py` — `get_stats()` business logic
+- `services/api/app/repo/b2_client.py` — `get_upload_stats()` data access
 
 ## Inputs
 - None (dashboard loads data automatically)

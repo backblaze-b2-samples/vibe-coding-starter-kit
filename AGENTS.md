@@ -4,7 +4,7 @@
 
 ### Structure
 - Monorepo: pnpm workspaces (`apps/*`, `packages/*`)
-- Frontend: `apps/web/` — Next.js 15, App Router, Tailwind v4, shadcn/ui
+- Frontend: `apps/web/` — Next.js 16, App Router, Tailwind v4, shadcn/ui
 - Backend: `services/api/` — FastAPI, boto3 for B2 S3
 - Shared types: `packages/shared/`
 

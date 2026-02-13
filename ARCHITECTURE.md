@@ -2,7 +2,7 @@
 
 ## Components
 
-- **apps/web/** — Next.js 15 frontend (App Router, Tailwind v4, shadcn/ui)
+- **apps/web/** — Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
   - Dashboard with stats, upload chart, recent uploads
   - File upload with drag-and-drop, progress tracking
   - File browser with preview, download, delete

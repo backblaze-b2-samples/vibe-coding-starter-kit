@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import type { FileMetadataDetail } from "@oss-starter-kit/shared";
+import type { FileMetadataDetail } from "@vibe-coding-starter-kit/shared";
 
 interface FileMetadataPanelProps {
   metadata: FileMetadataDetail;

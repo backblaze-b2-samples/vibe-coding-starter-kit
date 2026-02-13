@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFiles } from "@/lib/api-client";
-import type { FileMetadata } from "@oss-starter-kit/shared";
+import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {

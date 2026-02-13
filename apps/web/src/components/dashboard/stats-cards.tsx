@@ -5,7 +5,7 @@ import { FileIcon, HardDrive, Upload, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFileStats } from "@/lib/api-client";
-import type { UploadStats } from "@oss-starter-kit/shared";
+import type { UploadStats } from "@vibe-coding-starter-kit/shared";
 
 export function StatsCards() {
   const [stats, setStats] = useState<UploadStats | null>(null);

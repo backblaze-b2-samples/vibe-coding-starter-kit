@@ -14,7 +14,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@oss-starter-kit/shared':
+      '@vibe-coding-starter-kit/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       class-variance-authority:

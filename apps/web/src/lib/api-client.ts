@@ -2,7 +2,7 @@ import type {
   FileMetadata,
   FileUploadResponse,
   UploadStats,
-} from "@oss-starter-kit/shared";
+} from "@vibe-coding-starter-kit/shared";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 

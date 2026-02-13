@@ -2,7 +2,7 @@
 
 import { FileIcon, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import type { FileStatus } from "@oss-starter-kit/shared";
+import type { FileStatus } from "@vibe-coding-starter-kit/shared";
 
 export interface UploadItem {
   id: string;

@@ -16,7 +16,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { getFiles } from "@/lib/api-client";
-import type { FileMetadata } from "@oss-starter-kit/shared";
+import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 const chartConfig = {
   uploads: {

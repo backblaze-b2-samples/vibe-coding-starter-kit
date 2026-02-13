@@ -1,12 +1,12 @@
 {
-  "name": "oss-starter-kit",
+  "name": "vibe-coding-starter-kit",
   "private": true,
   "scripts": {
     "dev": "concurrently --names web,api --prefix-colors blue,green \"pnpm dev:web\" \"pnpm dev:api\"",
-    "dev:web": "pnpm --filter @oss-starter-kit/web dev",
+    "dev:web": "pnpm --filter @vibe-coding-starter-kit/web dev",
     "dev:api": "cd services/api && uvicorn main:app --reload --port 8000",
-    "build": "pnpm --filter @oss-starter-kit/web build",
-    "lint": "pnpm --filter @oss-starter-kit/web lint"
+    "build": "pnpm --filter @vibe-coding-starter-kit/web build",
+    "lint": "pnpm --filter @vibe-coding-starter-kit/web lint"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

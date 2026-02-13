@@ -10,7 +10,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileMetadataPanel } from "./file-metadata-panel";
 import { getDownloadUrl } from "@/lib/api-client";
-import type { FileMetadata, FileMetadataDetail } from "@oss-starter-kit/shared";
+import type { FileMetadata, FileMetadataDetail } from "@vibe-coding-starter-kit/shared";
 
 interface FilePreviewProps {
   file: FileMetadata | null;

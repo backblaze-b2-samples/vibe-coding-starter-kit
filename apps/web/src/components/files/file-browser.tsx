@@ -31,7 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FilePreview } from "./file-preview";
 import { getFiles, getDownloadUrl, deleteFile } from "@/lib/api-client";
 import { buildFileTree, type TreeNode, type TreeFolder } from "@/lib/file-tree";
-import type { FileMetadata } from "@oss-starter-kit/shared";
+import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {

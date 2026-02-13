@@ -72,54 +72,67 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 - Backblaze B2 (S3-compatible object storage)
 - pnpm workspaces (monorepo)
 
-## Setup
+## Get Running in 5 Minutes
 
-### Prerequisites
+You need: Node.js >= 20, pnpm >= 9, Python >= 3.11, and a free **[Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)**.
 
-- Node.js >= 20, pnpm >= 9
-- Python >= 3.11
-- **[Backblaze B2 Account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)** (free tier available)
-  - Create a bucket
-  - Generate an Application Key with `readFiles`, `writeFiles`, `deleteFiles` permissions
-
-### Install
+**1. Clone and install**
 
 ```bash
-git clone https://github.com/backblaze-b2-samples/vibe-coding-starter-kit.git && cd vibe-coding-starter-kit
+git clone https://github.com/backblaze-b2-samples/vibe-coding-starter-kit.git
+cd vibe-coding-starter-kit
 pnpm install
-cd services/api && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ```
 
-### Environment Variables
+**2. Set up the backend**
+
+```bash
+cd services/api
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cd ../..
+```
+
+**3. Add your B2 credentials**
+
+Create a bucket and an application key in your [B2 dashboard](https://secure.backblaze.com/b2_buckets.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter) (the key needs `readFiles`, `writeFiles`, `deleteFiles` permissions), then:
 
 ```bash
 cp .env.example .env
 ```
 
-| Variable | Description |
-|----------|-------------|
-| `B2_S3_ENDPOINT` | B2 S3-compatible endpoint URL |
-| `B2_APPLICATION_KEY_ID` | B2 application key ID |
-| `B2_APPLICATION_KEY` | B2 application key secret |
-| `B2_BUCKET_NAME` | Target bucket name |
+Fill in your `.env`:
 
-The frontend auto-connects to `http://localhost:8000` in dev. For production, set `NEXT_PUBLIC_API_URL` on the web service (see [Railway docs](infra/railway/README.md)).
+```
+B2_S3_ENDPOINT=https://s3.us-west-004.backblazeb2.com
+B2_APPLICATION_KEY_ID=your-key-id
+B2_APPLICATION_KEY=your-key
+B2_BUCKET_NAME=your-bucket
+```
 
-## Run Commands
+**4. Run it**
 
-- `pnpm dev` — start both frontend and backend
-- `pnpm dev:web` — frontend only
-- `pnpm dev:api` — backend only
-- `pnpm build` — build frontend
+```bash
+pnpm dev
+```
 
-## Test Commands
+That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file and see it working.
 
-- `pnpm lint` — lint frontend
-- `pnpm build` — type check + build
-- `pnpm lint:api` — lint backend (ruff)
-- `pnpm test:api` — backend tests (pytest)
-- `pnpm check:structure` — structural boundary tests
-- `pnpm test:e2e` — Playwright e2e tests
+For production deployment, see [Railway docs](infra/railway/README.md).
+
+## Commands
+
+| Command | What it does |
+|---------|-------------|
+| `pnpm dev` | Start frontend + backend |
+| `pnpm dev:web` | Frontend only |
+| `pnpm dev:api` | Backend only |
+| `pnpm build` | Build frontend |
+| `pnpm lint` | Lint frontend |
+| `pnpm lint:api` | Lint backend (ruff) |
+| `pnpm test:api` | Run backend tests |
+| `pnpm check:structure` | Verify layering rules |
+| `pnpm test:e2e` | Playwright e2e tests |
 
 ## Contributing
 

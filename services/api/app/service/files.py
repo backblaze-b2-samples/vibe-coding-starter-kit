@@ -1,4 +1,5 @@
 import re
+from threading import Lock
 
 from app.repo import (
     delete_file,
@@ -11,6 +12,19 @@ from app.types import FileMetadata, UploadStats
 
 _ALLOWED_PREFIXES = ("uploads/",)
 _DANGEROUS_KEY_RE = re.compile(r"(\.\./|/\.\.|\\|%2e%2e|%00|\x00)")
+_download_lock = Lock()
+_download_count = 0
+
+
+def _record_download() -> None:
+    global _download_count
+    with _download_lock:
+        _download_count += 1
+
+
+def get_download_count() -> int:
+    with _download_lock:
+        return _download_count
 
 
 class FileKeyError(Exception):
@@ -45,6 +59,7 @@ def get_files(prefix: str = "", limit: int = 100) -> list[FileMetadata]:
 
 def get_stats() -> UploadStats:
     data = get_upload_stats()
+    data["total_downloads"] = get_download_count()
     return UploadStats(**data)
 
 
@@ -61,7 +76,9 @@ def get_download_url(key: str) -> str:
     metadata = get_file_metadata(key)
     if not metadata:
         raise FileNotFoundError()
-    return get_presigned_url(key, filename=metadata.filename)
+    url = get_presigned_url(key, filename=metadata.filename)
+    _record_download()
+    return url
 
 
 def remove_file(key: str) -> bool:

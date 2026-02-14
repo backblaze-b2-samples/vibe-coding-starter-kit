@@ -50,4 +50,5 @@ export interface UploadStats {
   total_size_bytes: number;
   total_size_human: string;
   uploads_today: number;
+  total_downloads: number;
 }

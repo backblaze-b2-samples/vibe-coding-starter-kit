@@ -20,13 +20,13 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 - None (dashboard loads data automatically)
 
 ## Outputs
-- `GET /files/stats` → `UploadStats` (total_files, total_size_bytes, total_size_human, uploads_today)
+- `GET /files/stats` → `UploadStats` (total_files, total_size_bytes, total_size_human, uploads_today, total_downloads)
 - `GET /files` (limit 10) → `FileMetadata[]` for recent uploads table
 - `GET /files` (limit 1000) → `FileMetadata[]` for chart aggregation
 
 ## Flow
 - Page loads → three parallel API calls (stats, recent files, all files for chart)
-- Stats cards display total files, storage used, uploads today, total downloads (placeholder)
+- Stats cards display total files, storage used, uploads today, total downloads
 - Upload chart aggregates files by day, shows last 7 days as bar chart
 - Recent uploads table shows last 10 files with filename, size, type, date, status badge
 

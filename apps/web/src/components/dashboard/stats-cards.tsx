@@ -21,6 +21,7 @@ export function StatsCards() {
           total_size_bytes: 0,
           total_size_human: "0 B",
           uploads_today: 0,
+          total_downloads: 0,
         });
       })
       .finally(() => setLoading(false));
@@ -44,7 +45,7 @@ export function StatsCards() {
     },
     {
       title: "Total Downloads",
-      value: "—",
+      value: stats?.total_downloads ?? 0,
       icon: Download,
     },
   ];

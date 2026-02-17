@@ -1,4 +1,4 @@
-# Feature: Metadata Extraction
+# Product Spec: Metadata Extraction
 
 ## Purpose
 Extract rich metadata from uploaded files and return it alongside upload results.
@@ -46,7 +46,5 @@ Extract rich metadata from uploaded files and return it alongside upload results
 - Required cases: image with EXIF, image without EXIF, PDF with metadata, PDF without metadata, unknown file type, corrupt file handling
 
 ## Related Docs
-- [README.md](../../README.md)
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - [File Upload](file-upload.md)
-- [App Workflows](../app-workflows.md)

@@ -1,4 +1,4 @@
-# Feature: File Upload
+# Product Spec: File Upload
 
 ## Purpose
 Upload files from the browser to Backblaze B2 with real-time progress tracking.
@@ -61,7 +61,5 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - Required cases: successful upload, oversized file rejection, disallowed type rejection, missing filename, progress callback fires
 
 ## Related Docs
-- [README.md](../../README.md)
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- [App Workflows](../app-workflows.md)
 - [Metadata Extraction](metadata-extraction.md)

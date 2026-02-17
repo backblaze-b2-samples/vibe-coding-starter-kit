@@ -1,14 +1,16 @@
 # AGENTS.md
 
+This is the authoritative control surface for all coding agents. Read this first.
+
 ## 1. Repository Map
 
 ```
 apps/web/          Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
 services/api/      FastAPI backend (layered: types/config/repo/service/runtime)
 packages/shared/   Shared TypeScript types
-docs/              System of record (features, security, reliability, principles)
+docs/              System of record (product specs, security, reliability)
 infra/railway/     Deployment config
-plans/             Temporary reasoning artifacts (not source of truth)
+plans/             Execution plans and reasoning artifacts
 ```
 
 ## 2. Architectural Invariants
@@ -26,16 +28,17 @@ plans/             Temporary reasoning artifacts (not source of truth)
 
 ## 3. Quality Expectations
 
+- **DRY** — do not duplicate logic, types, or constants. Extract shared code only when used in 2+ places.
 - Structured JSON logging only — no `print()` statements
 - No raw SDK calls outside `repo/` layer
 - Files stay under 300 lines
 - Tests added or updated for every behavior change
 - Docs updated in same PR as code changes
 - Lint clean before merge
+- Prefer boring, composable libraries over clever abstractions
+- No implicit type assumptions — use typed models
 
 ## 4. Mechanical Enforcement
-
-These rules are enforced by code, not convention:
 
 | Rule | Enforced by |
 |------|-------------|
@@ -48,39 +51,66 @@ These rules are enforced by code, not convention:
 | Frontend strict equality | `eslint` rule eqeqeq |
 | No unused vars | `eslint` + `ruff` rules |
 
-Run: `pnpm check:structure` / `pnpm lint:api` / `pnpm lint`
+## 5. Commands
 
-## 5. Golden Principles
+```bash
+# Run
+pnpm dev               # start both frontend and backend
+pnpm dev:web           # frontend only
+pnpm dev:api           # backend only
 
-1. Prefer repository adapters over raw SDK usage
-2. Validate all external input at boundaries
-3. No implicit type assumptions — use typed models
-4. Prefer boring, composable libraries over clever abstractions
-5. Favor determinism — no `Math.random` in business logic
-6. Do not rely on cultural memory — encode rules mechanically
-7. Keep files small enough for agent context windows
+# Test & Lint
+pnpm lint              # frontend lint (eslint)
+pnpm build             # frontend type check + build
+pnpm lint:api          # backend lint (ruff)
+pnpm test:api          # backend tests (pytest)
+pnpm check:structure   # structural boundary tests
+pnpm test:e2e          # Playwright e2e tests
+```
 
-Full list: [docs/golden-principles.md](docs/golden-principles.md)
+## 6. Agent Workflow
 
-## 6. Where to Find More Context
+1. Read this file first.
+2. Review [ARCHITECTURE.md](ARCHITECTURE.md) before structural changes.
+3. For non-trivial changes, create a plan in `plans/YYYY-MM-DD-short-title.md`.
+4. Implement the smallest coherent change.
+5. Run: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+6. Update docs in the same PR (see §8).
+7. Only change files relevant to the task. No drive-by improvements.
+
+## 7. Frontend Conventions
+
+- Tailwind v4: config via CSS `@theme` blocks, NOT `tailwind.config.ts`
+- Colors: OKLch format
+- Dark mode: `next-themes` with `@custom-variant dark (&:is(.dark *))`
+- Animations: `tw-animate-css` (not `tailwindcss-animate`)
+
+## 8. Doc Update Mapping
+
+| Change Type | Update Location |
+|-------------|-----------------|
+| Feature logic, inputs, outputs | `docs/product-specs/<feature>.md` |
+| System layout, deployments | `ARCHITECTURE.md` |
+| Setup or scope changes | `README.md` |
+| Security changes | `docs/SECURITY.md` |
+| Reliability changes | `docs/RELIABILITY.md` |
+
+If documentation and implementation conflict, update docs in the same PR. Documentation rot destroys agent reliability.
+
+## 9. Where to Find More Context
 
 | Topic | Location |
 |-------|----------|
 | System layout, data flows, boundaries | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Product specifications | [docs/product-specs/](docs/product-specs/) |
 | Security principles | [docs/SECURITY.md](docs/SECURITY.md) |
 | Reliability expectations | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
-| Quality checklist | [docs/QUALITY_SCORE.md](docs/QUALITY_SCORE.md) |
-| Feature specifications | [docs/features/](docs/features/) |
-| User journeys | [docs/app-workflows.md](docs/app-workflows.md) |
-| Engineering workflows | [docs/dev-workflows.md](docs/dev-workflows.md) |
-| Execution plans | [docs/exec-plans/](docs/exec-plans/) |
-| Design decisions | [docs/design-docs/](docs/design-docs/) |
+| Execution plans | [plans/](plans/) |
 
-## 7. When Unsure
+## 10. When Unsure
 
 - Prefer boring, stable libraries
 - Prefer small PRs over large changes
 - Add tests with every change
 - Never bypass lint rules without explicit instruction
-- If documentation and implementation conflict, update docs in the same PR
 - Ask before making destructive or irreversible changes

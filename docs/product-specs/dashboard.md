@@ -1,4 +1,4 @@
-# Feature: Dashboard
+# Product Spec: Dashboard
 
 ## Purpose
 Provide an at-a-glance overview of file storage usage and recent upload activity.
@@ -45,6 +45,4 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 - Required cases: stats with files, stats with empty bucket, API error fallback
 
 ## Related Docs
-- [README.md](../../README.md)
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- [App Workflows](../app-workflows.md)

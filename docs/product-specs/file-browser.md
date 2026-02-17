@@ -1,4 +1,4 @@
-# Feature: File Browser
+# Product Spec: File Browser
 
 ## Purpose
 List, preview, download, and delete files stored in Backblaze B2.
@@ -57,6 +57,4 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Required cases: list files, empty list, file not found, presigned URL generation, delete success, delete failure
 
 ## Related Docs
-- [README.md](../../README.md)
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- [App Workflows](../app-workflows.md)

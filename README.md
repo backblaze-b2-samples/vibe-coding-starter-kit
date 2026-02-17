@@ -10,33 +10,29 @@ The structure follows the principle that **repository knowledge is the system of
 
 ### How it works
 
-**AGENTS.md is a map, not a manual.** A short (~90 line) entry point gives agents the repository layout, architectural invariants, and pointers to deeper docs. Agents start with a small, stable surface and progressively disclose context as needed — rather than being overwhelmed by a monolithic instruction file.
+**AGENTS.md is the single source of truth for all coding agents.** A ~120 line entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, .cursorrules, etc.) are thin pointers back to AGENTS.md.
 
 **Architecture is enforced mechanically, not by convention.** Layering rules, import boundaries, file size limits, and SDK containment are verified by structural tests and lints that run on every change. When rules are enforceable by code, agents follow them reliably.
 
 **The knowledge base is structured for progressive disclosure:**
 
 ```
-AGENTS.md              Map — repo layout, invariants, where to look next
-CLAUDE.md              Operational — workflow, self-validation, merge philosophy
+AGENTS.md              Single source of truth — layout, invariants, commands, conventions
 ARCHITECTURE.md        System layout, layering rules, data flows
 docs/
-  features/            Feature specs (inputs, outputs, flows, edge cases)
-  golden-principles.md Architectural invariants
+  product-specs/       Product specs (inputs, outputs, flows, edge cases)
   SECURITY.md          Security principles
   RELIABILITY.md       Reliability expectations
-  QUALITY_SCORE.md     Quality checklist
-  exec-plans/          Execution plans (active + completed)
-  design-docs/         Architectural decision records
+plans/                 Execution plans and reasoning artifacts
 ```
 
 ### Key design decisions
 
 | Principle | Implementation |
 |-----------|---------------|
-| Give agents a map, not an encyclopedia | AGENTS.md < 100 lines, points to deeper docs |
+| Give agents a single source of truth | AGENTS.md ~120 lines — layout, invariants, commands, conventions |
 | Enforce invariants mechanically | Structural tests + ruff + ESLint verify boundaries |
-| Encode golden principles in-repo | `docs/golden-principles.md` — no cultural memory required |
+| DRY documentation | Each fact lives in one place; no redundant files to drift |
 | Strict layered architecture | `types -> config -> repo -> service -> runtime`, enforced by tests |
 | Prefer boring, composable libraries | stdlib logging over frameworks, Pydantic over ad-hoc validation |
 | Contain external SDKs | `boto3` only in `repo/` layer — verified by structural test |
@@ -49,10 +45,10 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 ## Core Features
 
 **Application**
-- [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress
-- [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
-- [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
-- [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
+- [File Upload](docs/product-specs/file-upload.md) — drag-and-drop upload with real-time progress
+- [File Browser](docs/product-specs/file-browser.md) — list, preview, download, delete files
+- [Dashboard](docs/product-specs/dashboard.md) — stats cards, upload chart, recent uploads
+- [Metadata Extraction](docs/product-specs/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
 
 **Quality & Observability**
 - Structural tests — verify layering rules, import boundaries, SDK containment, file size limits

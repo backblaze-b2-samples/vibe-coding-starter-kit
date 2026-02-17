@@ -106,13 +106,13 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 
 ## Core Features
 
-- [File Upload](docs/features/file-upload.md)
-- [File Browser](docs/features/file-browser.md)
-- [Dashboard](docs/features/dashboard.md)
-- [Metadata Extraction](docs/features/metadata-extraction.md)
+- [File Upload](docs/product-specs/file-upload.md)
+- [File Browser](docs/product-specs/file-browser.md)
+- [Dashboard](docs/product-specs/dashboard.md)
+- [Metadata Extraction](docs/product-specs/metadata-extraction.md)
 
 ## References
 
 - [docs/SECURITY.md](docs/SECURITY.md) — security principles and implementation
 - [docs/RELIABILITY.md](docs/RELIABILITY.md) — reliability expectations
-- [docs/golden-principles.md](docs/golden-principles.md) — architectural invariants
+- [AGENTS.md](AGENTS.md) — architectural invariants and agent instructions

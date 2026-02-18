@@ -1,6 +1,6 @@
 """Integration tests for download stats behavior."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -30,7 +30,7 @@ async def test_downloads_increment_stats(client, monkeypatch):
             size_bytes=1024,
             size_human="1.0 KB",
             content_type="text/plain",
-            uploaded_at=datetime.now(timezone.utc),
+            uploaded_at=datetime.now(UTC),
             url=None,
         )
 

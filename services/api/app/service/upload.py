@@ -1,8 +1,7 @@
 import re
-import uuid
 
 from app.config import settings
-from app.repo import upload_file
+from app.repo import get_file_metadata, upload_file
 from app.repo.b2_client import _humanize_bytes
 from app.service.metadata import extract_metadata
 from app.types import FileUploadResponse
@@ -113,7 +112,9 @@ def process_upload(
             status_code=413,
         )
 
-    key = f"uploads/{uuid.uuid4().hex[:12]}_{safe_name}"
+    key = f"uploads/{safe_name}"
+    if get_file_metadata(key) is not None:
+        raise UploadError("File already exists", status_code=409)
     result = upload_file(file_data, key, content_type)
     metadata = extract_metadata(file_data, safe_name, content_type)
 

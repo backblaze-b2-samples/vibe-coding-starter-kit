@@ -23,7 +23,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 
 ## Outputs
 - `FileUploadResponse`: key, filename, size, content_type, uploaded_at, url, metadata
-- Side effects: file stored in B2 bucket under `uploads/{uuid}_{filename}`
+- Side effects: file stored in B2 bucket under `uploads/{sanitized_filename}`
 
 ## Flow
 - User drops or selects files in dropzone
@@ -35,7 +35,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - API validates file extension matches declared MIME type
 - API reads file in 1MB chunks with streaming size enforcement (max 100MB)
 - API rejects empty files
-- API generates unique key: `uploads/{uuid12}_{sanitized_filename}`
+- API uses key: `uploads/{sanitized_filename}`
 - API calls `put_object` to B2
 - API extracts file metadata (checksums, image dimensions, PDF info)
 - API returns `FileUploadResponse`
@@ -47,6 +47,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - File extension mismatches MIME type → API returns 415
 - No filename provided → API returns 400
 - Empty file → API returns 400
+- Duplicate filename → API returns 409
 - B2 unreachable → API returns 500
 - Upload aborted by user → XHR abort, error state in UI
 

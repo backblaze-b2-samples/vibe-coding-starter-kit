@@ -1,3 +1,4 @@
+<!-- last_verified: 2026-03-06 -->
 # Architecture
 
 ## Components
@@ -104,12 +105,23 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 - `/metrics` endpoint (Prometheus format: request count, latency, upload count)
 - `/health` endpoint (B2 connectivity check)
 
+## Canonical Files
+
+- Layered API handler: `services/api/app/runtime/upload.py`
+- Service orchestration: `services/api/app/service/upload.py`
+- B2 data access (repo layer): `services/api/app/repo/b2_client.py`
+- Pydantic models: `services/api/app/types/models.py`
+- Config (pydantic-settings): `services/api/app/config/settings.py`
+- Structural tests: `services/api/tests/test_structure.py`
+- Frontend API client: `apps/web/src/lib/api-client.ts`
+- Shared TypeScript types: `packages/shared/src/types.ts`
+
 ## Core Features
 
-- [File Upload](docs/product-specs/file-upload.md)
-- [File Browser](docs/product-specs/file-browser.md)
-- [Dashboard](docs/product-specs/dashboard.md)
-- [Metadata Extraction](docs/product-specs/metadata-extraction.md)
+- [File Upload](docs/features/file-upload.md)
+- [File Browser](docs/features/file-browser.md)
+- [Dashboard](docs/features/dashboard.md)
+- [Metadata Extraction](docs/features/metadata-extraction.md)
 
 ## References
 

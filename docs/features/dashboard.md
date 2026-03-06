@@ -1,4 +1,5 @@
-# Product Spec: Dashboard
+<!-- last_verified: 2026-03-06 -->
+# Feature: Dashboard
 
 ## Purpose
 Provide an at-a-glance overview of file storage usage and recent upload activity.
@@ -15,6 +16,10 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 - `services/api/app/runtime/files.py` — `GET /files/stats` handler
 - `services/api/app/service/files.py` — `get_stats()` business logic
 - `services/api/app/repo/b2_client.py` — `get_upload_stats()` data access
+
+## Canonical Files
+- Dashboard page layout: `apps/web/src/components/dashboard/stats-cards.tsx`
+- Stats service logic: `services/api/app/service/files.py`
 
 ## Inputs
 - None (dashboard loads data automatically)
@@ -40,9 +45,13 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 - Empty: "No files uploaded yet" / "No upload data available yet"
 - Loaded: populated cards, chart, table
 
-## Tests
-- No test harness yet
+## Verification
+- Test files: `services/api/tests/` (no dedicated dashboard tests yet)
 - Required cases: stats with files, stats with empty bucket, API error fallback
+- Quick verify command: `pnpm test:api`
+- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Pass criteria: all pytest tests green, no ruff violations
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- [App Workflows](../app-workflows.md)

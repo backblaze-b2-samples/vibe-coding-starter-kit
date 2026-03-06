@@ -1,4 +1,5 @@
-# Product Spec: Metadata Extraction
+<!-- last_verified: 2026-03-06 -->
+# Feature: Metadata Extraction
 
 ## Purpose
 Extract rich metadata from uploaded files and return it alongside upload results.
@@ -10,6 +11,10 @@ Extract rich metadata from uploaded files and return it alongside upload results
 ## Core Functions
 - `services/api/app/service/metadata.py` — `extract_metadata()`, `_extract_image_metadata()`, `_extract_pdf_metadata()`
 - `apps/web/src/components/files/file-metadata-panel.tsx` — displays metadata in structured card
+
+## Canonical Files
+- Metadata extraction pattern: `services/api/app/service/metadata.py`
+- Metadata display component: `apps/web/src/components/files/file-metadata-panel.tsx`
 
 ## Inputs
 - file_data: bytes
@@ -41,9 +46,12 @@ Extract rich metadata from uploaded files and return it alongside upload results
 ## UX States
 - Not applicable (metadata is part of upload response and file preview)
 
-## Tests
-- No test harness yet
+## Verification
+- Test files: `services/api/tests/` (no dedicated metadata tests yet)
 - Required cases: image with EXIF, image without EXIF, PDF with metadata, PDF without metadata, unknown file type, corrupt file handling
+- Quick verify command: `pnpm test:api`
+- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Pass criteria: all pytest tests green, no ruff violations
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)

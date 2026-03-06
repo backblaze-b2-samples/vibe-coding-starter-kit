@@ -1,3 +1,4 @@
+<!-- last_verified: 2026-03-06 -->
 # Reliability
 
 Reliability expectations and practices for this project.

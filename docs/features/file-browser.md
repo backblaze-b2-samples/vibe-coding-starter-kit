@@ -1,4 +1,5 @@
-# Product Spec: File Browser
+<!-- last_verified: 2026-03-06 -->
+# Feature: File Browser
 
 ## Purpose
 List, preview, download, and delete files stored in Backblaze B2.
@@ -17,9 +18,14 @@ List, preview, download, and delete files stored in Backblaze B2.
 - `services/api/app/service/files.py` — business logic, key validation
 - `services/api/app/repo/b2_client.py` — `list_files()`, `get_file_metadata()`, `get_presigned_url()`, `delete_file()`
 
+## Canonical Files
+- File route handlers: `services/api/app/runtime/files.py`
+- File tree builder: `apps/web/src/lib/file-tree.ts`
+- B2 data access pattern: `services/api/app/repo/b2_client.py`
+
 ## Inputs
 - prefix: string (optional filter for file listing)
-- limit: int (max files to return, 1–1000, default 100)
+- limit: int (max files to return, 1-1000, default 100)
 - key: string (file key for get/download/delete — must start with allowed prefix, no traversal)
 
 ## Outputs
@@ -52,9 +58,13 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Error: toast notification
 - Loaded: tree view with expand/collapse folders and hover action menus
 
-## Tests
-- No test harness yet
+## Verification
+- Test files: `services/api/tests/` (no dedicated file browser tests yet)
 - Required cases: list files, empty list, file not found, presigned URL generation, delete success, delete failure
+- Quick verify command: `pnpm test:api`
+- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Pass criteria: all pytest tests green, no ruff violations
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- [App Workflows](../app-workflows.md)

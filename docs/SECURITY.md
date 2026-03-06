@@ -1,3 +1,4 @@
+<!-- last_verified: 2026-03-06 -->
 # Security
 
 Security principles and implementation for the vibe-coding-starter-kit.

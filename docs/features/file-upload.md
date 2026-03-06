@@ -1,4 +1,5 @@
-# Product Spec: File Upload
+<!-- last_verified: 2026-03-06 -->
+# Feature: File Upload
 
 ## Purpose
 Upload files from the browser to Backblaze B2 with real-time progress tracking.
@@ -16,6 +17,11 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - `services/api/app/service/upload.py` — validates and orchestrates upload
 - `services/api/app/repo/b2_client.py` — `upload_file()` via boto3 `put_object`
 - `services/api/app/service/metadata.py` — `extract_metadata()` after upload
+
+## Canonical Files
+- Upload handler pattern: `services/api/app/runtime/upload.py`
+- Service orchestration pattern: `services/api/app/service/upload.py`
+- Frontend upload flow: `apps/web/src/components/upload/upload-form.tsx`
 
 ## Inputs
 - file: `File` (from browser, multipart form data)
@@ -57,10 +63,14 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - Error: red status icon, error message per file
 - Complete: green checkmark, "Clear completed" button
 
-## Tests
-- No test harness yet
-- Required cases: successful upload, oversized file rejection, disallowed type rejection, missing filename, progress callback fires
+## Verification
+- Test files: `services/api/tests/` (no dedicated upload tests yet)
+- Required cases: successful upload, oversized file rejection, disallowed type rejection, missing filename, empty file, duplicate filename
+- Quick verify command: `pnpm test:api`
+- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Pass criteria: all pytest tests green, no ruff violations
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - [Metadata Extraction](metadata-extraction.md)
+- [App Workflows](../app-workflows.md)

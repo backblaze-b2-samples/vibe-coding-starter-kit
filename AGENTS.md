@@ -1,3 +1,4 @@
+<!-- last_verified: 2026-03-06 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -8,9 +9,9 @@ This is the authoritative control surface for all coding agents. Read this first
 apps/web/          Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
 services/api/      FastAPI backend (layered: types/config/repo/service/runtime)
 packages/shared/   Shared TypeScript types
-docs/              System of record (product specs, security, reliability)
+docs/              System of record (features, workflows, security, reliability)
+docs/exec-plans/   Execution plans and tech debt tracker
 infra/railway/     Deployment config
-plans/             Execution plans and reasoning artifacts
 ```
 
 ## 2. Architectural Invariants
@@ -72,40 +73,45 @@ pnpm test:e2e          # Playwright e2e tests
 
 1. Read this file first.
 2. Review [ARCHITECTURE.md](ARCHITECTURE.md) before structural changes.
-3. For non-trivial changes, create a plan in `plans/YYYY-MM-DD-short-title.md`.
+3. For non-trivial changes, create a plan in `docs/exec-plans/active/`.
 4. Implement the smallest coherent change.
 5. Run: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
 6. Update docs in the same PR (see §8).
-7. Only change files relevant to the task. No drive-by improvements.
+7. Move completed plans to `docs/exec-plans/completed/`.
+8. Only change files relevant to the task. No drive-by improvements.
 
 ## 7. Frontend Conventions
 
-- Tailwind v4: config via CSS `@theme` blocks, NOT `tailwind.config.ts`
-- Colors: OKLch format
-- Dark mode: `next-themes` with `@custom-variant dark (&:is(.dark *))`
-- Animations: `tw-animate-css` (not `tailwindcss-animate`)
+See [docs/dev-workflows.md](docs/dev-workflows.md) for full details.
 
 ## 8. Doc Update Mapping
 
 | Change Type | Update Location |
 |-------------|-----------------|
-| Feature logic, inputs, outputs | `docs/product-specs/<feature>.md` |
+| Feature logic, inputs, outputs, tests | `docs/features/<feature>.md` |
+| User journeys | `docs/app-workflows.md` |
 | System layout, deployments | `ARCHITECTURE.md` |
+| Dev or testing process | `docs/dev-workflows.md` |
 | Setup or scope changes | `README.md` |
 | Security changes | `docs/SECURITY.md` |
 | Reliability changes | `docs/RELIABILITY.md` |
+| Active work plans | `docs/exec-plans/active/` |
+| Known tech debt | `docs/exec-plans/tech-debt-tracker.md` |
 
 If documentation and implementation conflict, update docs in the same PR. Documentation rot destroys agent reliability.
 
-## 9. Where to Find More Context
+## 9. Doc Map
 
 | Topic | Location |
 |-------|----------|
 | System layout, data flows, boundaries | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| Product specifications | [docs/product-specs/](docs/product-specs/) |
+| Feature docs | [docs/features/](docs/features/) |
+| User journeys | [docs/app-workflows.md](docs/app-workflows.md) |
+| Engineering workflows and testing | [docs/dev-workflows.md](docs/dev-workflows.md) |
 | Security principles | [docs/SECURITY.md](docs/SECURITY.md) |
 | Reliability expectations | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
-| Execution plans | [plans/](plans/) |
+| Execution plans | [docs/exec-plans/](docs/exec-plans/) |
+| Tech debt | [docs/exec-plans/tech-debt-tracker.md](docs/exec-plans/tech-debt-tracker.md) |
 
 ## 10. When Unsure
 

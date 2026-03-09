@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
 import { Toaster } from "@/components/ui/sonner";
+import { RefreshProvider } from "@/lib/refresh-context";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -37,16 +38,18 @@ export default function RootLayout({
         className={`${inter.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <SidebarProvider>
-            <TooltipProvider>
-              <AppSidebar />
-              <div className="flex flex-1 flex-col">
-                <Header />
-                <main className="flex-1 overflow-auto p-6">{children}</main>
-              </div>
-              <Toaster />
-            </TooltipProvider>
-          </SidebarProvider>
+          <RefreshProvider>
+            <SidebarProvider>
+              <TooltipProvider>
+                <AppSidebar />
+                <div className="flex flex-1 flex-col">
+                  <Header />
+                  <main className="flex-1 overflow-auto p-6">{children}</main>
+                </div>
+                <Toaster />
+              </TooltipProvider>
+            </SidebarProvider>
+          </RefreshProvider>
         </ThemeProvider>
       </body>
     </html>

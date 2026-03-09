@@ -8,18 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Dropzone } from "./dropzone";
 import { UploadProgress, type UploadItem } from "./upload-progress";
 import { uploadFile } from "@/lib/api-client";
-
-function humanizeBytes(bytes: number) {
-  for (const unit of ["B", "KB", "MB", "GB"]) {
-    if (Math.abs(bytes) < 1024) return `${bytes.toFixed(1)} ${unit}`;
-    bytes /= 1024;
-  }
-  return `${bytes.toFixed(1)} TB`;
-}
+import { humanizeBytes } from "@/lib/utils";
+import { useRefresh } from "@/lib/refresh-context";
 
 export function UploadForm() {
   const [items, setItems] = useState<UploadItem[]>([]);
   const [uploading, setUploading] = useState(false);
+  const { triggerRefresh } = useRefresh();
 
   const handleFilesRejected = useCallback((rejections: FileRejection[]) => {
     for (const rejection of rejections) {
@@ -45,6 +40,7 @@ export function UploadForm() {
     setUploading(true);
 
     const uploadQueue = async () => {
+      let anySuccess = false;
       for (const item of newItems) {
         try {
           await uploadFile(item.file, (percent) => {
@@ -62,6 +58,7 @@ export function UploadForm() {
             )
           );
           toast.success(`${item.file.name} uploaded successfully`);
+          anySuccess = true;
         } catch (err) {
           const message =
             err instanceof Error ? err.message : "Upload failed";
@@ -76,10 +73,12 @@ export function UploadForm() {
         }
       }
       setUploading(false);
+      // Trigger data refresh so dashboard/file browser show new files
+      if (anySuccess) triggerRefresh();
     };
 
-    uploadQueue();
-  }, []);
+    uploadQueue().catch(console.error);
+  }, [triggerRefresh]);
 
   const clearCompleted = useCallback(() => {
     setItems((prev) => prev.filter((i) => i.status === "uploading"));

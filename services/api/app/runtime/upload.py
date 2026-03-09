@@ -2,6 +2,8 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile
 
+from app.config import settings
+from app.runtime.metrics import record_upload
 from app.service.upload import UploadError, process_upload
 from app.types import FileUploadResponse
 
@@ -16,7 +18,7 @@ async def upload(request: Request, file: UploadFile):
     content_length_header = request.headers.get("content-length")
     content_length = int(content_length_header) if content_length_header else None
 
-    # Read file with chunked streaming
+    # Read file with chunked streaming and early size rejection
     chunks: list[bytes] = []
     total = 0
     while True:
@@ -24,6 +26,8 @@ async def upload(request: Request, file: UploadFile):
         if not chunk:
             break
         total += len(chunk)
+        if total > settings.max_file_size:
+            raise HTTPException(status_code=413, detail="File too large")
         chunks.append(chunk)
     file_data = b"".join(chunks)
 
@@ -36,8 +40,10 @@ async def upload(request: Request, file: UploadFile):
         )
     except UploadError as e:
         logger.warning("Upload rejected: %s", e.detail)
+        record_upload(success=False)
         raise HTTPException(status_code=e.status_code, detail=e.detail) from None
 
+    record_upload(success=True)
     logger.info(
         "File uploaded: key=%s size=%d type=%s",
         result.key,

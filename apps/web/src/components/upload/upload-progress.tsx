@@ -2,6 +2,7 @@
 
 import { FileIcon, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { humanizeBytes } from "@/lib/utils";
 import type { FileStatus } from "@vibe-coding-starter-kit/shared";
 
 export interface UploadItem {
@@ -14,14 +15,6 @@ export interface UploadItem {
 
 interface UploadProgressProps {
   items: UploadItem[];
-}
-
-function humanizeBytes(bytes: number) {
-  for (const unit of ["B", "KB", "MB", "GB"]) {
-    if (Math.abs(bytes) < 1024) return `${bytes.toFixed(1)} ${unit}`;
-    bytes /= 1024;
-  }
-  return `${bytes.toFixed(1)} TB`;
 }
 
 function StatusIcon({ status }: { status: FileStatus }) {

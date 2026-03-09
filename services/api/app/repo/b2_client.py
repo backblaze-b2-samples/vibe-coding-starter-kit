@@ -1,20 +1,16 @@
+import functools
 import io
 import mimetypes
-from datetime import datetime
+from datetime import UTC, datetime
+from urllib.parse import quote
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 
 from app.config import settings
 from app.types import FileMetadata
-
-
-def _humanize_bytes(size: int) -> str:
-    for unit in ("B", "KB", "MB", "GB", "TB"):
-        if abs(size) < 1024:
-            return f"{size:.1f} {unit}"
-        size /= 1024  # type: ignore[assignment]
-    return f"{size:.1f} PB"
+from app.types.formatting import humanize_bytes
 
 
 def _guess_content_type(key: str) -> str:
@@ -30,6 +26,14 @@ def _split_key(key: str) -> tuple[str, str]:
     return "", parts[0]
 
 
+def _public_url(key: str) -> str | None:
+    """Build a public URL for an object key, percent-encoding the path."""
+    if not settings.b2_public_url:
+        return None
+    return f"{settings.b2_public_url}/{quote(key, safe='/')}"
+
+
+@functools.lru_cache(maxsize=1)
 def get_s3_client():
     return boto3.client(
         "s3",
@@ -55,17 +59,17 @@ def check_connectivity() -> bool:
 def upload_file(
     file_data: bytes, key: str, content_type: str
 ) -> FileMetadata:
+    """Upload file to B2. Raises RuntimeError on S3 failure."""
     client = get_s3_client()
-    client.put_object(
-        Bucket=settings.b2_bucket_name,
-        Key=key,
-        Body=io.BytesIO(file_data),
-        ContentType=content_type,
-    )
-    url = None
-    if settings.b2_public_url:
-        url = f"{settings.b2_public_url}/{key}"
-
+    try:
+        client.put_object(
+            Bucket=settings.b2_bucket_name,
+            Key=key,
+            Body=io.BytesIO(file_data),
+            ContentType=content_type,
+        )
+    except ClientError as e:
+        raise RuntimeError(f"B2 upload failed for '{key}': {e}") from e
     folder, filename = _split_key(key)
     size = len(file_data)
     return FileMetadata(
@@ -73,25 +77,26 @@ def upload_file(
         filename=filename,
         folder=folder,
         size_bytes=size,
-        size_human=_humanize_bytes(size),
+        size_human=humanize_bytes(size),
         content_type=content_type,
-        uploaded_at=datetime.utcnow(),
-        url=url,
+        uploaded_at=datetime.now(UTC),
+        url=_public_url(key),
     )
 
 
 def list_files(prefix: str = "", max_keys: int = 1000) -> list[FileMetadata]:
+    """List files from B2. Raises RuntimeError on S3 failure."""
     client = get_s3_client()
-    response = client.list_objects_v2(
-        Bucket=settings.b2_bucket_name,
-        Prefix=prefix,
-        MaxKeys=max_keys,
-    )
+    try:
+        response = client.list_objects_v2(
+            Bucket=settings.b2_bucket_name,
+            Prefix=prefix,
+            MaxKeys=max_keys,
+        )
+    except ClientError as e:
+        raise RuntimeError(f"B2 list failed: {e}") from e
     files: list[FileMetadata] = []
     for obj in response.get("Contents", []):
-        url = None
-        if settings.b2_public_url:
-            url = f"{settings.b2_public_url}/{obj['Key']}"
         folder, filename = _split_key(obj["Key"])
         files.append(
             FileMetadata(
@@ -99,10 +104,10 @@ def list_files(prefix: str = "", max_keys: int = 1000) -> list[FileMetadata]:
                 filename=filename,
                 folder=folder,
                 size_bytes=obj["Size"],
-                size_human=_humanize_bytes(obj["Size"]),
+                size_human=humanize_bytes(obj["Size"]),
                 content_type=_guess_content_type(obj["Key"]),
                 uploaded_at=obj["LastModified"],
-                url=url,
+                url=_public_url(obj["Key"]),
             )
         )
     files.sort(key=lambda f: f.uploaded_at, reverse=True)
@@ -115,12 +120,12 @@ def get_file_metadata(key: str) -> FileMetadata | None:
         response = client.head_object(
             Bucket=settings.b2_bucket_name, Key=key
         )
-    except client.exceptions.ClientError:
-        return None
-
-    url = None
-    if settings.b2_public_url:
-        url = f"{settings.b2_public_url}/{key}"
+    except ClientError as e:
+        # Only treat 404/NoSuchKey as "not found"; re-raise other errors
+        code = e.response.get("Error", {}).get("Code", "")
+        if code in ("404", "NoSuchKey"):
+            return None
+        raise
 
     folder, filename = _split_key(key)
     return FileMetadata(
@@ -128,54 +133,72 @@ def get_file_metadata(key: str) -> FileMetadata | None:
         filename=filename,
         folder=folder,
         size_bytes=response["ContentLength"],
-        size_human=_humanize_bytes(response["ContentLength"]),
+        size_human=humanize_bytes(response["ContentLength"]),
         content_type=response.get("ContentType", _guess_content_type(key)),
         uploaded_at=response["LastModified"],
-        url=url,
+        url=_public_url(key),
     )
 
 
-def delete_file(key: str) -> bool:
+def delete_file(key: str) -> None:
+    """Delete an object from B2. Raises RuntimeError on failure."""
     client = get_s3_client()
     try:
         client.delete_object(Bucket=settings.b2_bucket_name, Key=key)
-        return True
-    except Exception:
-        return False
+    except ClientError as e:
+        raise RuntimeError(f"B2 delete failed for '{key}': {e}") from e
 
 
 def get_presigned_url(
     key: str, filename: str | None = None, expires_in: int = 600
 ) -> str:
+    """Generate a presigned download URL. Raises RuntimeError on failure."""
     client = get_s3_client()
     params: dict = {"Bucket": settings.b2_bucket_name, "Key": key}
     if filename:
+        # RFC 5987 encoding for non-ASCII filenames
+        encoded = quote(filename, safe="")
         params["ResponseContentDisposition"] = (
-            f'attachment; filename="{filename}"'
+            f"attachment; filename=\"{encoded}\"; filename*=UTF-8''{encoded}"
         )
     else:
         params["ResponseContentDisposition"] = "attachment"
-    return client.generate_presigned_url(
-        "get_object",
-        Params=params,
-        ExpiresIn=expires_in,
-    )
+    try:
+        return client.generate_presigned_url(
+            "get_object",
+            Params=params,
+            ExpiresIn=expires_in,
+        )
+    except ClientError as e:
+        raise RuntimeError(f"B2 presign failed for '{key}': {e}") from e
 
 
 def get_upload_stats() -> dict:
+    """Paginate through all objects and return aggregate stats.
+
+    Raises RuntimeError on S3 failure.
+    """
     client = get_s3_client()
-    response = client.list_objects_v2(
-        Bucket=settings.b2_bucket_name, MaxKeys=10000
-    )
-    contents = response.get("Contents", [])
+    contents: list[dict] = []
+    kwargs: dict = {"Bucket": settings.b2_bucket_name, "MaxKeys": 1000}
+    try:
+        while True:
+            response = client.list_objects_v2(**kwargs)
+            contents.extend(response.get("Contents", []))
+            if not response.get("IsTruncated"):
+                break
+            kwargs["ContinuationToken"] = response["NextContinuationToken"]
+    except ClientError as e:
+        raise RuntimeError(f"B2 stats query failed: {e}") from e
+
     total_size = sum(obj["Size"] for obj in contents)
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     uploads_today = sum(
         1 for obj in contents if obj["LastModified"].date() == today
     )
     return {
         "total_files": len(contents),
         "total_size_bytes": total_size,
-        "total_size_human": _humanize_bytes(total_size),
+        "total_size_human": humanize_bytes(total_size),
         "uploads_today": uploads_today,
     }

@@ -45,6 +45,11 @@ export interface FileUploadResponse {
   metadata: FileMetadataDetail | null;
 }
 
+export interface DailyUploadCount {
+  date: string;
+  uploads: number;
+}
+
 export interface UploadStats {
   total_files: number;
   total_size_bytes: number;

@@ -4,28 +4,26 @@ import { useEffect, useState } from "react";
 import { FileIcon, HardDrive, Upload, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { getFileStats } from "@/lib/api-client";
+import { useRefresh } from "@/lib/refresh-context";
 import type { UploadStats } from "@vibe-coding-starter-kit/shared";
 
 export function StatsCards() {
   const [stats, setStats] = useState<UploadStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { refreshKey } = useRefresh();
 
   useEffect(() => {
+    setLoading(true);
     getFileStats()
       .then(setStats)
       .catch(() => {
-        // Use placeholder data when API is unavailable
-        setStats({
-          total_files: 0,
-          total_size_bytes: 0,
-          total_size_human: "0 B",
-          uploads_today: 0,
-          total_downloads: 0,
-        });
+        setStats(null);
+        toast.error("Failed to load stats");
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshKey]);
 
   const cards = [
     {

@@ -1,4 +1,6 @@
 import re
+from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 from threading import Lock
 
 from app.repo import (
@@ -9,6 +11,7 @@ from app.repo import (
     list_files,
 )
 from app.types import FileMetadata, UploadStats
+from app.types.stats import DailyUploadCount
 
 _ALLOWED_PREFIXES = ("uploads/",)
 _DANGEROUS_KEY_RE = re.compile(r"(\.\./|/\.\.|\\|%2e%2e|%00|\x00)")
@@ -54,7 +57,11 @@ def validate_key(key: str) -> None:
 def get_files(prefix: str = "", limit: int = 100) -> list[FileMetadata]:
     if limit < 1 or limit > 1000:
         raise ValueError("Limit must be between 1 and 1000")
-    return list_files(prefix=prefix, max_keys=limit)
+    # S3 list_objects_v2 returns objects in lexicographic order, not by date.
+    # Fetch a full batch, sort newest-first, then slice to the requested limit.
+    files = list_files(prefix=prefix, max_keys=1000)
+    files.sort(key=lambda f: f.uploaded_at, reverse=True)
+    return files[:limit]
 
 
 def get_stats() -> UploadStats:
@@ -81,9 +88,29 @@ def get_download_url(key: str) -> str:
     return url
 
 
-def remove_file(key: str) -> bool:
+def remove_file(key: str) -> None:
+    """Validate key and delete the file. Raises RuntimeError on B2 failure."""
     validate_key(key)
-    success = delete_file(key)
-    if not success:
-        raise RuntimeError("Failed to delete file")
-    return True
+    delete_file(key)
+
+
+def get_upload_activity(days: int = 7) -> list[DailyUploadCount]:
+    """Return daily upload counts for the last N days."""
+    files = list_files(prefix="", max_keys=1000)
+    today = datetime.now(UTC).date()
+    cutoff = today - timedelta(days=days - 1)
+
+    counts: dict[str, int] = defaultdict(int)
+    for f in files:
+        d = f.uploaded_at.date()
+        if d >= cutoff:
+            counts[d.isoformat()] += 1
+
+    # Fill in missing days with zero
+    return [
+        DailyUploadCount(
+            date=(cutoff + timedelta(days=i)).isoformat(),
+            uploads=counts.get((cutoff + timedelta(days=i)).isoformat(), 0),
+        )
+        for i in range(days)
+    ]

@@ -1,4 +1,5 @@
 import type {
+  DailyUploadCount,
   FileMetadata,
   FileUploadResponse,
   UploadStats,
@@ -6,11 +7,44 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+/** Typed API error with HTTP status code for caller-side branching. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+
+  /** True for 408, 429, 500, 502, 503, 504 — worth retrying. */
+  get isRetryable(): boolean {
+    return [408, 429, 500, 502, 503, 504].includes(this.status);
+  }
+
+  get isNotFound(): boolean {
+    return this.status === 404;
+  }
+
+  get isConflict(): boolean {
+    return this.status === 409;
+  }
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, init);
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, init);
+  } catch {
+    // Network failure (offline, DNS, CORS, etc.)
+    throw new ApiError("Network error — check your connection", 0);
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail || `API error: ${res.status}`);
+    throw new ApiError(
+      body.detail || `API error: ${res.status}`,
+      res.status,
+    );
   }
   return res.json();
 }
@@ -27,6 +61,10 @@ export async function getFiles(prefix = "", limit = 100) {
 
 export async function getFileStats() {
   return apiFetch<UploadStats>("/files/stats");
+}
+
+export async function getUploadActivity(days = 7) {
+  return apiFetch<DailyUploadCount[]>(`/files/stats/activity?days=${days}`);
 }
 
 export async function getFile(key: string) {
@@ -64,15 +102,19 @@ export function uploadFile(
       } else {
         try {
           const body = JSON.parse(xhr.responseText);
-          reject(new Error(body.detail || `Upload failed: ${xhr.status}`));
+          reject(new ApiError(body.detail || `Upload failed: ${xhr.status}`, xhr.status));
         } catch {
-          reject(new Error(`Upload failed: ${xhr.status}`));
+          reject(new ApiError(`Upload failed: ${xhr.status}`, xhr.status));
         }
       }
     });
 
-    xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-    xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
+    xhr.addEventListener("error", () =>
+      reject(new ApiError("Network error — check your connection", 0)),
+    );
+    xhr.addEventListener("abort", () =>
+      reject(new ApiError("Upload aborted", 0)),
+    );
 
     xhr.open("POST", `${API_BASE}/upload`);
     xhr.send(formData);

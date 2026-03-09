@@ -12,17 +12,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { getFiles } from "@/lib/api-client";
+import { formatDate } from "@/lib/utils";
+import { useRefresh } from "@/lib/refresh-context";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function mimeToLabel(mime: string) {
   const map: Record<string, string> = {
@@ -44,13 +38,18 @@ function mimeToLabel(mime: string) {
 export function RecentUploadsTable() {
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [loading, setLoading] = useState(true);
+  const { refreshKey } = useRefresh();
 
   useEffect(() => {
+    setLoading(true);
     getFiles("", 10)
       .then(setFiles)
-      .catch(() => setFiles([]))
+      .catch(() => {
+        setFiles([]);
+        toast.error("Failed to load recent uploads");
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshKey]);
 
   return (
     <Card>

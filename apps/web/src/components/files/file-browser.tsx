@@ -27,20 +27,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilePreview } from "./file-preview";
-import { getFiles, getDownloadUrl, deleteFile } from "@/lib/api-client";
+import { ApiError, getFiles, getDownloadUrl, deleteFile } from "@/lib/api-client";
+import { formatDate } from "@/lib/utils";
+import { useRefresh } from "@/lib/refresh-context";
 import { buildFileTree, type TreeNode, type TreeFolder } from "@/lib/file-tree";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function getFileIcon(contentType: string) {
   if (contentType.startsWith("image/")) return ImageIcon;
@@ -177,6 +180,8 @@ export function FileBrowser() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [previewFile, setPreviewFile] = useState<FileMetadata | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<FileMetadata | null>(null);
+  const { refreshKey, triggerRefresh } = useRefresh();
 
   const fetchFiles = useCallback(() => {
     setLoading(true);
@@ -199,7 +204,7 @@ export function FileBrowser() {
 
   useEffect(() => {
     fetchFiles();
-  }, [fetchFiles]);
+  }, [fetchFiles, refreshKey]);
 
   const toggleFolder = useCallback((path: string) => {
     setExpanded((prev) => {
@@ -214,18 +219,24 @@ export function FileBrowser() {
     try {
       const { url } = await getDownloadUrl(file.key);
       window.open(url, "_blank");
-    } catch {
-      toast.error("Failed to get download URL");
+    } catch (err) {
+      const detail = err instanceof ApiError ? err.message : "Failed to get download URL";
+      toast.error(detail);
     }
   };
 
-  const handleDelete = async (file: FileMetadata) => {
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteFile(file.key);
-      setFiles((prev) => prev.filter((f) => f.key !== file.key));
-      toast.success(`${file.filename} deleted`);
-    } catch {
-      toast.error("Failed to delete file");
+      await deleteFile(deleteTarget.key);
+      setFiles((prev) => prev.filter((f) => f.key !== deleteTarget.key));
+      toast.success(`${deleteTarget.filename} deleted`);
+      triggerRefresh();
+    } catch (err) {
+      const detail = err instanceof ApiError ? err.message : "Failed to delete file";
+      toast.error(detail);
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -268,7 +279,7 @@ export function FileBrowser() {
                   onToggle={toggleFolder}
                   onPreview={handlePreview}
                   onDownload={handleDownload}
-                  onDelete={handleDelete}
+                  onDelete={setDeleteTarget}
                 />
               ))}
             </div>
@@ -281,6 +292,23 @@ export function FileBrowser() {
         open={previewOpen}
         onOpenChange={setPreviewOpen}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete file?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{deleteTarget?.filename}</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

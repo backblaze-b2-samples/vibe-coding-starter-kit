@@ -1,6 +1,11 @@
 from pydantic import BaseModel
 
 
+class DailyUploadCount(BaseModel):
+    date: str
+    uploads: int
+
+
 class UploadStats(BaseModel):
     total_files: int
     total_size_bytes: int

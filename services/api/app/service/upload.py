@@ -1,10 +1,10 @@
 import re
 
 from app.config import settings
-from app.repo import get_file_metadata, upload_file
-from app.repo.b2_client import _humanize_bytes
+from app.repo import upload_file
 from app.service.metadata import extract_metadata
 from app.types import FileUploadResponse
+from app.types.formatting import humanize_bytes
 
 ALLOWED_TYPES = {
     "image/jpeg",
@@ -84,9 +84,9 @@ def process_upload(
     if not filename:
         raise UploadError("No filename provided")
 
-    if content_length and content_length > settings.max_file_size + 4096:
+    if content_length and content_length > settings.max_file_size:
         raise UploadError(
-            f"File too large. Max size: {_humanize_bytes(settings.max_file_size)}",
+            f"File too large. Max size: {humanize_bytes(settings.max_file_size)}",
             status_code=413,
         )
 
@@ -108,13 +108,13 @@ def process_upload(
 
     if len(file_data) > settings.max_file_size:
         raise UploadError(
-            f"File too large. Max size: {_humanize_bytes(settings.max_file_size)}",
+            f"File too large. Max size: {humanize_bytes(settings.max_file_size)}",
             status_code=413,
         )
 
+    # B2 buckets are always versioned — uploading the same key creates a new
+    # version automatically.  No duplicate rejection needed.
     key = f"uploads/{safe_name}"
-    if get_file_metadata(key) is not None:
-        raise UploadError("File already exists", status_code=409)
     result = upload_file(file_data, key, content_type)
     metadata = extract_metadata(file_data, safe_name, content_type)
 

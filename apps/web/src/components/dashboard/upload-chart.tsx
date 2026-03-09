@@ -15,8 +15,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { getFiles } from "@/lib/api-client";
-import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
+import { getUploadActivity } from "@/lib/api-client";
+import { useRefresh } from "@/lib/refresh-context";
 
 const chartConfig = {
   uploads: {
@@ -25,28 +25,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function aggregateByDay(files: FileMetadata[]) {
-  const counts: Record<string, number> = {};
-  for (const file of files) {
-    const day = new Date(file.uploaded_at).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-    counts[day] = (counts[day] || 0) + 1;
-  }
-  return Object.entries(counts)
-    .map(([date, uploads]) => ({ date, uploads }))
-    .slice(-7);
-}
-
 export function UploadChart() {
   const [data, setData] = useState<{ date: string; uploads: number }[]>([]);
+  const { refreshKey } = useRefresh();
 
   useEffect(() => {
-    getFiles("", 1000)
-      .then((files) => setData(aggregateByDay(files)))
+    getUploadActivity(7)
+      .then((activity) =>
+        setData(
+          activity.map((d) => ({
+            // Format ISO date to short display label
+            date: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
+            uploads: d.uploads,
+          }))
+        )
+      )
       .catch(() => setData([]));
-  }, []);
+  }, [refreshKey]);
 
   return (
     <Card>

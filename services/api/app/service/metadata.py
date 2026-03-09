@@ -1,16 +1,12 @@
 import hashlib
 import io
-from datetime import datetime
+import logging
+from datetime import UTC, datetime
 
 from app.types import FileMetadataDetail
+from app.types.formatting import humanize_bytes
 
-
-def _humanize_bytes(size: int) -> str:
-    for unit in ("B", "KB", "MB", "GB", "TB"):
-        if abs(size) < 1024:
-            return f"{size:.1f} {unit}"
-        size /= 1024  # type: ignore[assignment]
-    return f"{size:.1f} PB"
+logger = logging.getLogger(__name__)
 
 
 def _extract_image_metadata(file_data: bytes) -> dict:
@@ -38,6 +34,7 @@ def _extract_image_metadata(file_data: bytes) -> dict:
             result["exif"] = exif_data if exif_data else None
         return result
     except Exception:
+        logger.warning("Image metadata extraction failed", exc_info=True)
         return {}
 
 
@@ -53,6 +50,7 @@ def _extract_pdf_metadata(file_data: bytes) -> dict:
             "pdf_title": info.title if info else None,
         }
     except Exception:
+        logger.warning("PDF metadata extraction failed", exc_info=True)
         return {}
 
 
@@ -61,7 +59,7 @@ def extract_metadata(
     filename: str,
     content_type: str,
 ) -> FileMetadataDetail:
-    md5 = hashlib.md5(file_data).hexdigest()
+    md5 = hashlib.md5(file_data, usedforsecurity=False).hexdigest()
     sha256 = hashlib.sha256(file_data).hexdigest()
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
@@ -75,11 +73,11 @@ def extract_metadata(
     return FileMetadataDetail(
         filename=filename,
         size_bytes=len(file_data),
-        size_human=_humanize_bytes(len(file_data)),
+        size_human=humanize_bytes(len(file_data)),
         mime_type=content_type,
         extension=extension,
         md5=md5,
         sha256=sha256,
-        uploaded_at=datetime.utcnow(),
+        uploaded_at=datetime.now(UTC),
         **extra,
     )

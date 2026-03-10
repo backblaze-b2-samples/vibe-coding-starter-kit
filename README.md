@@ -176,3 +176,9 @@ Start with [AGENTS.md](AGENTS.md). It's the map — everything else is discovera
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+## Claude Agent B2 Skill
+
+Manage Backblaze B2 from your terminal using natural language (list/search, audits, stale or large file detection, security checks, safe cleanup).
+
+Repo: [https://github.com/backblaze-b2-samples/claude-skill-b2-cloud-storage](https://github.com/backblaze-b2-samples/claude-skill-b2-cloud-storage)

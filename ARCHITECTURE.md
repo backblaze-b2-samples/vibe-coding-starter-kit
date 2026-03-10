@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-03-10 -->
 # Architecture
 
 ## Components
@@ -110,7 +110,7 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 - Layered API handler: `services/api/app/runtime/upload.py`
 - Service orchestration: `services/api/app/service/upload.py`
 - B2 data access (repo layer): `services/api/app/repo/b2_client.py`
-- Pydantic models: `services/api/app/types/models.py`
+- Pydantic models: `services/api/app/types/` (`files.py`, `upload.py`, `stats.py`, `formatting.py`)
 - Config (pydantic-settings): `services/api/app/config/settings.py`
 - Structural tests: `services/api/tests/test_structure.py`
 - Frontend API client: `apps/web/src/lib/api-client.ts`

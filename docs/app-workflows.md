@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-03-10 -->
 # App Workflows
 
 User journeys inside the application.
@@ -30,7 +30,7 @@ User journeys inside the application.
 ## View Dashboard
 
 - User navigates to `/` (home)
-- Three parallel API calls load: stats, recent files, chart data
+- Three parallel API calls load: stats, recent files, upload activity
 - Stats cards show: total files, storage used, uploads today, total downloads
 - Upload chart shows last 7 days of upload activity as bar chart
 - Recent uploads table shows last 10 files with filename, size, type, date

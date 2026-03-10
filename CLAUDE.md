@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-03-10 -->
 # CLAUDE.md
 
 Follow [AGENTS.md](AGENTS.md) at all times — it is the single source of truth.

@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-03-10 -->
 # Feature: File Upload
 
 ## Purpose
@@ -53,7 +53,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - File extension mismatches MIME type → API returns 415
 - No filename provided → API returns 400
 - Empty file → API returns 400
-- Duplicate filename → API returns 409
+- Duplicate filename → B2 creates a new version (buckets are always versioned)
 - B2 unreachable → API returns 500
 - Upload aborted by user → XHR abort, error state in UI
 
@@ -64,8 +64,8 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - Complete: green checkmark, "Clear completed" button
 
 ## Verification
-- Test files: `services/api/tests/` (no dedicated upload tests yet)
-- Required cases: successful upload, oversized file rejection, disallowed type rejection, missing filename, empty file, duplicate filename
+- Test files: `services/api/tests/test_upload_conflict.py`, `services/api/tests/test_error_handling.py`
+- Required cases: successful upload, oversized file rejection, disallowed type rejection, missing filename, empty file, duplicate filename allowed
 - Quick verify command: `pnpm test:api`
 - Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
 - Pass criteria: all pytest tests green, no ruff violations

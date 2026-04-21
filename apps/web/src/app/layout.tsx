@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { Geist_Mono } from "next/font/google";
+import { Mona_Sans } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -11,15 +10,13 @@ import { Header } from "@/components/layout/header";
 import { Toaster } from "@/components/ui/sonner";
 import { RefreshProvider } from "@/lib/refresh-context";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Display face — used for page titles. Body copy uses the system stack
+// defined in globals.css.
+const monaSans = Mona_Sans({
+  variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -34,9 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${monaSans.variable} antialiased`}>
         <ThemeProvider>
           <RefreshProvider>
             <SidebarProvider>
@@ -44,7 +39,9 @@ export default function RootLayout({
                 <AppSidebar />
                 <div className="flex flex-1 flex-col">
                   <Header />
-                  <main className="flex-1 overflow-auto p-6">{children}</main>
+                  <main className="flex-1 overflow-auto p-6 lg:p-8">
+                    {children}
+                  </main>
                 </div>
                 <Toaster />
               </TooltipProvider>

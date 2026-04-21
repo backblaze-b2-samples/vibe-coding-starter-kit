@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/chart";
 import { getUploadActivity } from "@/lib/api-client";
 import { useRefresh } from "@/lib/refresh-context";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BarChart3 } from "lucide-react";
 
 const chartConfig = {
   uploads: {
@@ -48,15 +50,19 @@ export function UploadChart() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Upload Activity</CardTitle>
-        <CardDescription>Files uploaded over the last 7 days</CardDescription>
+      <CardHeader className="border-b border-border py-4 px-5">
+        <CardTitle className="card-title">Upload Activity</CardTitle>
+        <CardDescription className="text-xs mt-0.5">
+          Files uploaded over the last 7 days
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-5 px-5">
         {data.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
-            No upload data available yet.
-          </p>
+          <EmptyState
+            icon={BarChart3}
+            title="No activity yet"
+            description="Upload files to see activity trends here."
+          />
         ) : (
           <ChartContainer config={chartConfig} className="h-[250px] w-full">
             <BarChart data={data}>
@@ -67,7 +73,9 @@ export function UploadChart() {
               <Bar
                 dataKey="uploads"
                 fill="var(--color-uploads)"
-                radius={[4, 4, 0, 0]}
+                radius={[3, 3, 0, 0]}
+                animationDuration={600}
+                animationEasing="ease-out"
               />
             </BarChart>
           </ChartContainer>

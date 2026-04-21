@@ -90,10 +90,10 @@ export function UploadForm() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Upload Files</CardTitle>
+      <CardHeader className="border-b border-border py-4 px-5">
+        <CardTitle className="card-title">Upload Files</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-5 px-5 pb-5">
         <Dropzone
           onFilesSelected={handleFilesSelected}
           onFilesRejected={handleFilesRejected}

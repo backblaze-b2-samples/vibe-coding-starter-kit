@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -12,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { getFiles } from "@/lib/api-client";
 import { formatDate } from "@/lib/utils";
@@ -53,42 +54,63 @@ export function RecentUploadsTable() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Recent Uploads</CardTitle>
+      <CardHeader className="border-b border-border py-4 px-5">
+        <CardTitle className="card-title">Recent Uploads</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {loading ? (
-          <div className="space-y-3">
+          <div className="p-4 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
         ) : files.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
-            No files uploaded yet. Go to Upload to get started.
-          </p>
+          <EmptyState
+            icon={Inbox}
+            title="No uploads yet"
+            description="Head to Upload to add your first files."
+          />
         ) : (
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
-              <TableRow>
-                <TableHead>Filename</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableHead className="w-[34%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Filename
+                </TableHead>
+                <TableHead className="w-[14%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Size
+                </TableHead>
+                <TableHead className="w-[14%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Type
+                </TableHead>
+                <TableHead className="w-[22%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Date
+                </TableHead>
+                <TableHead className="w-[16%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Status
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {files.map((file) => (
-                <TableRow key={file.key}>
-                  <TableCell className="font-medium truncate max-w-[200px]">
-                    {file.filename}
+                <TableRow key={file.key} className="table-row-hover">
+                  <TableCell className="font-medium">
+                    <div className="truncate">{file.filename}</div>
                   </TableCell>
-                  <TableCell>{file.size_human}</TableCell>
-                  <TableCell>{mimeToLabel(file.content_type)}</TableCell>
-                  <TableCell>{formatDate(file.uploaded_at)}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">Complete</Badge>
+                  <TableCell className="font-mono text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                    {file.size_human}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                    {mimeToLabel(file.content_type)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                    {formatDate(file.uploaded_at)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+                      Complete
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}

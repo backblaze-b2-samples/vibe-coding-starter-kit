@@ -26,44 +26,36 @@ export function StatsCards() {
   }, [refreshKey]);
 
   const cards = [
-    {
-      title: "Total Files",
-      value: stats?.total_files ?? 0,
-      icon: FileIcon,
-    },
-    {
-      title: "Storage Used",
-      value: stats?.total_size_human ?? "0 B",
-      icon: HardDrive,
-    },
-    {
-      title: "Uploads Today",
-      value: stats?.uploads_today ?? 0,
-      icon: Upload,
-    },
-    {
-      title: "Total Downloads",
-      value: stats?.total_downloads ?? 0,
-      icon: Download,
-    },
+    { title: "Total Files", value: stats?.total_files ?? 0, unit: "files in bucket", icon: FileIcon },
+    { title: "Storage Used", value: stats?.total_size_human ?? "0 B", unit: "across all files", icon: HardDrive },
+    { title: "Uploads Today", value: stats?.uploads_today ?? 0, unit: "since midnight", icon: Upload },
+    { title: "Total Downloads", value: stats?.total_downloads ?? 0, unit: "all time", icon: Download },
   ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card) => (
-        <Card key={card.title}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
+      {cards.map((card, i) => (
+        <Card
+          key={card.title}
+          className={`card-hover animate-fade-in-up stagger-${i + 1}`}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 pt-4 px-5">
+            <CardTitle className="text-xs font-semibold text-muted-foreground">
               {card.title}
             </CardTitle>
-            <card.icon className="h-4 w-4 text-muted-foreground" />
+            <div className="stat-icon-wrap">
+              <card.icon className="h-4 w-4" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-4 px-5">
             {loading ? (
-              <Skeleton className="h-7 w-20" />
+              <Skeleton className="h-8 w-28" />
             ) : (
-              <div className="text-2xl font-bold">{card.value}</div>
+              <div className="stat-value">{card.value}</div>
             )}
+            <p className="text-[11px] text-muted-foreground mt-1.5 font-medium">
+              {card.unit}
+            </p>
           </CardContent>
         </Card>
       ))}

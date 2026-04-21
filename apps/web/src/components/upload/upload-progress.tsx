@@ -22,7 +22,7 @@ function StatusIcon({ status }: { status: FileStatus }) {
     case "uploading":
       return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
     case "complete":
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      return <CheckCircle2 className="h-4 w-4 text-[var(--success)]" />;
     case "error":
       return <XCircle className="h-4 w-4 text-destructive" />;
   }
@@ -36,21 +36,24 @@ export function UploadProgress({ items }: UploadProgressProps) {
       {items.map((item) => (
         <div
           key={item.id}
-          className="flex items-center gap-3 rounded-lg border p-3"
+          className="flex items-center gap-3 rounded-md border border-border bg-card p-3 animate-fade-in-up transition-colors hover:border-foreground/20"
         >
-          <FileIcon className="h-8 w-8 shrink-0 text-muted-foreground" />
+          <FileIcon className="h-6 w-6 shrink-0 text-muted-foreground" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium truncate">{item.file.name}</p>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-muted-foreground">
+                <span className="font-mono text-xs text-muted-foreground tabular-nums">
                   {humanizeBytes(item.file.size)}
                 </span>
                 <StatusIcon status={item.status} />
               </div>
             </div>
             {item.status === "uploading" && (
-              <Progress value={item.progress} className="mt-2 h-1.5" />
+              <Progress
+                value={item.progress}
+                className="mt-2 h-1 progress-gradient"
+              />
             )}
             {item.error && (
               <p className="text-xs text-destructive mt-1">{item.error}</p>

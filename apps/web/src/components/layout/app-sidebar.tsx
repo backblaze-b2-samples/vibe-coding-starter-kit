@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Upload, FolderOpen, HardDrive } from "lucide-react";
+import { LayoutDashboard, Upload, FolderOpen, Settings, Sparkles } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,48 +20,108 @@ const navItems = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Upload", href: "/upload", icon: Upload },
   { title: "Files", href: "/files", icon: FolderOpen },
+  { title: "Settings", href: "/settings", icon: Settings },
 ];
+
+const utilItems = [{ title: "Design System", href: "/design", icon: Sparkles }];
 
 export function AppSidebar() {
   const pathname = usePathname();
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <HardDrive className="h-5 w-5" />
-          <span>OSS Starter Kit</span>
+      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 font-display font-semibold text-[15px] tracking-tight group"
+        >
+          {/* Solid monogram — static, reads as product identity. */}
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-foreground text-background font-display font-bold text-sm">
+            B2
+          </div>
+          <div className="leading-tight">
+            <div>OSS Starter Kit</div>
+            <div className="text-[10px] font-normal text-muted-foreground tracking-wide uppercase">
+              Backblaze B2
+            </div>
+          </div>
         </Link>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Navigation
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
-                    <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={
+                        isActive
+                          ? "relative font-semibold before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:bg-primary"
+                          : ""
+                      }
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Reference
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {utilItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={
+                        isActive
+                          ? "relative font-semibold before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:bg-primary"
+                          : ""
+                      }
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-        <SidebarFooter className="border-t px-4 py-3">
-          <a
-            href="https://www.backblaze.com/cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=ossstarter"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:underline"
-          >
-            Built on Backblaze B2
-          </a>
-        </SidebarFooter>
+
+      <SidebarFooter className="border-t border-sidebar-border px-4 py-3">
+        <a
+          href="https://www.backblaze.com/cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=ossstarter"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#e42c39]" />
+          Built on Backblaze B2
+        </a>
+      </SidebarFooter>
     </Sidebar>
   );
 }

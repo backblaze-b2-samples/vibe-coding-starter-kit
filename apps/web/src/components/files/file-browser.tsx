@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FilePreview } from "./file-preview";
 import { ApiError, getFiles, getDownloadUrl, deleteFile } from "@/lib/api-client";
 import { formatDate } from "@/lib/utils";
@@ -89,8 +90,8 @@ function TreeRow({
       <>
         <button
           onClick={() => onToggle(node.path)}
-          className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors"
-          style={{ paddingLeft: `${depth * 20 + 8}px` }}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm hover:bg-accent/60 tree-row transition-colors group"
+          style={{ paddingLeft: `${depth * 20 + 12}px` }}
         >
           {isOpen ? (
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -98,9 +99,9 @@ function TreeRow({
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
           )}
           {isOpen ? (
-            <FolderOpen className="h-4 w-4 shrink-0 text-blue-500" />
+            <FolderOpen className="h-4 w-4 shrink-0 text-[var(--attention)]" />
           ) : (
-            <Folder className="h-4 w-4 shrink-0 text-blue-500" />
+            <Folder className="h-4 w-4 shrink-0 text-[var(--attention)]" />
           )}
           <span className="font-medium truncate">{node.name}</span>
           <span className="ml-auto text-xs text-muted-foreground shrink-0">
@@ -129,13 +130,13 @@ function TreeRow({
 
   return (
     <div
-      className="group flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors"
-      style={{ paddingLeft: `${depth * 20 + 28}px` }}
+      className="group flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm hover:bg-accent/60 tree-row transition-colors"
+      style={{ paddingLeft: `${depth * 20 + 32}px` }}
     >
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       <span className="truncate">{node.name}</span>
-      <span className="ml-auto flex items-center gap-3 shrink-0">
-        <span className="text-xs text-muted-foreground hidden sm:inline">
+      <span className="ml-auto flex items-center gap-4 shrink-0">
+        <span className="font-mono text-xs text-muted-foreground tabular-nums hidden sm:inline">
           {file.size_human}
         </span>
         <span className="text-xs text-muted-foreground hidden md:inline">
@@ -250,14 +251,21 @@ export function FileBrowser() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>All Files</CardTitle>
-          <Button variant="outline" size="sm" onClick={fetchFiles}>
-            <RefreshCw className="h-4 w-4 mr-1" />
+        <CardHeader className="flex flex-row items-center justify-between border-b border-border py-4 px-5 space-y-0">
+          <CardTitle className="card-title">All Files</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchFiles}
+            className="h-7 text-xs"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 mr-1 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-3">
           {loading ? (
             <div className="space-y-2">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -265,9 +273,11 @@ export function FileBrowser() {
               ))}
             </div>
           ) : files.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-12 text-center">
-              No files found. Upload some files to get started.
-            </p>
+            <EmptyState
+              icon={FolderOpen}
+              title="This bucket is empty"
+              description="Upload some files to see them listed here."
+            />
           ) : (
             <div className="space-y-0.5">
               {tree.map((node) => (

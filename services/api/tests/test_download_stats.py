@@ -51,3 +51,35 @@ async def test_downloads_increment_stats(client, monkeypatch):
     response = await client.get("/files/stats")
     assert response.status_code == 200
     assert response.json()["total_downloads"] == 2
+
+
+@pytest.mark.asyncio
+async def test_preview_does_not_increment_downloads(client, monkeypatch):
+    """Preview returns a presigned URL without bumping the download counter."""
+    monkeypatch.setattr(files_service, "_download_count", 0)
+
+    def fake_metadata(key: str) -> FileMetadata:
+        return FileMetadata(
+            key=key,
+            filename="test.png",
+            folder="uploads/",
+            size_bytes=1024,
+            size_human="1.0 KB",
+            content_type="image/png",
+            uploaded_at=datetime.now(UTC),
+            url=None,
+        )
+
+    monkeypatch.setattr(files_service, "get_file_metadata", fake_metadata)
+    monkeypatch.setattr(
+        files_service,
+        "get_presigned_url",
+        lambda key, filename=None: "https://example.com/preview",
+    )
+
+    for _ in range(3):
+        response = await client.get("/files/uploads/test.png/preview")
+        assert response.status_code == 200
+        assert response.json()["url"] == "https://example.com/preview"
+
+    assert files_service.get_download_count() == 0

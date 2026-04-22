@@ -8,6 +8,7 @@ from app.service.files import (
     get_download_url,
     get_file,
     get_files,
+    get_preview_url,
     get_stats,
     get_upload_activity,
     remove_file,
@@ -43,6 +44,18 @@ async def upload_activity_endpoint(days: int = 7):
 async def download_file_endpoint(key: str):
     try:
         url = get_download_url(key)
+    except FileKeyError as e:
+        raise HTTPException(status_code=400, detail=e.detail) from None
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.detail) from None
+    return {"url": url}
+
+
+@router.get("/files/{key:path}/preview")
+async def preview_file_endpoint(key: str):
+    """Return a presigned URL for inline preview. Does not count as a download."""
+    try:
+        url = get_preview_url(key)
     except FileKeyError as e:
         raise HTTPException(status_code=400, detail=e.detail) from None
     except FileNotFoundError as e:

@@ -75,6 +75,11 @@ export async function getDownloadUrl(key: string) {
   return apiFetch<{ url: string }>(`/files/${key}/download`);
 }
 
+/** Preview-only presigned URL — does NOT increment the download counter. */
+export async function getPreviewUrl(key: string) {
+  return apiFetch<{ url: string }>(`/files/${key}/preview`);
+}
+
 export async function deleteFile(key: string) {
   return apiFetch<{ deleted: boolean; key: string }>(`/files/${key}`, {
     method: "DELETE",

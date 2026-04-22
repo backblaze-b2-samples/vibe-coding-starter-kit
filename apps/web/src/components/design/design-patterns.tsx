@@ -70,7 +70,7 @@ export function DesignPatterns() {
           <CardHeader className="border-b border-border py-4 px-5">
             <CardTitle className="card-title">Empty state</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-5">
             <EmptyState
               icon={Inbox}
               title="No uploads yet"
@@ -90,7 +90,7 @@ export function DesignPatterns() {
               Sortable data table
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4">
+          <CardContent className="p-5">
             <DataTable
               columns={columns}
               data={sampleRows}
@@ -106,7 +106,7 @@ export function DesignPatterns() {
               Command palette
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 text-sm text-muted-foreground">
+          <CardContent className="p-5 text-sm text-muted-foreground">
             Press{" "}
             <kbd className="text-[10px] font-mono border border-border rounded px-1 py-0.5">
               ⌘K

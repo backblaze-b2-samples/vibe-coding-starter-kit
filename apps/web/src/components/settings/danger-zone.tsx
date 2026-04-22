@@ -30,7 +30,7 @@ export function DangerZone() {
       <CardHeader className="border-b border-destructive/30 py-4 px-5">
         <CardTitle className="card-title text-destructive">Danger Zone</CardTitle>
       </CardHeader>
-      <CardContent className="pt-5 px-5 pb-5 space-y-4">
+      <CardContent className="p-5 space-y-4">
         <Alert variant="destructive">
           <AlertTriangle />
           <AlertTitle>Irreversible actions</AlertTitle>

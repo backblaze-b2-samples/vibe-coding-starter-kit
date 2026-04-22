@@ -30,21 +30,15 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
+      <SidebarHeader className="border-b border-sidebar-border px-4 py-3.5">
         <Link
           href="/"
-          className="flex items-center gap-2.5 font-display font-semibold text-[15px] tracking-tight group"
+          className="flex items-center gap-2.5 font-semibold text-[15px] tracking-tight"
         >
-          {/* Solid monogram — static, reads as product identity. */}
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-foreground text-background font-display font-bold text-sm">
+          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-foreground text-background font-display font-bold text-[13px]">
             B2
           </div>
-          <div className="leading-tight">
-            <div>OSS Starter Kit</div>
-            <div className="text-[10px] font-normal text-muted-foreground tracking-wide uppercase">
-              Backblaze B2
-            </div>
-          </div>
+          <span>OSS Starter Kit</span>
         </Link>
       </SidebarHeader>
 

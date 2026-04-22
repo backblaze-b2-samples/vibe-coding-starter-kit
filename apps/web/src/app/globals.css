@@ -241,9 +241,9 @@
   40%           { transform: scale(1);   opacity: 1; }
 }
 
-.animate-fade-in-up { animation: fade-in-up 0.3s var(--ease-productive) both; }
-.animate-fade-in    { animation: fade-in 0.2s var(--ease-productive) both; }
-.animate-bubble-in  { animation: bubble-in 0.25s var(--ease-expressive) both; }
+.animate-fade-in-up { animation: fade-in-up 0.2s var(--ease-productive) both; }
+.animate-fade-in    { animation: fade-in 0.15s var(--ease-productive) both; }
+.animate-bubble-in  { animation: bubble-in 0.2s var(--ease-expressive) both; }
 
 .stagger-1 { animation-delay: 0ms; }
 .stagger-2 { animation-delay: 50ms; }
@@ -252,12 +252,22 @@
 .stagger-5 { animation-delay: 200ms; }
 .stagger-6 { animation-delay: 250ms; }
 
-/* Cards — 1px border + a whisper of shadow for subtle depth. */
+/* Cards — 1px border + a whisper of shadow for subtle depth.
+   Neutralize the generated component's py-6 + gap-6 defaults so the
+   explicit padding declared on each CardHeader / CardContent wins. */
 [data-slot="card"] {
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
+  padding-top: 0;
+  padding-bottom: 0;
+  gap: 0;
   transition: border-color var(--duration-short) var(--ease-productive),
               box-shadow var(--duration-short) var(--ease-productive);
+}
+/* When a CardHeader carries a border-b, the generated class sets pb-6.
+   Our explicit py-4 is the intended rhythm. */
+[data-slot="card-header"].border-b {
+  padding-bottom: 1rem;
 }
 
 .card-hover:hover {
@@ -327,7 +337,17 @@ table[data-slot="table"] th {
   line-height: 1.2;
 }
 
-/* Card / section titles — 14px system semibold. */
+/* Section title — intra-page H2, fills the scale between page-title and
+   card-title. 20px system semibold. */
+.section-title {
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+/* Card title — 14px system semibold. */
 .card-title {
   font-family: inherit;
   font-weight: 600;

@@ -10,6 +10,16 @@ Stop wiring boilerplate and start building. This open-source starter kit gives v
 - FastAPI backend with strict layered architecture and structural tests
 - Agent-optimized docs — your AI coding agent can read the repo and start contributing immediately
 
+## What it looks like
+
+**Dashboard** — stats, upload activity, and recent uploads at a glance:
+
+![Dashboard view showing stat cards, upload activity chart, and recent uploads table](docs/images/b2-starterkit-dashboard1.png)
+
+**File browser** — tree view with preview, download, and delete:
+
+![File browser view showing a tree of files with hover actions](docs/images/b2-starterkit-fileview2.png)
+
 ## Agent-First Architecture
 
 This repo is optimized for coding agents. Use the template, point your agent at it, and start building.

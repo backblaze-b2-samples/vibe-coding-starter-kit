@@ -20,10 +20,10 @@ function MetaRow({ label, value }: { label: string; value: string | number }) {
 export function FileMetadataPanel({ metadata }: FileMetadataPanelProps) {
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">File Details</CardTitle>
+      <CardHeader className="pb-3 px-5 pt-5">
+        <CardTitle className="card-title">File Details</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 px-5 pb-5">
         <MetaRow label="Filename" value={metadata.filename} />
         <MetaRow label="Size" value={metadata.size_human} />
         <MetaRow label="Type" value={metadata.mime_type} />

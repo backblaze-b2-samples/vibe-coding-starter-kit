@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDownloadUrl } from "@/lib/api-client";
+import { getPreviewUrl } from "@/lib/api-client";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 interface FilePreviewProps {
@@ -27,7 +27,7 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
       return;
     }
     setLoading(true);
-    getDownloadUrl(file.key)
+    getPreviewUrl(file.key)
       .then(({ url }) => setPreviewUrl(url))
       .catch(() => setPreviewUrl(file.url))
       .finally(() => setLoading(false));

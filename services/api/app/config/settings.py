@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     # Upload limits
     max_file_size: int = 100 * 1024 * 1024  # 100MB
 
+    # Small durable counters (downloads, etc). Point at a persistent
+    # volume in production if you care about surviving restarts.
+    download_count_file: str = "data/download_count.json"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
     @property

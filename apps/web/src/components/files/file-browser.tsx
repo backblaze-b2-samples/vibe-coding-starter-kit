@@ -220,6 +220,7 @@ export function FileBrowser() {
     try {
       const { url } = await getDownloadUrl(file.key);
       window.open(url, "_blank");
+      triggerRefresh();
     } catch (err) {
       const detail = err instanceof ApiError ? err.message : "Failed to get download URL";
       toast.error(detail);
@@ -265,7 +266,7 @@ export function FileBrowser() {
             Refresh
           </Button>
         </CardHeader>
-        <CardContent className="pt-3">
+        <CardContent className="p-3">
           {loading ? (
             <div className="space-y-2">
               {Array.from({ length: 6 }).map((_, i) => (

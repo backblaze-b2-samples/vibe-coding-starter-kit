@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-04-22 -->
 # Security
 
 Security principles and implementation for the vibe-coding-starter-kit.
@@ -19,8 +19,11 @@ Security principles and implementation for the vibe-coding-starter-kit.
 
 ## File Key Validation
 
-- All file endpoints require keys to start with allowed prefixes (`uploads/`)
-- Path traversal patterns rejected (`../`, `%2e%2e`, null bytes)
+- Empty keys rejected
+- Path traversal patterns rejected (`../`, `%2e%2e`, backslashes, null bytes)
+- The bucket is the only access boundary — add prefix scoping in
+  `services/api/app/service/files.py::validate_key` if your deployment
+  shares a bucket with other workloads
 
 ## Download Safety
 

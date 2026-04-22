@@ -44,3 +44,6 @@ coverage/
 
 # B2 / AWS
 .aws/
+
+# Local runtime data (download counter, etc.)
+services/api/data/

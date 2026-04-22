@@ -1,8 +1,15 @@
+import contextlib
+import json
+import logging
+import os
 import re
+import tempfile
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from threading import Lock
 
+from app.config import settings
 from app.repo import (
     delete_file,
     get_file_metadata,
@@ -13,16 +20,60 @@ from app.repo import (
 from app.types import FileMetadata, UploadStats
 from app.types.stats import DailyUploadCount
 
-_ALLOWED_PREFIXES = ("uploads/",)
+logger = logging.getLogger(__name__)
+
 _DANGEROUS_KEY_RE = re.compile(r"(\.\./|/\.\.|\\|%2e%2e|%00|\x00)")
 _download_lock = Lock()
-_download_count = 0
+
+
+def _counter_path() -> Path:
+    """Resolve the counter file path relative to the api service root."""
+    p = Path(settings.download_count_file)
+    if not p.is_absolute():
+        # Anchor at services/api/ (three levels up from this file)
+        p = Path(__file__).resolve().parents[2] / p
+    return p
+
+
+def _load_download_count() -> int:
+    """Read persisted counter; return 0 if the file is missing or unreadable."""
+    try:
+        with open(_counter_path()) as f:
+            return int(json.load(f).get("count", 0))
+    except (FileNotFoundError, json.JSONDecodeError, ValueError, TypeError):
+        return 0
+
+
+def _save_download_count(count: int) -> None:
+    """Atomically persist the counter. Caller must hold the download lock."""
+    path = _counter_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Atomic write: tmp file in the same dir, then rename.
+        fd, tmp = tempfile.mkstemp(
+            dir=path.parent, prefix=path.name + ".", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump({"count": count}, f)
+            os.replace(tmp, path)
+        except Exception:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp)
+            raise
+    except OSError as e:
+        # Counter persistence failing shouldn't break downloads — log and move on.
+        logger.warning("Failed to persist download counter: %s", e)
+
+
+_download_count = _load_download_count()
 
 
 def _record_download() -> None:
     global _download_count
     with _download_lock:
         _download_count += 1
+        _save_download_count(_download_count)
 
 
 def get_download_count() -> int:
@@ -47,8 +98,8 @@ class FileNotFoundError(Exception):
 
 
 def validate_key(key: str) -> None:
-    """Reject keys that could escape the allowed prefix or contain traversal."""
-    if not key or not any(key.startswith(p) for p in _ALLOWED_PREFIXES):
+    """Reject empty keys and keys that contain path-traversal patterns."""
+    if not key:
         raise FileKeyError()
     if _DANGEROUS_KEY_RE.search(key.lower()):
         raise FileKeyError()
@@ -78,12 +129,23 @@ def get_file(key: str) -> FileMetadata:
     return metadata
 
 
-def get_download_url(key: str) -> str:
+def get_preview_url(key: str) -> str:
+    """Return a presigned URL without recording a download.
+
+    Used by the preview modal for rendering images / PDFs inline — opening
+    a preview is not a user-initiated download and shouldn't inflate the
+    download counter.
+    """
     validate_key(key)
     metadata = get_file_metadata(key)
     if not metadata:
         raise FileNotFoundError()
-    url = get_presigned_url(key, filename=metadata.filename)
+    return get_presigned_url(key, filename=metadata.filename)
+
+
+def get_download_url(key: str) -> str:
+    """Return a presigned URL and record the event as a download."""
+    url = get_preview_url(key)
     _record_download()
     return url
 

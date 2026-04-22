@@ -46,11 +46,26 @@ async def test_download_not_found_returns_404(client, monkeypatch):
     assert "not found" in response.json()["detail"].lower()
 
 
-@pytest.mark.asyncio
-async def test_invalid_key_returns_400(client):
-    """Keys without allowed prefix are rejected with 400."""
-    response = await client.get("/files/notallowed/secret.txt")
-    assert response.status_code == 400
+def test_traversal_keys_are_rejected():
+    """validate_key blocks empty keys and path-traversal patterns."""
+    from app.service.files import FileKeyError, validate_key
+
+    bad_keys = [
+        "",
+        "uploads/../secret.txt",
+        "../etc/passwd",
+        "uploads\\secret.txt",
+        "uploads/%2e%2e/secret",
+        "uploads/\x00null",
+    ]
+    for bad in bad_keys:
+        with pytest.raises(FileKeyError):
+            validate_key(bad)
+
+    # Sanity: ordinary keys (including those outside uploads/) pass.
+    validate_key("uploads/file.txt")
+    validate_key("photos/2026/vacation.jpg")
+    validate_key("readme.md")
 
 
 @pytest.mark.asyncio

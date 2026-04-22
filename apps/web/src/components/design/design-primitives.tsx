@@ -56,7 +56,7 @@ export function DesignPrimitives() {
           <CardHeader className="border-b border-border py-4 px-5">
             <CardTitle className="card-title">Buttons</CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 flex flex-wrap gap-2">
+          <CardContent className="p-5 flex flex-wrap gap-2">
             <Button>Primary</Button>
             <Button variant="outline">Outline</Button>
             <Button variant="ghost">Ghost</Button>
@@ -74,7 +74,7 @@ export function DesignPrimitives() {
           <CardHeader className="border-b border-border py-4 px-5">
             <CardTitle className="card-title">Badges</CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 flex flex-wrap gap-2">
+          <CardContent className="p-5 flex flex-wrap gap-2">
             <Badge>Default</Badge>
             <Badge variant="secondary">Secondary</Badge>
             <Badge variant="outline">Outline</Badge>
@@ -92,7 +92,7 @@ export function DesignPrimitives() {
               Form controls
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 space-y-4">
+          <CardContent className="p-5 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="demo-input">Text input</Label>
               <Input id="demo-input" placeholder="type here" />
@@ -134,7 +134,7 @@ export function DesignPrimitives() {
           <CardHeader className="border-b border-border py-4 px-5">
             <CardTitle className="card-title">Feedback</CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 space-y-4">
+          <CardContent className="p-5 space-y-4">
             <Alert>
               <Info />
               <AlertTitle>Informational</AlertTitle>
@@ -170,7 +170,7 @@ export function DesignPrimitives() {
           <CardHeader className="border-b border-border py-4 px-5">
             <CardTitle className="card-title">Overlays</CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 flex flex-wrap gap-2">
+          <CardContent className="p-5 flex flex-wrap gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -198,7 +198,7 @@ export function DesignPrimitives() {
               Disclosure &amp; navigation
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 space-y-4">
+          <CardContent className="p-5 space-y-4">
             <Tabs defaultValue="one">
               <TabsList>
                 <TabsTrigger value="one">Tab one</TabsTrigger>
@@ -235,7 +235,7 @@ export function DesignPrimitives() {
               Identity &amp; chrome
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 flex items-center gap-4">
+          <CardContent className="p-5 flex items-center gap-4">
             <Avatar>
               <AvatarFallback>JD</AvatarFallback>
             </Avatar>

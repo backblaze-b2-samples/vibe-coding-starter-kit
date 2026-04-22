@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -56,6 +58,15 @@ export function RecentUploadsTable() {
     <Card>
       <CardHeader className="border-b border-border py-4 px-5">
         <CardTitle className="card-title">Recent Uploads</CardTitle>
+        <CardAction className="self-center">
+          <Link
+            href="/files"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            View all
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </CardAction>
       </CardHeader>
       <CardContent className="p-0">
         {loading ? (

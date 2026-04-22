@@ -87,7 +87,7 @@ export function SettingsForm() {
           <CardHeader className="border-b border-border py-4 px-5">
             <CardTitle className="card-title">Profile</CardTitle>
           </CardHeader>
-          <CardContent className="pt-5 px-5 pb-5 space-y-4">
+          <CardContent className="p-5 space-y-4">
             <FormField
               control={form.control}
               name="displayName"
@@ -130,7 +130,7 @@ export function SettingsForm() {
           <CardHeader className="border-b border-border py-4 px-5">
             <CardTitle className="card-title">Preferences</CardTitle>
           </CardHeader>
-          <CardContent className="pt-5 px-5 pb-5 space-y-6">
+          <CardContent className="p-5 space-y-6">
             <FormField
               control={form.control}
               name="theme"

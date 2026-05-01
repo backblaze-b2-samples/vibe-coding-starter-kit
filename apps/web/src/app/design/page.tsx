@@ -2,6 +2,7 @@ import { DesignTokens } from "@/components/design/design-tokens";
 import { DesignPrimitives } from "@/components/design/design-primitives";
 import { DesignPatterns } from "@/components/design/design-patterns";
 import { DesignAI } from "@/components/design/design-ai";
+import { DesignLoader } from "@/components/design/design-loader";
 
 export default function DesignPage() {
   return (
@@ -17,6 +18,7 @@ export default function DesignPage() {
         <DesignTokens />
         <DesignPrimitives />
         <DesignAI />
+        <DesignLoader />
         <DesignPatterns />
       </div>
     </div>

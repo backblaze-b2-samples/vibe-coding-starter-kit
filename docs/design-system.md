@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-04-21 -->
+<!-- last_verified: 2026-04-30 -->
 # Design System
 
 The starter uses a GitHub Primer-flavored token palette with shadcn/ui
@@ -126,6 +126,44 @@ Primer palette so they drop into any Primer-styled app).
 
 Wire an input, a streaming fetch to your LLM provider, and an open/close
 trigger (Sheet works well) to turn these primitives into a full experience.
+
+## Generating loader
+
+`<GeneratingLoader />` (in `components/ui/generating-loader/`) is the
+brand-tinted "something is generating" indicator. Self-contained: the
+blaze palette (red/amber/yellow) is scoped to `.blaze-orb` and the
+component reads only `--muted-foreground`, `--foreground`, and
+`--background` from the host theme — drops into either light or dark
+mode without changes.
+
+### Sizes
+
+- `sm` (16px) — inline inside a button. Always renders a single
+  continuously-rotating sparkle in the center; the variant prop is
+  ignored at this size because the field compositions don't read.
+- `md` (48px) — tile / thumbnail placeholder. Default.
+- `lg` (96px) — hero canvas placeholder. Pair with a `label` so the
+  shimmer text reads as part of the moment.
+
+### Variants
+
+- `flames` (default) — rising vertical scanlines through red/amber/yellow.
+  Use during the first generation, before any output exists.
+- `stars` — interior AI sparkles popping in/out. Use when iterating on
+  existing content (refining, regenerating).
+
+### Placement constraint
+
+The `stars` variant includes one or more **white** sparkles whose dark
+1px stroke disappears on pure white. Render `stars` on `bg-muted` (or
+darker) — never directly on `bg-card` / `bg-background` in light mode.
+For overlays, pair with `.blaze-scrim` to dim the underlying content.
+
+Why this lives in `components/ui/`: shared non-shadcn primitives
+(`EmptyState`, `DataTable`, `GeneratingLoader`) sit alongside the
+generated shadcn components in that directory. The "never modify" rule
+applies to the shadcn-generated files themselves, not to net-new custom
+primitives added in their own subdirectory.
 
 ## Spacing
 

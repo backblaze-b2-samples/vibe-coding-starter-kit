@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Inbox } from "lucide-react";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -14,12 +13,9 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Inbox } from "lucide-react";
-import { toast } from "sonner";
-import { getFiles } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/error-state";
+import { useFiles } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
-import { useRefresh } from "@/lib/refresh-context";
-import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 function mimeToLabel(mime: string) {
   const map: Record<string, string> = {
@@ -39,20 +35,7 @@ function mimeToLabel(mime: string) {
 }
 
 export function RecentUploadsTable() {
-  const [files, setFiles] = useState<FileMetadata[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { refreshKey } = useRefresh();
-
-  useEffect(() => {
-    setLoading(true);
-    getFiles("", 10)
-      .then(setFiles)
-      .catch(() => {
-        setFiles([]);
-        toast.error("Failed to load recent uploads");
-      })
-      .finally(() => setLoading(false));
-  }, [refreshKey]);
+  const { data: files = [], isLoading, error, refetch } = useFiles("", 10);
 
   return (
     <Card>
@@ -69,12 +52,14 @@ export function RecentUploadsTable() {
         </CardAction>
       </CardHeader>
       <CardContent className="p-0">
-        {loading ? (
+        {isLoading ? (
           <div className="p-4 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
+        ) : error ? (
+          <ErrorState error={error} onRetry={() => refetch()} />
         ) : files.length === 0 ? (
           <EmptyState
             icon={Inbox}

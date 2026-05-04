@@ -1,11 +1,17 @@
 import json
 import logging
 import sys
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+# Single source of truth: repo-root .env. Anchored to this file's path so it
+# resolves correctly regardless of where uvicorn is invoked from (local
+# `cd services/api && uvicorn`, Docker WORKDIR, etc.).
+REPO_ROOT_ENV = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(REPO_ROOT_ENV)
 
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
@@ -13,6 +19,57 @@ from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 
 from app.config import settings  # noqa: E402
 from app.runtime import files, health, metrics, upload  # noqa: E402
+
+# --- Startup validation ---
+# Required B2 settings are declared with empty-string defaults so that
+# `Settings()` instantiation (and therefore `from main import app`) never
+# raises during test collection. We instead fail fast at server startup
+# with a human-readable message — uvicorn surfaces this as the first log
+# line, so misconfiguration is obvious within seconds rather than turning
+# into mysterious 500s on the first request.
+REQUIRED_B2_SETTINGS = (
+    ("b2_application_key_id", "B2_APPLICATION_KEY_ID"),
+    ("b2_application_key", "B2_APPLICATION_KEY"),
+    ("b2_bucket_name", "B2_BUCKET_NAME"),
+    ("b2_s3_endpoint", "B2_S3_ENDPOINT"),
+)
+
+# Exact placeholder strings shipped in .env.example. If a user copied
+# the example and didn't edit it, Settings will pass the "non-empty"
+# check above but every B2 call will still 403. Catch that here.
+PLACEHOLDER_VALUES = frozenset({
+    "your_key_id",
+    "your_application_key",
+    "your-bucket-name",
+})
+
+
+@asynccontextmanager
+async def lifespan(_app: "FastAPI"):
+    missing = [
+        env_name
+        for attr, env_name in REQUIRED_B2_SETTINGS
+        if not getattr(settings, attr)
+    ]
+    if missing:
+        raise RuntimeError(
+            "Missing required B2 configuration: "
+            + ", ".join(missing)
+            + f". Add them to {REPO_ROOT_ENV} (see .env.example) and restart."
+        )
+
+    placeholders = [
+        env_name
+        for attr, env_name in REQUIRED_B2_SETTINGS
+        if getattr(settings, attr) in PLACEHOLDER_VALUES
+    ]
+    if placeholders:
+        raise RuntimeError(
+            "B2 configuration still has placeholder values: "
+            + ", ".join(placeholders)
+            + f". Edit {REPO_ROOT_ENV} with your real B2 credentials and restart."
+        )
+    yield
 
 # --- Structured JSON logging ---
 
@@ -49,11 +106,15 @@ app = FastAPI(
     title="OSS Starter Kit API",
     description="File upload and management API backed by Backblaze B2",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    # Optional regex (empty by default). When set, any origin matching
+    # the pattern is allowed in addition to the explicit allowlist.
+    allow_origin_regex=settings.api_cors_origin_regex or None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],

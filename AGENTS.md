@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-05-01 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -26,6 +26,8 @@ infra/railway/     Deployment config
 - No shared mutable state across layers
 
 **Frontend**: shadcn/ui components in `src/components/ui/` are generated — never modify them.
+
+**Data fetching**: every API call flows through TanStack Query hooks in `apps/web/src/lib/queries.ts`. No bare `useEffect + fetch` patterns. New endpoints touch three files: `runtime/<router>.py`, `lib/api-client.ts`, `lib/queries.ts`.
 
 ## 3. Quality Expectations
 

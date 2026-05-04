@@ -1,29 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { FileIcon, HardDrive, Upload, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { getFileStats } from "@/lib/api-client";
-import { useRefresh } from "@/lib/refresh-context";
-import type { UploadStats } from "@vibe-coding-starter-kit/shared";
+import { ErrorState } from "@/components/ui/error-state";
+import { useFileStats } from "@/lib/queries";
 
 export function StatsCards() {
-  const [stats, setStats] = useState<UploadStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { refreshKey } = useRefresh();
+  const { data: stats, isLoading, error, refetch } = useFileStats();
 
-  useEffect(() => {
-    setLoading(true);
-    getFileStats()
-      .then(setStats)
-      .catch(() => {
-        setStats(null);
-        toast.error("Failed to load stats");
-      })
-      .finally(() => setLoading(false));
-  }, [refreshKey]);
+  // Surface fetch failures inline rather than rendering "0 files / 0 B" —
+  // that lies to the user about the bucket state when really the API is
+  // just unreachable.
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <ErrorState error={error} onRetry={() => refetch()} />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const cards = [
     { title: "Total Files", value: stats?.total_files ?? 0, icon: FileIcon },
@@ -48,7 +45,7 @@ export function StatsCards() {
             </div>
           </CardHeader>
           <CardContent className="pb-5 px-4">
-            {loading ? (
+            {isLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="stat-value">{card.value}</div>

@@ -2,7 +2,9 @@
   "name": "vibe-coding-starter-kit",
   "private": true,
   "scripts": {
-    "dev": "concurrently --names web,api --prefix-colors blue,green \"pnpm dev:web\" \"pnpm dev:api\"",
+    "doctor": "node scripts/doctor.mjs",
+    "predev": "node scripts/doctor.mjs",
+    "dev": "concurrently --kill-others-on-fail --names web,api --prefix-colors blue,green \"pnpm dev:web\" \"pnpm dev:api\"",
     "dev:web": "pnpm --filter @vibe-coding-starter-kit/web dev",
     "dev:api": "cd services/api && uvicorn main:app --reload --port 8000",
     "build": "pnpm --filter @vibe-coding-starter-kit/web build",

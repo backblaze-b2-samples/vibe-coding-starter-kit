@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-10 -->
+<!-- last_verified: 2026-05-01 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -72,3 +72,42 @@ Engineering workflows for this repo.
 - Dark mode: `next-themes` with `@custom-variant dark (&:is(.dark *))`
 - Animations: `tw-animate-css` (not `tailwindcss-animate`)
 - shadcn/ui components in `src/components/ui/` are generated — never modify them
+
+## Data Fetching
+
+All API reads/writes flow through TanStack Query hooks in
+`apps/web/src/lib/queries.ts`. Don't add bare `useEffect + fetch` patterns
+to components.
+
+**Read** — use the hooks directly:
+
+```tsx
+const { data, isLoading, error, refetch } = useFiles(prefix, limit);
+const { data: stats } = useFileStats();
+```
+
+Surface errors via `<ErrorState error={error} onRetry={() => refetch()} />`
+rather than silently rendering empty UI.
+
+**Write** — wrap mutations with `useMutation` and invalidate on success:
+
+```tsx
+const deleteMutation = useDeleteFile();
+deleteMutation.mutate(file.key, {
+  onSuccess: () => toast.success("Deleted"),
+});
+```
+
+`useDeleteFile()` already calls `queryClient.invalidateQueries({ queryKey: qk.all })`
+on success — every consumer of `useFiles` / `useFileStats` re-fetches lazily.
+
+**Add a new endpoint** — three places to touch:
+1. `services/api/app/runtime/<router>.py` — FastAPI route
+2. `apps/web/src/lib/api-client.ts` — typed fetch wrapper
+3. `apps/web/src/lib/queries.ts` — `useQuery` / `useMutation` hook + entry in `qk`
+
+Defaults (in `apps/web/src/lib/query-client.tsx`):
+- `staleTime: 30s` — file lists / stats don't change second-to-second
+- `retry: 1` for transient errors; never retry 4xx (won't get better)
+- `refetchOnWindowFocus`: on (TanStack default) — dashboard self-heals
+  when the user comes back to the tab

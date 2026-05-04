@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-05-01 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -109,13 +109,13 @@ cd ../..
 
 **3. Add your B2 credentials**
 
-Create a bucket and an application key in your [B2 dashboard](https://secure.backblaze.com/b2_buckets.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter) (the key needs `readFiles`, `writeFiles`, `deleteFiles` permissions), then:
+Create a bucket and an application key in your [B2 dashboard](https://secure.backblaze.com/b2_buckets.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter) (the key needs `readFiles`, `writeFiles`, `deleteFiles` permissions), then from the repo root:
 
 ```bash
 cp .env.example .env
 ```
 
-Fill in your `.env`:
+A single `.env` at the repo root powers both the API and the web app — no per-service env files. Fill it in:
 
 ```
 B2_S3_ENDPOINT=https://s3.us-west-004.backblazeb2.com
@@ -132,7 +132,7 @@ pnpm dev
 
 That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file and see it working.
 
-For production deployment, see [Railway docs](infra/railway/README.md).
+`pnpm dev` runs `pnpm doctor` first — a preflight check that catches the common setup gotchas (wrong Node/Python version, missing venv, missing or placeholder `.env`, ports already taken) and tells you exactly how to fix each one. Run it standalone any time with `pnpm doctor`.
 
 ## Core Features
 
@@ -140,6 +140,10 @@ For production deployment, see [Railway docs](infra/railway/README.md).
 - [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
 - [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
 - [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
+- [Design System](docs/design-system.md) — tokens, primitives, AI elements, the blaze generating loader, and inline `ErrorState` / `EmptyState` patterns. Live preview at `/design`.
+- Inline error handling — fetch failures surface *what's wrong* (API offline, 401, 5xx) and offer a Retry, instead of silently rendering empty state.
+- Single-source config — one `.env` at the repo root powers both API and web app, validated at startup so misconfig fails fast with a readable message.
+- Centralized data layer — every fetch goes through TanStack Query hooks in `apps/web/src/lib/queries.ts`; cache invalidation is one call after a mutation.
 - Structural tests — verify layering rules, import boundaries, SDK containment, file size limits
 - Structured JSON logging — every request traced with `request_id` and timing
 - `/health` endpoint — B2 connectivity check
@@ -148,6 +152,7 @@ For production deployment, see [Railway docs](infra/railway/README.md).
 ## Tech Stack
 
 - TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, Recharts
+- TanStack Query — caching, dedup, retry, stale-while-revalidate for every fetch
 - Python 3.11+, FastAPI, boto3, Pydantic v2, Pillow, PyPDF2
 - Backblaze B2 (S3-compatible object storage)
 - pnpm workspaces (monorepo)
@@ -173,6 +178,7 @@ For production deployment, see [Railway docs](infra/railway/README.md).
 | [AGENTS.md](AGENTS.md) | Agent table of contents — start here |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System layout, layering, data flows |
 | [docs/features/](docs/features/) | Feature docs (upload, browser, dashboard, metadata) |
+| [docs/design-system.md](docs/design-system.md) | Design tokens, primitives, AI elements, loader, error/empty states |
 | [docs/app-workflows.md](docs/app-workflows.md) | User journeys |
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows and testing |
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |

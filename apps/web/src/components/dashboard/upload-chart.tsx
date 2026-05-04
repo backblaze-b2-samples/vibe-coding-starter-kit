@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { BarChart3 } from "lucide-react";
 import {
   Card,
   CardAction,
@@ -16,10 +17,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { getUploadActivity } from "@/lib/api-client";
-import { useRefresh } from "@/lib/refresh-context";
 import { EmptyState } from "@/components/ui/empty-state";
-import { BarChart3 } from "lucide-react";
+import { ErrorState } from "@/components/ui/error-state";
+import { useUploadActivity } from "@/lib/queries";
 
 const chartConfig = {
   uploads: {
@@ -29,25 +29,20 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function UploadChart() {
-  const [data, setData] = useState<{ date: string; uploads: number }[]>([]);
-  const { refreshKey } = useRefresh();
+  const { data: activity, error, refetch } = useUploadActivity(7);
 
-  useEffect(() => {
-    getUploadActivity(7)
-      .then((activity) =>
-        setData(
-          activity.map((d) => ({
-            // Format ISO date to short display label
-            date: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-            uploads: d.uploads,
-          }))
-        )
-      )
-      .catch(() => setData([]));
-  }, [refreshKey]);
+  // Memoize so recharts doesn't re-render on identical fetches.
+  const data = useMemo(
+    () =>
+      (activity ?? []).map((d) => ({
+        date: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        uploads: d.uploads,
+      })),
+    [activity],
+  );
 
   const total = data.reduce((sum, d) => sum + d.uploads, 0);
 
@@ -66,7 +61,9 @@ export function UploadChart() {
         </CardAction>
       </CardHeader>
       <CardContent className="p-5">
-        {data.length === 0 ? (
+        {error ? (
+          <ErrorState error={error} onRetry={() => refetch()} />
+        ) : data.length === 0 ? (
           <EmptyState
             icon={BarChart3}
             title="No activity yet"

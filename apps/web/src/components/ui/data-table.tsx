@@ -44,6 +44,11 @@ export function DataTable<TData, TValue>({
   emptyDescription,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  // TanStack Table v8 returns mutable functions that the React Compiler
+  // can't memoize safely; the team is aware and this is the documented
+  // workaround. Re-evaluate when migrating to a future Compiler-friendly
+  // version of @tanstack/react-table.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,

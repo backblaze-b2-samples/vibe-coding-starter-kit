@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Download,
   Eye,
@@ -39,20 +39,29 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { FilePreview } from "./file-preview";
-import { ApiError, getFiles, getDownloadUrl, deleteFile } from "@/lib/api-client";
+import { ApiError, getDownloadUrl } from "@/lib/api-client";
+import { useDeleteFile, useFiles } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
-import { useRefresh } from "@/lib/refresh-context";
 import { buildFileTree, type TreeNode, type TreeFolder } from "@/lib/file-tree";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
-function getFileIcon(contentType: string) {
-  if (contentType.startsWith("image/")) return ImageIcon;
-  if (contentType === "application/pdf") return FileTextIcon;
-  if (contentType.startsWith("video/")) return FileVideoIcon;
-  if (contentType.startsWith("audio/")) return FileAudioIcon;
-  if (contentType === "application/zip") return FileArchiveIcon;
-  return FileIcon;
+// Stable component (declared at module scope, never re-created during
+// render) so the React Compiler / lint rule treats it as a normal element.
+function FileTypeIcon({
+  contentType,
+  className,
+}: {
+  contentType: string;
+  className?: string;
+}) {
+  if (contentType.startsWith("image/")) return <ImageIcon className={className} />;
+  if (contentType === "application/pdf") return <FileTextIcon className={className} />;
+  if (contentType.startsWith("video/")) return <FileVideoIcon className={className} />;
+  if (contentType.startsWith("audio/")) return <FileAudioIcon className={className} />;
+  if (contentType === "application/zip") return <FileArchiveIcon className={className} />;
+  return <FileIcon className={className} />;
 }
 
 function countFiles(node: TreeFolder): number {
@@ -126,14 +135,16 @@ function TreeRow({
   }
 
   const file = node.data;
-  const Icon = getFileIcon(file.content_type);
 
   return (
     <div
       className="group flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm hover:bg-accent/60 tree-row transition-colors"
       style={{ paddingLeft: `${depth * 20 + 32}px` }}
     >
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <FileTypeIcon
+        contentType={file.content_type}
+        className="h-4 w-4 shrink-0 text-muted-foreground"
+      />
       <span className="truncate">{node.name}</span>
       <span className="ml-auto flex items-center gap-4 shrink-0">
         <span className="font-mono text-xs text-muted-foreground tabular-nums hidden sm:inline">
@@ -176,36 +187,34 @@ function TreeRow({
 }
 
 export function FileBrowser() {
-  const [files, setFiles] = useState<FileMetadata[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: files = [], isLoading, isFetching, error, refetch } = useFiles();
+  const deleteMutation = useDeleteFile();
+
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [previewFile, setPreviewFile] = useState<FileMetadata | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FileMetadata | null>(null);
-  const { refreshKey, triggerRefresh } = useRefresh();
 
-  const fetchFiles = useCallback(() => {
-    setLoading(true);
-    getFiles()
-      .then((data) => {
-        setFiles(data);
-        // Auto-expand top-level folders
-        const tree = buildFileTree(data);
-        const topFolders = tree
-          .filter((n): n is TreeFolder => n.type === "folder")
-          .map((f) => f.path);
-        setExpanded(new Set(topFolders));
-      })
-      .catch(() => {
-        setFiles([]);
-        toast.error("Failed to load files");
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const tree = useMemo(() => buildFileTree(files), [files]);
 
+  // Auto-expand top-level folders the first time data arrives. The guard
+  // on `prev.size > 0` makes this idempotent across refetches — once the
+  // user has toggled anything, their expansion state is preserved (this
+  // is a deliberate UX improvement over the pre-TanStack-Query version,
+  // which clobbered expansion state on every refresh).
   useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles, refreshKey]);
+    if (files.length === 0) return;
+    // Syncing initial UI state once when async data first arrives is the
+    // documented escape hatch for react-hooks/set-state-in-effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setExpanded((prev) => {
+      if (prev.size > 0) return prev;
+      const topFolders = tree
+        .filter((n): n is TreeFolder => n.type === "folder")
+        .map((f) => f.path);
+      return new Set(topFolders);
+    });
+  }, [files.length, tree]);
 
   const toggleFolder = useCallback((path: string) => {
     setExpanded((prev) => {
@@ -220,34 +229,31 @@ export function FileBrowser() {
     try {
       const { url } = await getDownloadUrl(file.key);
       window.open(url, "_blank");
-      triggerRefresh();
     } catch (err) {
       const detail = err instanceof ApiError ? err.message : "Failed to get download URL";
       toast.error(detail);
     }
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!deleteTarget) return;
-    try {
-      await deleteFile(deleteTarget.key);
-      setFiles((prev) => prev.filter((f) => f.key !== deleteTarget.key));
-      toast.success(`${deleteTarget.filename} deleted`);
-      triggerRefresh();
-    } catch (err) {
-      const detail = err instanceof ApiError ? err.message : "Failed to delete file";
-      toast.error(detail);
-    } finally {
-      setDeleteTarget(null);
-    }
+    const target = deleteTarget;
+    deleteMutation.mutate(target.key, {
+      onSuccess: () => {
+        toast.success(`${target.filename} deleted`);
+      },
+      onError: (err) => {
+        const detail = err instanceof ApiError ? err.message : "Failed to delete file";
+        toast.error(detail);
+      },
+      onSettled: () => setDeleteTarget(null),
+    });
   };
 
   const handlePreview = (file: FileMetadata) => {
     setPreviewFile(file);
     setPreviewOpen(true);
   };
-
-  const tree = buildFileTree(files);
 
   return (
     <>
@@ -257,22 +263,25 @@ export function FileBrowser() {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchFiles}
+            onClick={() => refetch()}
             className="h-7 text-xs"
+            disabled={isFetching}
           >
             <RefreshCw
-              className={`h-3.5 w-3.5 mr-1 ${loading ? "animate-spin" : ""}`}
+              className={`h-3.5 w-3.5 mr-1 ${isFetching ? "animate-spin" : ""}`}
             />
             Refresh
           </Button>
         </CardHeader>
         <CardContent className="p-3">
-          {loading ? (
+          {isLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-8 w-full" />
               ))}
             </div>
+          ) : error ? (
+            <ErrorState error={error} onRetry={() => refetch()} />
           ) : files.length === 0 ? (
             <EmptyState
               icon={FolderOpen}
@@ -314,8 +323,12 @@ export function FileBrowser() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPreviewUrl } from "@/lib/api-client";
+import { usePreviewUrl } from "@/lib/queries";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 interface FilePreviewProps {
@@ -18,20 +18,11 @@ interface FilePreviewProps {
 }
 
 export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!file || !open) {
-      setPreviewUrl(null);
-      return;
-    }
-    setLoading(true);
-    getPreviewUrl(file.key)
-      .then(({ url }) => setPreviewUrl(url))
-      .catch(() => setPreviewUrl(file.url))
-      .finally(() => setLoading(false));
-  }, [file, open]);
+  // Fetch a presigned preview URL only while the dialog is open. Falls
+  // back to the file's stored URL if the API call fails (e.g. the
+  // `/preview` endpoint is unreachable but we still have a static URL).
+  const { data, isLoading } = usePreviewUrl(file?.key, open && !!file);
+  const previewUrl = data?.url ?? file?.url ?? null;
 
   if (!file) return null;
 
@@ -46,14 +37,22 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
         </DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex items-center justify-center rounded-lg border bg-muted/30 min-h-[200px]">
-            {loading ? (
+            {isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : isImage && previewUrl ? (
-              <img
-                src={previewUrl}
-                alt={file.filename}
-                className="max-h-[400px] object-contain rounded"
-              />
+              <div className="relative w-full h-[400px]">
+                {/* `unoptimized` because presigned URLs carry their own
+                    short-lived expiry and we don't want Next's image
+                    optimizer caching them past that window. */}
+                <Image
+                  src={previewUrl}
+                  alt={file.filename}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 600px"
+                  className="object-contain rounded"
+                  unoptimized
+                />
+              </div>
             ) : isPdf && previewUrl ? (
               <iframe
                 src={previewUrl}

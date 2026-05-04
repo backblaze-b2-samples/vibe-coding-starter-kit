@@ -165,6 +165,23 @@ generated shadcn components in that directory. The "never modify" rule
 applies to the shadcn-generated files themselves, not to net-new custom
 primitives added in their own subdirectory.
 
+## Empty / error states
+
+Two persistent full-content states for "the data isn't there":
+
+- **`<EmptyState>`** — the underlying *data* is empty (no files in the
+  bucket, no results for a query). Friendly icon + copy + optional CTA.
+- **`<ErrorState>`** — the *fetch* failed. Pass the thrown error (typically
+  an `ApiError`) and `ErrorState` derives readable copy: status `0` becomes
+  "Can't reach the API" with the configured base URL; `401`/`403` becomes
+  "Not authorized"; `5xx` becomes "Backend error". Pair with `onRetry` to
+  let the user re-trigger the fetch.
+
+Always prefer `ErrorState` over a stale `EmptyState` on fetch failure —
+showing "no files" when the API is unreachable is actively misleading.
+
+Both live in `components/ui/` next to the shadcn primitives.
+
 ## Spacing
 
 Tailwind defaults. Load-bearing steps:

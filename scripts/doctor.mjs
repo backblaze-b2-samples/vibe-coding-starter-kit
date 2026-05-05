@@ -39,10 +39,9 @@ const PLACEHOLDERS = new Set([
   "your-bucket-name",
 ]);
 
-const PORTS_TO_CHECK = [
-  { port: 3000, name: "Next.js dev server" },
-  { port: 8000, name: "FastAPI" },
-];
+// Only Next.js: `pnpm dev` self-heals the API side via scripts/pick-port.mjs,
+// so warning about 8000 here would just duplicate dev.sh's own banner.
+const PORTS_TO_CHECK = [{ port: 3000, name: "Next.js dev server" }];
 
 const failures = [];
 const warnings = [];
@@ -199,10 +198,10 @@ async function checkPort({ port, name }) {
     isPortBoundOn(port, "::"),
   ]);
   if (v4 || v6) {
-    fail(
+    warn(
       `Port ${port} (${name}) is already in use`,
-      `Find and kill the stale process: \`lsof -nP -iTCP:${port} -sTCP:LISTEN\` then \`kill <PID>\`. ` +
-        `If you intentionally have something else running on ${port}, run only the half you need: \`pnpm dev:web\` or \`pnpm dev:api\`.`,
+      `ok — \`pnpm dev\` will pick the next free port automatically. ` +
+        `To inspect what's on it: \`lsof -nP -iTCP:${port} -sTCP:LISTEN\`.`,
     );
   }
 }

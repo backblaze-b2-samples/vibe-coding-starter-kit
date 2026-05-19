@@ -28,8 +28,8 @@ const REQUIRED_PYTHON_MINOR = 11; // 3.11+
 // .env.example. Keep in sync with services/api/main.py REQUIRED_B2_SETTINGS
 // and PLACEHOLDER_VALUES.
 const REQUIRED_B2_VARS = [
-  "B2_S3_ENDPOINT",
-  "B2_APPLICATION_KEY_ID",
+  "B2_ENDPOINT",
+  "B2_KEY_ID",
   "B2_APPLICATION_KEY",
   "B2_BUCKET_NAME",
 ];

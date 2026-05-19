@@ -28,10 +28,10 @@ from app.runtime import files, health, metrics, upload  # noqa: E402
 # line, so misconfiguration is obvious within seconds rather than turning
 # into mysterious 500s on the first request.
 REQUIRED_B2_SETTINGS = (
-    ("b2_application_key_id", "B2_APPLICATION_KEY_ID"),
+    ("b2_key_id", "B2_KEY_ID"),
     ("b2_application_key", "B2_APPLICATION_KEY"),
     ("b2_bucket_name", "B2_BUCKET_NAME"),
-    ("b2_s3_endpoint", "B2_S3_ENDPOINT"),
+    ("b2_endpoint", "B2_ENDPOINT"),
 )
 
 # Exact placeholder strings shipped in .env.example. If a user copied

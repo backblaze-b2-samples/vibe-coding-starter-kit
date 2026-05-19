@@ -6,7 +6,7 @@
     "predev": "node scripts/doctor.mjs",
     "dev": "sh scripts/dev.sh",
     "dev:web": "pnpm --filter @vibe-coding-starter-kit/web dev",
-    "dev:api": "cd services/api && uvicorn main:app --reload --port ${API_PORT:-8000}",
+    "dev:api": "cd services/api && .venv/bin/uvicorn main:app --reload --port ${API_PORT:-8000}",
     "build": "pnpm --filter @vibe-coding-starter-kit/web build",
     "lint": "pnpm --filter @vibe-coding-starter-kit/web lint",
     "lint:api": "cd services/api && .venv/bin/ruff check .",

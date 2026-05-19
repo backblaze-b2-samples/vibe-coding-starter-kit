@@ -34,6 +34,7 @@ const REQUIRED_B2_VARS = [
   "B2_BUCKET_NAME",
 ];
 const PLACEHOLDERS = new Set([
+  "your_b2_endpoint",
   "your_key_id",
   "your_application_key",
   "your-bucket-name",

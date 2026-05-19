@@ -118,8 +118,8 @@ cp .env.example .env
 A single `.env` at the repo root powers both the API and the web app — no per-service env files. Fill it in:
 
 ```
-B2_S3_ENDPOINT=https://s3.us-west-004.backblazeb2.com
-B2_APPLICATION_KEY_ID=your-key-id
+B2_ENDPOINT=https://s3.us-west-004.backblazeb2.com
+B2_KEY_ID=your-key-id
 B2_APPLICATION_KEY=your-key
 B2_BUCKET_NAME=your-bucket
 ```

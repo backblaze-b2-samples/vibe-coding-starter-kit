@@ -2,8 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    b2_s3_endpoint: str = "https://s3.us-west-004.backblazeb2.com"
-    b2_application_key_id: str = ""
+    b2_endpoint: str = "https://s3.us-west-004.backblazeb2.com"
+    b2_key_id: str = ""
     b2_application_key: str = ""
     b2_bucket_name: str = ""
     b2_public_url: str = ""

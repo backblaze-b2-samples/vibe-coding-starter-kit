@@ -24,8 +24,8 @@ Set these on the API service:
 
 | Variable | Value |
 |----------|-------|
-| `B2_S3_ENDPOINT` | Your B2 S3 endpoint |
-| `B2_APPLICATION_KEY_ID` | Your B2 key ID |
+| `B2_ENDPOINT` | Your B2 S3 endpoint |
+| `B2_KEY_ID` | Your B2 key ID |
 | `B2_APPLICATION_KEY` | Your B2 key |
 | `B2_BUCKET_NAME` | Your bucket name |
 | `API_CORS_ORIGINS` | Your web service URL (e.g., `https://web-production-xxx.up.railway.app`) |

@@ -28,7 +28,7 @@ The structure follows the principle that **repository knowledge is the system of
 
 ### How it works
 
-**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** A ~100 line entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, .cursorrules, etc.) are thin pointers back to AGENTS.md.
+**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** A ~100 line entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, etc.) are thin pointers back to AGENTS.md.
 
 **Architecture is enforced mechanically, not by convention.** Layering rules, import boundaries, file size limits, and SDK containment are verified by structural tests and lints that run on every change. When rules are enforceable by code, agents follow them reliably.
 
@@ -109,20 +109,22 @@ cd ../..
 
 **3. Add your B2 credentials**
 
-Create a bucket and an application key in your [B2 dashboard](https://secure.backblaze.com/b2_buckets.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter) (the key needs `readFiles`, `writeFiles`, `deleteFiles` permissions), then from the repo root:
+Set up your local `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-A single `.env` at the repo root powers both the API and the web app — no per-service env files. Fill it in:
+Open `.env` in your editor and keep it visible. Then head to the [Backblaze B2 dashboard](https://secure.backblaze.com/b2_buckets.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=oss-starter) and:
 
-```
-B2_ENDPOINT=https://s3.us-west-004.backblazeb2.com
-B2_KEY_ID=your-key-id
-B2_APPLICATION_KEY=your-key
-B2_BUCKET_NAME=your-bucket
-```
+1. **Create a bucket.** B2 will show two values — paste each into `.env`:
+   - **Bucket Unique Name** → `B2_BUCKET_NAME`
+   - **Endpoint** → `B2_ENDPOINT`
+2. **Create an application key** with `Read and Write` permission. B2 will show two values — paste each into `.env`:
+   - **keyID** → `B2_KEY_ID`
+   - **applicationKey** → `B2_APPLICATION_KEY` *(only shown once — paste it now)*
+
+> Want a walkthrough? See the docs for [creating a bucket](https://www.backblaze.com/docs/cloud-storage-create-and-manage-buckets) and [creating app keys](https://www.backblaze.com/docs/cloud-storage-create-and-manage-app-keys).
 
 **4. Run it**
 

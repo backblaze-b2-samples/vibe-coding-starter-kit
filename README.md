@@ -171,7 +171,7 @@ That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file 
 | `pnpm lint:api` | Lint backend (ruff) |
 | `pnpm test:api` | Run backend tests |
 | `pnpm check:structure` | Verify layering rules |
-| `pnpm test:e2e` | Playwright e2e tests |
+| `pnpm test:e2e` | Playwright e2e tests (run `pnpm exec playwright install chromium` once first) |
 
 ## Documentation Map
 

@@ -41,6 +41,8 @@ pnpm-debug.log*
 # Testing
 coverage/
 .pytest_cache/
+playwright-report/
+test-results/
 
 # B2 / AWS
 .aws/

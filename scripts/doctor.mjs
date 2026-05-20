@@ -98,21 +98,35 @@ function checkPnpm() {
 }
 
 function checkPython() {
-  // Try python3 first (the canonical name on macOS / most Linux), fall
-  // back to python (Windows or pyenv shim).
-  const out = tryExec("python3 --version") ?? tryExec("python --version");
-  if (!out) {
+  // Try python3 first (canonical on macOS/Linux), then versioned names that
+  // Homebrew installs (python3.13, python3.12, python3.11), then the bare
+  // python shim (Windows / pyenv). Stop at the first one that satisfies the
+  // minimum version — this avoids false failures on macOS where `python3`
+  // resolves to the system 3.9 even when a newer Homebrew Python is on PATH.
+  const candidates = [
+    "python3",
+    "python3.13",
+    "python3.12",
+    "python3.11",
+    "python",
+  ];
+  for (const bin of candidates) {
+    const out = tryExec(`${bin} --version`);
+    if (!out) continue;
+    const v = parseSemver(out);
+    if (v && v.major >= 3 && v.minor >= REQUIRED_PYTHON_MINOR) return; // good
+  }
+  // Nothing suitable found — report using the first candidate that exists.
+  const found = candidates.map((b) => tryExec(`${b} --version`)).find(Boolean);
+  if (found) {
+    fail(
+      `${found} is too old (need >= 3.${REQUIRED_PYTHON_MINOR})`,
+      `Install Python 3.${REQUIRED_PYTHON_MINOR}+ via Homebrew (\`brew install python@3.12\`) or pyenv (\`pyenv install 3.${REQUIRED_PYTHON_MINOR}\`)`,
+    );
+  } else {
     fail(
       "Python is not on PATH",
-      "Install Python 3.11+ from https://python.org or via pyenv",
-    );
-    return;
-  }
-  const v = parseSemver(out);
-  if (!v || v.major < 3 || v.minor < REQUIRED_PYTHON_MINOR) {
-    fail(
-      `${out} is too old (need >= 3.${REQUIRED_PYTHON_MINOR})`,
-      `Install Python 3.${REQUIRED_PYTHON_MINOR}+ via pyenv: \`pyenv install 3.${REQUIRED_PYTHON_MINOR}\``,
+      `Install Python 3.${REQUIRED_PYTHON_MINOR}+ from https://python.org, via Homebrew (\`brew install python@3.12\`), or pyenv`,
     );
   }
 }

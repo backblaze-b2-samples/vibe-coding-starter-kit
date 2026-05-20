@@ -59,7 +59,7 @@ Engineering workflows for this repo.
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`
 - Full suite: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- E2E: `pnpm test:e2e` (run `pnpm exec playwright install chromium` once first)
+- E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
 
 ### When to run
 - After behavior change: run relevant subset

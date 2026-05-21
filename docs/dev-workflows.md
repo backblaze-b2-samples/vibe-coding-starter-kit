@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-01 -->
+<!-- last_verified: 2026-05-21 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -10,7 +10,7 @@ Engineering workflows for this repo.
 - [ ] For non-trivial changes, create a plan in `docs/exec-plans/active/`
 - [ ] Implement the smallest coherent change
 - [ ] Add or update tests
-- [ ] Run: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- [ ] Run: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
 - [ ] Update docs in the same PR (see AGENTS.md §8)
 - [ ] Move plan to `docs/exec-plans/completed/` after validation
 
@@ -56,9 +56,10 @@ Engineering workflows for this repo.
 ### Commands
 - Quick (backend): `pnpm test:api`
 - Structure: `pnpm check:structure`
+- Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`
-- Full suite: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Full suite: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
 
 ### When to run

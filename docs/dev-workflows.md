@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-21 -->
+<!-- last_verified: 2026-05-22 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -10,7 +10,7 @@ Engineering workflows for this repo.
 - [ ] For non-trivial changes, create a plan in `docs/exec-plans/active/`
 - [ ] Implement the smallest coherent change
 - [ ] Add or update tests
-- [ ] Run: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- [ ] Run: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure && pnpm check:structure:web`
 - [ ] Update docs in the same PR (see AGENTS.md §8)
 - [ ] Move plan to `docs/exec-plans/completed/` after validation
 
@@ -25,7 +25,7 @@ Engineering workflows for this repo.
 ## Refactor
 
 - [ ] Read `ARCHITECTURE.md` — respect layering rules
-- [ ] Ensure structural tests still pass: `pnpm check:structure`
+- [ ] Ensure structural tests still pass: `pnpm check:structure && pnpm check:structure:web`
 - [ ] No behavior changes without updating feature docs
 
 ## Documentation Update
@@ -55,11 +55,12 @@ Engineering workflows for this repo.
 
 ### Commands
 - Quick (backend): `pnpm test:api`
-- Structure: `pnpm check:structure`
+- Backend structure: `pnpm check:structure`
 - Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
+- Frontend structure: `pnpm check:structure:web`
 - Backend lint: `pnpm lint:api`
-- Full suite: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Full suite: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure && pnpm check:structure:web`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
 
 ### When to run
@@ -73,6 +74,7 @@ Engineering workflows for this repo.
 - Dark mode: `next-themes` with `@custom-variant dark (&:is(.dark *))`
 - Animations: `tw-animate-css` (not `tailwindcss-animate`)
 - shadcn/ui components in `src/components/ui/` are generated — never modify them
+- **Data-layer invariant**: `fetch()` only in `src/lib/api-client.ts`; `@tanstack/react-query` imports only in `src/lib/`. Components consume typed hooks from `src/lib/queries.ts`. Enforced by `pnpm check:structure:web`.
 
 ## Data Fetching
 

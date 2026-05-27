@@ -136,6 +136,16 @@ That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file 
 
 `pnpm dev` runs `pnpm doctor` first — a preflight check that catches the common setup gotchas (wrong Node/Python version, missing venv, missing or placeholder `.env`, ports already taken) and tells you exactly how to fix each one. Run it standalone any time with `pnpm doctor`.
 
+## Building Your App
+
+When you adapt this kit for a new app, keep the shared scaffolding and only swap out what's app-specific:
+
+- **Keep** the UI kit (`apps/web/src/components/ui/` + design tokens in `globals.css` + `/design`).
+- **Keep** the File Explorer (`/files`) and Upload (`/upload`) pages and their sidebar nav entries — they're the reusable B2-backed surface.
+- **Adapt** the Dashboard (`/`) to your use case — replace the default stats, chart, and recent uploads with metrics that reflect what your app actually does.
+
+Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AGENTS.md#2-building-on-this-starter-kit).
+
 ## Core Features
 
 - [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress

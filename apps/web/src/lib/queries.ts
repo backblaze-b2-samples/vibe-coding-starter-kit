@@ -7,7 +7,13 @@ import {
   getFiles,
   getFileStats,
   getPreviewUrl,
+  getSnapshotActivity,
+  getSnapshotClusters,
+  getSnapshotIssues,
+  getSnapshotReport,
   getUploadActivity,
+  listSnapshots,
+  triggerSnapshot,
 } from "@/lib/api-client";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
@@ -22,6 +28,13 @@ export const qk = {
   uploadActivity: (days: number) =>
     [...qk.all, "stats", "activity", days] as const,
   preview: (key: string) => [...qk.all, "preview", key] as const,
+  intel: ["intelligence"] as const,
+  snapshots: () => [...qk.intel, "snapshots"] as const,
+  snapshotReport: (id: string) => [...qk.intel, "snapshot", id] as const,
+  snapshotIssues: (id: string, filters?: object) =>
+    [...qk.intel, "snapshot", id, "issues", filters ?? {}] as const,
+  snapshotClusters: (id: string) => [...qk.intel, "snapshot", id, "clusters"] as const,
+  snapshotActivity: (id: string) => [...qk.intel, "snapshot", id, "activity"] as const,
 };
 
 export function useFiles(prefix = "", limit = 100) {
@@ -65,6 +78,65 @@ export function useDeleteFile() {
     // correct — the dashboard re-fetches lazily as components remount.
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.all });
+    },
+  });
+}
+
+// --- Intelligence hooks ---
+
+export function useSnapshots() {
+  return useQuery({
+    queryKey: qk.snapshots(),
+    queryFn: listSnapshots,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      const hasRunning = Array.isArray(data) && data.some((s) => s.status === "running");
+      return hasRunning ? 3000 : false;
+    },
+  });
+}
+
+export function useSnapshotReport(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: qk.snapshotReport(snapshotId ?? ""),
+    queryFn: () => getSnapshotReport(snapshotId as string),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotIssues(
+  snapshotId: string | undefined,
+  filters: { cluster_id?: string; category?: string; min_spec_depth?: number; limit?: number; offset?: number } = {}
+) {
+  return useQuery({
+    queryKey: qk.snapshotIssues(snapshotId ?? "", filters),
+    queryFn: () => getSnapshotIssues(snapshotId as string, filters),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotClusters(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: qk.snapshotClusters(snapshotId ?? ""),
+    queryFn: () => getSnapshotClusters(snapshotId as string),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotActivity(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: qk.snapshotActivity(snapshotId ?? ""),
+    queryFn: () => getSnapshotActivity(snapshotId as string),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useTriggerSnapshot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (repo?: string) => triggerSnapshot(repo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.snapshots() });
     },
   });
 }

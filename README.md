@@ -1,7 +1,72 @@
-<!-- last_verified: 2026-05-01 -->
-# Vibe Coding Starter Kit
+<!-- last_verified: 2026-05-28 -->
+# Issue Intelligence — B2 Sample App
 
-Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
+**This is an analysis tool.** It does not republish issue content. It links to GitHub for canonical text.
+
+This app ingests issues from `backblaze-labs/demand-side-ai`, classifies and clusters them using embeddings + LLM, and surfaces what's actually in the backlog — themes, activity, spec quality, and how B2 is positioned. It is built on the [Vibe Coding Starter Kit](https://github.com/backblaze-b2-samples/vibe-coding-starter-kit) and doubles as a reference implementation for repo-intelligence tools backed by Backblaze B2.
+
+**What this is:**
+- A pipeline that fetches GitHub issues, embeds them, classifies each by category + B2 role + spec depth, clusters by theme, and stores everything as append-only snapshots in B2
+- A dashboard that renders clusters, category breakdown, activity timeline, and spec depth histogram from the latest snapshot
+- A working example of a multi-stage AI pipeline where B2 is the data layer (ingest → embed → classify → cluster → analyze)
+
+**What this is NOT:**
+- A recommendation engine ("build this next")
+- A surveillance tool or contributor leaderboard
+- A live continuous monitor (v0 is manual-trigger; v1 will add scheduling)
+- A multi-repo tool at runtime (the adapter is generic; only GitHub is implemented)
+
+---
+
+## Quick Start
+
+You need: Node.js >= 20, pnpm >= 9, Python >= 3.11, a free **[Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage)**, an OpenAI API key (embeddings), and an Anthropic API key (classification).
+
+### Setup
+
+```bash
+# 1. Install Node dependencies
+pnpm install
+
+# 2. Set up the Python venv
+cd services/api
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cd ../..
+
+# 3. Configure credentials
+cp .env.example .env
+# Fill in B2_*, OPENAI_API_KEY, ANTHROPIC_API_KEY
+# Optionally: GITHUB_TOKEN for higher rate limits
+
+# 4. Start both services
+pnpm dev
+# Frontend → localhost:3000  |  API → localhost:8000
+```
+
+### Run the pipeline
+
+```bash
+# Full pipeline: fetch → embed → classify → cluster → analyze
+pnpm intel:ingest
+
+# Re-run derived stages against an existing raw snapshot (no GitHub fetch)
+pnpm intel:reprocess <snapshot_id>
+
+# List all snapshots
+pnpm intel:list
+
+# Print a report summary to terminal
+pnpm intel:show <snapshot_id>
+```
+
+Pipeline cost is logged at the end of each run. A typical run against `backblaze-labs/demand-side-ai` costs under $1 in API fees.
+
+---
+
+## Underlying starter kit
+
+This app is built on the **Vibe Coding Starter Kit** — a production-ready full-stack template with B2 storage, a pre-built file upload and browser, and a design system. The kit's reusable scaffolding (UI components, file browser, upload page) is unchanged.
 
 **What you get out of the box:**
 - Full-stack dashboard UI (Next.js 16 + React 19 + Tailwind v4 + shadcn/ui)
@@ -146,11 +211,13 @@ When you adapt this kit for a new app, keep the shared scaffolding and only swap
 
 Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AGENTS.md#2-building-on-this-starter-kit).
 
-## Core Features
+## Features
 
+- [Intelligence Pipeline](docs/features/intelligence.md) — ingest → embed → classify → cluster → analyze
+- [Intelligence Dashboard](docs/features/intelligence-dashboard.md) — cluster grid, category breakdown, activity timeline
+- [Storage Layout](docs/features/storage-layout.md) — append-only B2 snapshot layout
 - [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress
 - [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
-- [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
 - [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
 - [Design System](docs/design-system.md) — tokens, primitives, AI elements, the blaze generating loader, and inline `ErrorState` / `EmptyState` patterns. Live preview at `/design`.
 - Inline error handling — fetch failures surface *what's wrong* (API offline, 401, 5xx) and offer a Retry, instead of silently rendering empty state.
@@ -166,6 +233,8 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 - TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, Recharts
 - TanStack Query — caching, dedup, retry, stale-while-revalidate for every fetch
 - Python 3.11+, FastAPI, boto3, Pydantic v2, Pillow, PyPDF2
+- OpenAI API (text-embedding-3-small), Anthropic API (claude-3-5-haiku-20241022)
+- scikit-learn HDBSCAN for clustering, pyarrow for parquet embedding storage
 - Backblaze B2 (S3-compatible object storage)
 - pnpm workspaces (monorepo)
 
@@ -182,6 +251,11 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm test:api` | Run backend tests |
 | `pnpm check:structure` | Verify layering rules |
 | `pnpm test:e2e` | Playwright e2e tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |
+| `pnpm intel:ingest` | Run full pipeline end-to-end |
+| `pnpm intel:ingest:raw` | Ingestion only (no embedding/classification) |
+| `pnpm intel:reprocess <ts>` | Re-run derived stages against an existing snapshot |
+| `pnpm intel:list` | List all snapshots |
+| `pnpm intel:show <ts>` | Print report summary to terminal |
 
 ## Documentation Map
 
@@ -195,6 +269,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows and testing |
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Operational runbook — rate limits, LLM failures, snapshot cleanup, re-labeling |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
 
 ## Contributing

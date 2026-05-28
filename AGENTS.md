@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-01 -->
+<!-- last_verified: 2026-05-28 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -30,6 +30,24 @@ When this repo is used as the foundation for a new app, the following pieces are
 
 **Why this contract exists**
 - The UI kit, Files, and Upload pages are the reusable B2-backed scaffolding that makes this a starter kit — stripping them defeats the purpose. The dashboard is the only screen explicitly designed to be rewritten per app.
+
+## 2a. This App: Demand-Side-AI Issue Intelligence
+
+This repo has been adapted into a B2 sample app that analyzes the `backblaze-labs/demand-side-ai` issue backlog. It is also a reference implementation for external developers building repo-intelligence tools on top of B2.
+
+**What this app does:** Ingests GitHub issues, embeds them (OpenAI), classifies each (Anthropic), clusters with HDBSCAN, and surfaces a dashboard of themes, activity, and spec quality.
+
+**What it does NOT do:** Recommendation, gap analysis, surveillance, multi-repo UI, or scheduled ingestion (those are v1+).
+
+**Key rules for agents working on this app:**
+
+- **Storage is append-only and snapshotted.** Never edit an existing snapshot in place. New runs create new `snapshot=<YYYYMMDDTHHMMSSZ>` directories. See [docs/features/storage-layout.md](docs/features/storage-layout.md).
+- **Content hash caching.** `content_hash` = MD5(title + body). Embeddings are reused across snapshots when hashes match. New analyses must not break this.
+- **SDK containment.** `boto3` in `repo/b2_client.py` and `repo/intelligence_storage.py`; `openai` in `repo/embedding_client.py`; `anthropic` in `repo/llm_client.py`. Services call these; they do not import the SDKs directly.
+- **Source adapter interface.** New sources implement `fetch_issues(repo) -> (list[Issue], int)`. Do not hardcode GitHub assumptions outside `repo/github_issues.py`.
+- **Cost logging.** Every pipeline run logs a `pipeline_cost` dict. New analyses must update the cost log. No analysis should silently multiply run cost.
+- **Privacy.** No per-user aggregations. Analyze content, not people. Issue body is never rendered in the UI — only titles and pipeline-generated metadata.
+- **Prompts are versioned.** LLM prompts live in `service/prompts/`. Changes to prompts appear in git diffs and must be reviewed.
 
 ## 3. Architectural Invariants
 
@@ -129,6 +147,7 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 | Engineering workflows and testing | [docs/dev-workflows.md](docs/dev-workflows.md) |
 | Security principles | [docs/SECURITY.md](docs/SECURITY.md) |
 | Reliability expectations | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
+| Operational runbook (rate limits, failures, cleanup) | [docs/RUNBOOK.md](docs/RUNBOOK.md) |
 | Execution plans | [docs/exec-plans/](docs/exec-plans/) |
 | Tech debt | [docs/exec-plans/tech-debt-tracker.md](docs/exec-plans/tech-debt-tracker.md) |
 

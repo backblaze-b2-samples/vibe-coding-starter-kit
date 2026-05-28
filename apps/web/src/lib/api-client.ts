@@ -1,8 +1,13 @@
 import type {
+  Cluster,
   DailyUploadCount,
   FileMetadata,
   FileUploadResponse,
+  IssueListResponse,
+  SnapshotReport,
+  SnapshotStatus,
   UploadStats,
+  WeeklyActivity,
 } from "@vibe-coding-starter-kit/shared";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -84,6 +89,48 @@ export async function deleteFile(key: string) {
   return apiFetch<{ deleted: boolean; key: string }>(`/files/${key}`, {
     method: "DELETE",
   });
+}
+
+// --- Intelligence pipeline API ---
+
+export async function triggerSnapshot(repo?: string) {
+  return apiFetch<{ snapshot_id: string; status: string }>("/api/intelligence/snapshots", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ repo: repo ?? null }),
+  });
+}
+
+export async function listSnapshots() {
+  return apiFetch<SnapshotStatus[]>("/api/intelligence/snapshots");
+}
+
+export async function getSnapshotReport(snapshotId: string) {
+  return apiFetch<SnapshotReport>(`/api/intelligence/snapshots/${snapshotId}`);
+}
+
+export async function getSnapshotIssues(
+  snapshotId: string,
+  params: { cluster_id?: string; category?: string; min_spec_depth?: number; limit?: number; offset?: number } = {}
+) {
+  const qs = new URLSearchParams();
+  if (params.cluster_id) qs.set("cluster_id", params.cluster_id);
+  if (params.category) qs.set("category", params.category);
+  if (params.min_spec_depth !== undefined) qs.set("min_spec_depth", String(params.min_spec_depth));
+  if (params.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params.offset !== undefined) qs.set("offset", String(params.offset));
+  const q = qs.toString();
+  return apiFetch<IssueListResponse>(
+    `/api/intelligence/snapshots/${snapshotId}/issues${q ? `?${q}` : ""}`
+  );
+}
+
+export async function getSnapshotClusters(snapshotId: string) {
+  return apiFetch<Cluster[]>(`/api/intelligence/snapshots/${snapshotId}/clusters`);
+}
+
+export async function getSnapshotActivity(snapshotId: string) {
+  return apiFetch<WeeklyActivity[]>(`/api/intelligence/snapshots/${snapshotId}/activity`);
 }
 
 export function uploadFile(

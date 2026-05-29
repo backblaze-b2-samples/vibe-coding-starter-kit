@@ -89,7 +89,7 @@ export function UploadForm() {
   );
 
   return (
-    <Card>
+    <Card data-testid="upload-form">
       <CardHeader className="border-b border-border py-4 px-5">
         <CardTitle className="card-title">Upload Files</CardTitle>
       </CardHeader>
@@ -102,7 +102,7 @@ export function UploadForm() {
         <UploadProgress items={items} />
         {hasCompleted && !uploading && (
           <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={clearCompleted}>
+            <Button variant="outline" size="sm" onClick={clearCompleted} data-testid="upload-clear-btn">
               Clear completed
             </Button>
           </div>

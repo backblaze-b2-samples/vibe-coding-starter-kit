@@ -13,10 +13,14 @@
     "lint:api": "cd services/api && .venv/bin/ruff check .",
     "test:api": "cd services/api && .venv/bin/python -m pytest",
     "check:structure": "cd services/api && .venv/bin/python -m pytest tests/test_structure.py -v",
-    "test:e2e": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test"
+    "test:e2e": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test",
+    "verify": "pnpm test:e2e; tsx scripts/upload-verify-run.ts",
+    "verify:record": "VERIFY_RECORD=1 pnpm verify"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@aws-sdk/client-s3": "^3.800.0",
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.4"
   },
   "engines": {
     "node": ">=20",

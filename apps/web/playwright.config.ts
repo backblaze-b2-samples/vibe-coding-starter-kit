@@ -6,11 +6,17 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: "html",
+  reporter: [
+    ["list"],
+    ["json", { outputFile: "./playwright-results/results.json" }],
+  ],
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.BASE_URL ?? "http://localhost:3000",
+    screenshot: "on",
     trace: "on-first-retry",
+    video: "off",
   },
+  outputDir: "./playwright-results/artifacts",
   projects: [
     {
       name: "chromium",

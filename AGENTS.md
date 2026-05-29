@@ -24,12 +24,12 @@ When this repo is used as the foundation for a new app, the following pieces are
 - **Upload.** `/upload` route, `apps/web/src/app/upload/`, and `apps/web/src/components/upload/`. The Upload sidebar entry stays.
 - The sidebar nav itself (Dashboard, Upload, Files, Settings, plus the Design System utility link).
 
-**Adapt to the new use case**
-- **Dashboard.** `/` route and `apps/web/src/components/dashboard/` (stats cards, upload chart, recent uploads table) are illustrative defaults. Replace them with metrics, charts, and tables that reflect what the new app actually does (e.g. transcripts processed, embeddings indexed, classifications run). New aggregations must flow through the same `runtime -> service -> repo` layering and be exposed via TanStack Query hooks in `apps/web/src/lib/queries.ts` — no bare `useEffect + fetch`.
+**Adapted for this sample app**
+- **Dashboard.** The `/` route and `apps/web/src/components/dashboard/` have been replaced with the verification runs dashboard (`VerifyRunsTable`, `RunStatusBadge`). The starter-kit defaults (stats cards, upload chart, recent uploads table) are intentionally removed. Any new aggregations must flow through the same `runtime -> service -> repo` layering and be exposed via TanStack Query hooks in `apps/web/src/lib/queries.ts` — no bare `useEffect + fetch`.
 - Update `docs/features/dashboard.md` in the same PR as any dashboard change (see §9).
 
 **Why this contract exists**
-- The UI kit, Files, and Upload pages are the reusable B2-backed scaffolding that makes this a starter kit — stripping them defeats the purpose. The dashboard is the only screen explicitly designed to be rewritten per app.
+- The UI kit, Files, and Upload pages are the reusable B2-backed scaffolding that makes this a starter kit — stripping them defeats the purpose. The dashboard is the one screen explicitly designed to be replaced per app, and this sample app has done so.
 
 ## 3. Architectural Invariants
 
@@ -139,3 +139,24 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 - Add tests with every change
 - Never bypass lint rules without explicit instruction
 - Ask before making destructive or irreversible changes
+
+## 12. Verification Subsystem
+
+This sample app adds a verification pipeline on top of the starter kit. See
+[docs/features/verification.md](docs/features/verification.md) for full details.
+
+**Commands:**
+
+| Command | What it does |
+|---------|-------------|
+| `pnpm verify` | Run Playwright tests, upload artifacts to B2 |
+| `VERIFY_RECORD=1 pnpm verify` | Same, but always upload screenshots/traces |
+| `pnpm test:e2e` | Run tests only, no B2 upload |
+| `/gen-e2e [feature]` | Generate or refresh state-based e2e tests from feature docs |
+
+**Key files added by this sample app (not in the upstream starter kit):**
+- `.claude/commands/gen-e2e.md` — slash command for test generation
+- `scripts/upload-verify-run.ts` — post-test B2 artifact uploader
+- `services/api/app/runtime/verify.py` — `GET /verify/runs`, `GET /verify/runs/{id}`
+- `apps/web/src/app/verify/[runId]/page.tsx` — run detail page
+- `apps/web/e2e/dashboard.spec.ts` — state-based dashboard tests

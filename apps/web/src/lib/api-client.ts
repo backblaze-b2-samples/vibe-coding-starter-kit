@@ -3,6 +3,8 @@ import type {
   FileMetadata,
   FileUploadResponse,
   UploadStats,
+  VerifyRunDetail,
+  VerifyRunSummary,
 } from "@vibe-coding-starter-kit/shared";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -84,6 +86,14 @@ export async function deleteFile(key: string) {
   return apiFetch<{ deleted: boolean; key: string }>(`/files/${key}`, {
     method: "DELETE",
   });
+}
+
+export async function listVerifyRuns(): Promise<VerifyRunSummary[]> {
+  return apiFetch("/verify/runs");
+}
+
+export async function getVerifyRun(runId: string): Promise<VerifyRunDetail> {
+  return apiFetch(`/verify/runs/${encodeURIComponent(runId)}`);
 }
 
 export function uploadFile(

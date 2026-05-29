@@ -41,6 +41,7 @@ export function Dropzone({ onFilesSelected, onFilesRejected, disabled }: Dropzon
   return (
     <div
       {...getRootProps()}
+      data-testid="dropzone"
       className={`flex flex-col items-center justify-center rounded-md border-2 border-dashed p-10 text-center transition-colors cursor-pointer ${
         isDragActive
           ? "border-primary bg-[var(--accent-subtle)] dropzone-active"

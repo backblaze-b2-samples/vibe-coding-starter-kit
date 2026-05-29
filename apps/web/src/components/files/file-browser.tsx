@@ -138,6 +138,7 @@ function TreeRow({
 
   return (
     <div
+      data-testid="file-row"
       className="group flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm hover:bg-accent/60 tree-row transition-colors"
       style={{ paddingLeft: `${depth * 20 + 32}px` }}
     >
@@ -164,7 +165,7 @@ function TreeRow({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onPreview(file)}>
+            <DropdownMenuItem data-testid="file-preview-btn" onClick={() => onPreview(file)}>
               <Eye className="mr-2 h-4 w-4" />
               Preview
             </DropdownMenuItem>
@@ -173,6 +174,7 @@ function TreeRow({
               Download
             </DropdownMenuItem>
             <DropdownMenuItem
+              data-testid="file-delete-btn"
               onClick={() => onDelete(file)}
               className="text-destructive"
             >
@@ -257,7 +259,7 @@ export function FileBrowser() {
 
   return (
     <>
-      <Card>
+      <Card data-testid="file-browser">
         <CardHeader className="flex flex-row items-center justify-between border-b border-border py-4 px-5 space-y-0">
           <CardTitle className="card-title">All Files</CardTitle>
           <Button
@@ -275,21 +277,25 @@ export function FileBrowser() {
         </CardHeader>
         <CardContent className="p-3">
           {isLoading ? (
-            <div className="space-y-2">
+            <div data-testid="file-browser-loading" className="space-y-2">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-8 w-full" />
               ))}
             </div>
           ) : error ? (
-            <ErrorState error={error} onRetry={() => refetch()} />
+            <div data-testid="file-browser-error">
+              <ErrorState error={error} onRetry={() => refetch()} />
+            </div>
           ) : files.length === 0 ? (
-            <EmptyState
-              icon={FolderOpen}
-              title="This bucket is empty"
-              description="Upload some files to see them listed here."
-            />
+            <div data-testid="file-browser-empty">
+              <EmptyState
+                icon={FolderOpen}
+                title="This bucket is empty"
+                description="Upload some files to see them listed here."
+              />
+            </div>
           ) : (
-            <div className="space-y-0.5">
+            <div data-testid="file-tree" className="space-y-0.5">
               {tree.map((node) => (
                 <TreeRow
                   key={node.type === "folder" ? node.path : node.data.key}

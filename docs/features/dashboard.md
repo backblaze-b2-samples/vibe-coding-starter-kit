@@ -1,57 +1,65 @@
-<!-- last_verified: 2026-03-10 -->
-# Feature: Dashboard
+<!-- last_verified: 2026-05-28 -->
+# Feature: Verification Dashboard
 
 ## Purpose
-Provide an at-a-glance overview of file storage usage and recent upload activity.
+Display a history of Playwright verification runs stored in Backblaze B2, with
+pass/fail status, test counts, duration, and commit SHA for each run. Clicking a
+run navigates to the run detail page which shows stored screenshots and traces.
 
 ## Used By
-- UI: `/` page (dashboard home)
-- API: `GET /files/stats`, `GET /files`, `GET /files/stats/activity`
+- UI: `/` page (dashboard home), `/verify/[runId]` (run detail)
+- API: `GET /verify/runs`, `GET /verify/runs/{id}`
 
 ## Core Functions
-- `apps/web/src/components/dashboard/stats-cards.tsx` — 4 stat cards
-- `apps/web/src/components/dashboard/recent-uploads-table.tsx` — last 10 uploads
-- `apps/web/src/components/dashboard/upload-chart.tsx` — bar chart of uploads per day
-- `apps/web/src/lib/api-client.ts` — `getFileStats()`, `getFiles()`, `getUploadActivity()`
-- `services/api/app/runtime/files.py` — `GET /files/stats` handler
-- `services/api/app/service/files.py` — `get_stats()` business logic
-- `services/api/app/repo/b2_client.py` — `get_upload_stats()` data access
-
-## Canonical Files
-- Dashboard page layout: `apps/web/src/components/dashboard/stats-cards.tsx`
-- Stats service logic: `services/api/app/service/files.py`
+- `apps/web/src/app/page.tsx` — verification runs list page
+- `apps/web/src/app/verify/[runId]/page.tsx` — run detail page
+- `apps/web/src/components/dashboard/VerifyRunsTable.tsx` — runs table
+- `apps/web/src/components/dashboard/RunStatusBadge.tsx` — pass/fail badge
+- `apps/web/src/lib/api-client.ts` — `listVerifyRuns()`, `getVerifyRun()`
+- `services/api/app/runtime/verify.py` — `GET /verify/runs`, `GET /verify/runs/{id}`
+- `services/api/app/service/verify.py` — service orchestration
+- `services/api/app/repo/verify_repo.py` — B2 reads (summary.json, presigned URLs)
 
 ## Inputs
-- None (dashboard loads data automatically)
+- None (dashboard loads automatically)
+- Run ID parameter for detail page (from URL)
 
 ## Outputs
-- `GET /files/stats` → `UploadStats` (total_files, total_size_bytes, total_size_human, uploads_today, total_downloads)
-- `GET /files` (limit 10) → `FileMetadata[]` for recent uploads table (sorted newest-first)
-- `GET /files/stats/activity?days=7` → `DailyUploadCount[]` for chart (server-side aggregation)
+- `GET /verify/runs` → `VerifyRunSummary[]` (sorted newest-first)
+- `GET /verify/runs/{id}` → `VerifyRunDetail` (includes `screenshot_urls`, `trace_urls`)
 
 ## Flow
-- Page loads → three parallel API calls (stats, recent files, upload activity)
-- Stats cards display total files, storage used, uploads today, total downloads
-- Upload chart displays server-aggregated daily counts for last 7 days as bar chart
-- Recent uploads table shows last 10 files with filename, size, type, date, status badge
+- Dashboard loads → calls `GET /verify/runs`
+- Runs table shows: date, status badge, test counts, duration, commit SHA
+- Each row is clickable and navigates to `/verify/{run_id}`
+- Detail page loads → calls `GET /verify/runs/{run_id}`
+- Screenshot grid renders `<img>` elements from presigned B2 URLs (1-hour expiry)
+- Clicking a screenshot opens full-size in a new tab
+- Trace section (if traces exist) lists download links
 
 ## Edge Cases
-- API unavailable → stats default to zeros, table shows empty state
-- No files uploaded → empty chart message, empty table message
-- Large file count → stats endpoint paginates through all objects using `ContinuationToken`
+- No runs yet → empty state with `pnpm verify` hint
+- B2 unreachable → ErrorState with Retry
+- Run not found (deleted from B2) → 404 from API, ErrorState on detail page
+- Screenshots expired (>1 hour old presigned URL) → reload detail page to regenerate
 
 ## UX States
-- Loading: skeleton placeholders for cards and table
-- Empty: "No files uploaded yet" / "No upload data available yet"
-- Loaded: populated cards, chart, table
+- Loading: skeleton rows
+- Empty: "No verification runs yet." with `pnpm verify` hint
+- Loaded: runs table with clickable rows
+- Error: ErrorState with Retry button
+- Detail — loading: skeleton placeholders
+- Detail — with screenshots: screenshot grid
+- Detail — no screenshots: muted "No screenshots stored" message
+- Detail — with traces: trace download links section
 
 ## Verification
-- Test files: `services/api/tests/test_upload_activity.py`, `services/api/tests/test_recent_files.py`
-- Required cases: stats with files, stats with empty bucket, API error fallback
-- Quick verify command: `pnpm test:api`
-- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- Pass criteria: all pytest tests green, no ruff violations
+- Test files: `apps/web/e2e/dashboard.spec.ts`
+- Required cases: loading, empty, loaded, has-failures, detail with screenshots, detail without
+- Run command: `pnpm test:e2e`
+- All tests are hermetic (mock API via `page.route()`, no live B2)
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- [Verification Pipeline](verification.md)
 - [App Workflows](../app-workflows.md)

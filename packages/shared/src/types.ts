@@ -57,3 +57,20 @@ export interface UploadStats {
   uploads_today: number;
   total_downloads: number;
 }
+
+export interface VerifyRunSummary {
+  run_id: string;
+  timestamp: string;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  duration: number;
+  git_sha: string;
+}
+
+export interface VerifyRunDetail extends VerifyRunSummary {
+  results: unknown;
+  screenshot_urls: string[];
+  trace_urls: string[];
+}

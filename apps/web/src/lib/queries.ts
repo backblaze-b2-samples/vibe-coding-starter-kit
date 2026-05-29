@@ -8,6 +8,8 @@ import {
   getFileStats,
   getPreviewUrl,
   getUploadActivity,
+  listVerifyRuns,
+  getVerifyRun,
 } from "@/lib/api-client";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
@@ -22,6 +24,8 @@ export const qk = {
   uploadActivity: (days: number) =>
     [...qk.all, "stats", "activity", days] as const,
   preview: (key: string) => [...qk.all, "preview", key] as const,
+  verifyRuns: () => ["verify", "runs"] as const,
+  verifyRun: (id: string) => ["verify", "runs", id] as const,
 };
 
 export function useFiles(prefix = "", limit = 100) {
@@ -54,6 +58,23 @@ export function usePreviewUrl(key: string | undefined, enabled: boolean) {
     queryFn: () => getPreviewUrl(key as string),
     enabled: enabled && !!key,
     staleTime: 60_000,
+  });
+}
+
+export function useVerifyRuns() {
+  return useQuery({
+    queryKey: qk.verifyRuns(),
+    queryFn: listVerifyRuns,
+    staleTime: 30_000,
+  });
+}
+
+export function useVerifyRun(runId: string) {
+  return useQuery({
+    queryKey: qk.verifyRun(runId),
+    queryFn: () => getVerifyRun(runId),
+    enabled: !!runId,
+    staleTime: Infinity,
   });
 }
 

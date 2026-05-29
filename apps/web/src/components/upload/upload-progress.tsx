@@ -36,6 +36,8 @@ export function UploadProgress({ items }: UploadProgressProps) {
       {items.map((item) => (
         <div
           key={item.id}
+          data-testid="upload-progress-item"
+          data-status={item.status}
           className="flex items-center gap-3 rounded-md border border-border bg-card p-3 animate-fade-in-up transition-colors hover:border-foreground/20"
         >
           <FileIcon className="h-6 w-6 shrink-0 text-muted-foreground" />

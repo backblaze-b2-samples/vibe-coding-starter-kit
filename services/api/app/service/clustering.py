@@ -38,11 +38,19 @@ def _find_centroid_issues(
     return [iid for iid, _ in sims[:top_n]]
 
 
+def _extract_json(raw: str) -> str:
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start != -1 and end != -1:
+        return raw[start : end + 1]
+    return raw
+
+
 def _generate_label(issue_titles: list[str]) -> tuple[str, str, int, int]:
     user_msg = build_cluster_label_user(issue_titles)
     raw, inp, out = call_llm(CLUSTER_LABEL_SYSTEM, user_msg)
     try:
-        data = json.loads(raw)
+        data = json.loads(_extract_json(raw))
         return data["label"], data["summary"], inp, out
     except (json.JSONDecodeError, KeyError):
         return "Uncategorized", "Issues that share a common theme.", inp, out

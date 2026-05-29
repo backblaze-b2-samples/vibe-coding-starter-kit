@@ -32,7 +32,7 @@ def run_embeddings(snapshot_id: str) -> dict:
         records.append({
             "issue_id": issue.id,
             "embedding": emb,
-            "model_id": intel_settings.embedding_model,
+            "model_id": "all-MiniLM-L6-v2",
             "content_hash": issue.content_hash,
         })
 

@@ -10,11 +10,20 @@ from app.types.classification import B2Role, ClassificationResult, IssueCategory
 logger = logging.getLogger(__name__)
 
 
+def _extract_json(raw: str) -> str:
+    """Pull the JSON object out of the response, stripping any markdown fencing."""
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start != -1 and end != -1:
+        return raw[start : end + 1]
+    return raw
+
+
 def _parse_classification(
     raw: str, issue_id: int, issue_number: int
 ) -> ClassificationResult:
     try:
-        data = json.loads(raw)
+        data = json.loads(_extract_json(raw))
         return ClassificationResult(
             issue_id=issue_id,
             issue_number=issue_number,

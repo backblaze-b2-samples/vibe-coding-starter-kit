@@ -140,7 +140,7 @@ def read_clusters(snapshot_id: str) -> tuple[list[Cluster], list[ClusterAssignme
 
 def write_report(snapshot_id: str, report: SnapshotReport) -> None:
     key = f"{_derived_prefix(snapshot_id, 'reports')}/report.json"
-    _put(key, report.model_dump_json(default=str))
+    _put(key, report.model_dump_json())
 
 
 def read_report(snapshot_id: str) -> SnapshotReport | None:
@@ -150,7 +150,7 @@ def read_report(snapshot_id: str) -> SnapshotReport | None:
 
 def write_snapshot_status(snapshot_id: str, status: SnapshotStatus) -> None:
     key = f"{_raw_prefix(snapshot_id)}/status.json"
-    _put(key, status.model_dump_json(default=str))
+    _put(key, status.model_dump_json())
 
 
 def list_snapshots() -> list[SnapshotStatus]:

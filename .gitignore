@@ -49,3 +49,8 @@ test-results/
 
 # Local runtime data (download counter, etc.)
 services/api/data/
+
+# Architecture audit reports
+architecture-claims-*.md
+experiment-notes.md
+schema-adjustment-experiment-notes.md

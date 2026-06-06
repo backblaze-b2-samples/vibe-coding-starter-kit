@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-01 -->
+<!-- last_verified: 2026-06-06 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -63,13 +63,19 @@ pnpm dev:web           # frontend only
 pnpm dev:api           # backend only
 
 # Test & Lint
-pnpm lint              # frontend lint (eslint)
-pnpm build             # frontend type check + build
-pnpm lint:api          # backend lint (ruff)
-pnpm test:api          # backend tests (pytest)
-pnpm check:structure   # structural boundary tests
-pnpm test:e2e          # Playwright e2e tests
+pnpm lint                  # frontend lint (eslint)
+pnpm build                 # frontend type check + build
+pnpm lint:api              # backend lint (ruff)
+pnpm test:api              # backend tests (pytest) — hermetic; live tests skip
+pnpm check:structure       # structural boundary tests
+pnpm test:api:integration  # live B2 round-trip (needs .env creds)
+pnpm test:e2e              # Playwright e2e — live upload flow (needs .env creds)
+pnpm smoke                 # onboarding smoke vs a running `pnpm dev`
 ```
+
+CI: `.github/workflows/ci.yml` runs the credential-free suite on every push/PR;
+`integration.yml` runs the live tests on `main` when B2 secrets are present.
+Before a customer release, work through [docs/RELEASE-QA.md](docs/RELEASE-QA.md).
 
 ## 6. Agent Workflow
 
@@ -94,6 +100,7 @@ See [docs/dev-workflows.md](docs/dev-workflows.md) for full details.
 | User journeys | `docs/app-workflows.md` |
 | System layout, deployments | `ARCHITECTURE.md` |
 | Dev or testing process | `docs/dev-workflows.md` |
+| Release / customer-handoff QA | `docs/RELEASE-QA.md` |
 | Setup or scope changes | `README.md` |
 | Security changes | `docs/SECURITY.md` |
 | Reliability changes | `docs/RELIABILITY.md` |
@@ -110,6 +117,7 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 | Feature docs | [docs/features/](docs/features/) |
 | User journeys | [docs/app-workflows.md](docs/app-workflows.md) |
 | Engineering workflows and testing | [docs/dev-workflows.md](docs/dev-workflows.md) |
+| Release / customer-handoff QA gate | [docs/RELEASE-QA.md](docs/RELEASE-QA.md) |
 | Security principles | [docs/SECURITY.md](docs/SECURITY.md) |
 | Reliability expectations | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
 | Execution plans | [docs/exec-plans/](docs/exec-plans/) |

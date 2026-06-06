@@ -155,7 +155,7 @@ That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file 
 
 - TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, Recharts
 - TanStack Query — caching, dedup, retry, stale-while-revalidate for every fetch
-- Python 3.11+, FastAPI, boto3, Pydantic v2, Pillow, PyPDF2
+- Python 3.11+, FastAPI, boto3, Pydantic v2, Pillow, pypdf
 - Backblaze B2 (S3-compatible object storage)
 - pnpm workspaces (monorepo)
 

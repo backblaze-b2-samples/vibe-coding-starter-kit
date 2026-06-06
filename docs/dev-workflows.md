@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-01 -->
+<!-- last_verified: 2026-06-06 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -43,27 +43,43 @@ Engineering workflows for this repo.
 
 ## Testing
 
+Tests split into a **credential-free** half (runs on every PR, mocks B2) and a
+**live** half (needs a real throwaway B2 bucket). Keep new backend tests
+credential-free unless they specifically validate the B2 integration.
+
 ### Test types
-- **Unit**: pure logic (service layer)
-- **Integration**: HTTP handlers, B2 connectivity (`tests/`)
+- **Unit**: pure logic — service/formatting/metadata layers (`tests/test_formatting.py`, `tests/test_metadata.py`)
+- **Integration (mocked)**: HTTP handlers with the B2 layer monkeypatched (`tests/`)
+- **Integration (live)**: real B2 round-trip via `app/repo/b2_client.py` — marked
+  `@pytest.mark.integration`, **auto-skipped when B2 creds are absent** (`tests/test_b2_integration.py`)
 - **Structural**: layering rules, import boundaries (`tests/test_structure.py`)
-- **E2E**: Playwright browser-driven smoke tests
+- **E2E**: Playwright drives the real upload → preview → download → delete flow
+  against live B2 (`apps/web/e2e/upload.spec.ts`); requires a configured `.env`,
+  same as `pnpm dev`
 
 ### Test placement
 - Backend: `services/api/tests/`
-- E2E: project root (Playwright)
+- E2E: `apps/web/e2e/` (Playwright)
 
 ### Commands
-- Quick (backend): `pnpm test:api`
-- Structure: `pnpm check:structure`
-- Frontend lint: `pnpm lint`
+- Quick (backend): `pnpm test:api` — hermetic; live integration tests skip
 - Backend lint: `pnpm lint:api`
+- Frontend lint: `pnpm lint`
+- Structure: `pnpm check:structure`
 - Full suite: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- E2E: `pnpm test:e2e`
+- Live B2 round-trip: `pnpm test:api:integration` (needs `.env` creds)
+- E2E (live): `pnpm test:e2e` (needs `.env` creds)
+- Onboarding smoke: `pnpm smoke` (against a running `pnpm dev`)
+
+### CI
+- `.github/workflows/ci.yml` — credential-free: lint + build + pytest + structure on every push/PR
+- `.github/workflows/integration.yml` — live: `pnpm test:api:integration` + `pnpm test:e2e`,
+  gated on B2 repo secrets (runs on `main` / manual dispatch only)
 
 ### When to run
 - After behavior change: run relevant subset
-- Before PR: run full suite
+- Before PR: run full credential-free suite
+- Before a customer release: work through [RELEASE-QA.md](RELEASE-QA.md)
 
 ## Frontend Conventions
 

@@ -1,0 +1,105 @@
+# Live integration — the credential-requiring half of the suite: the real B2
+# round-trip (pytest -m integration) and the full upload→preview→download→delete
+# e2e (Playwright). Kept separate from ci.yml so the default PR check stays
+# green and secret-free for forks.
+#
+# Runs only where B2 secrets are available: pushes to main and manual dispatch.
+# Fork PRs never receive secrets, so the `check-secrets` gate skips the work
+# cleanly rather than failing.
+#
+# Required repo secrets: B2_ENDPOINT, B2_KEY_ID, B2_APPLICATION_KEY,
+# B2_BUCKET_NAME — pointed at a THROWAWAY test bucket (the e2e and integration
+# tests create and delete objects under unique prefixes).
+name: Integration
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-secrets:
+    name: Check for B2 secrets
+    runs-on: ubuntu-latest
+    outputs:
+      has-creds: ${{ steps.check.outputs.has-creds }}
+    steps:
+      - id: check
+        env:
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+        run: |
+          if [ -n "$B2_KEY_ID" ]; then
+            echo "has-creds=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-creds=false (B2 secrets not configured — skipping live tests)"
+            echo "has-creds=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  integration:
+    name: Live B2 integration + e2e
+    needs: check-secrets
+    if: needs.check-secrets.outputs.has-creds == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create venv + install backend deps
+        working-directory: services/api
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements.txt
+
+      # Both the API (main.py load_dotenv) and `pnpm dev`'s doctor read the
+      # repo-root .env, so the live creds live there for the whole job.
+      - name: Write .env from secrets
+        env:
+          B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+          B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+        run: |
+          {
+            echo "B2_ENDPOINT=$B2_ENDPOINT"
+            echo "B2_KEY_ID=$B2_KEY_ID"
+            echo "B2_APPLICATION_KEY=$B2_APPLICATION_KEY"
+            echo "B2_BUCKET_NAME=$B2_BUCKET_NAME"
+          } > .env
+
+      - name: Real B2 round-trip (pytest -m integration)
+        working-directory: services/api
+        run: .venv/bin/python -m pytest -m integration -v
+
+      - name: Install Playwright browser
+        run: pnpm --filter @vibe-coding-starter-kit/web exec playwright install --with-deps chromium
+
+      - name: Upload e2e (live)
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

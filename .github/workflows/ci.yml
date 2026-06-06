@@ -1,0 +1,80 @@
+# CI — mirrors the AGENTS.md §5 full suite so "lint clean before merge" and
+# "tests added for every behavior change" are enforced, not aspirational.
+#
+# Both jobs are CREDENTIAL-FREE: the backend tests mock B2 entirely, so a fresh
+# fork (or a customer who clicked "Use this template") gets green CI with zero
+# secrets. Real-B2 integration and the gated upload e2e live in a separate
+# workflow that only runs when B2 secrets are present (see integration.yml).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same ref cancels the in-flight run for that ref.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web (lint + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (eslint)
+        run: pnpm lint
+
+      - name: Build (Next type-check + build)
+        run: pnpm build
+
+  api:
+    name: API (ruff + pytest + structure)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm is here only so the api job can invoke the documented `pnpm lint:api`
+      # / `pnpm test:api` / `pnpm check:structure` scripts (single source of truth
+      # for how these run); it needs no node_modules.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create venv + install backend deps
+        working-directory: services/api
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        run: pnpm lint:api
+
+      - name: Test (pytest, hermetic — no B2 creds)
+        run: pnpm test:api
+
+      - name: Structural boundary tests
+        run: pnpm check:structure

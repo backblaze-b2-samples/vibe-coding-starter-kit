@@ -22,5 +22,8 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     cwd: "../../",
+    // Cold start in CI compiles the Next app + boots uvicorn on first hit;
+    // the 60s default is occasionally too tight.
+    timeout: 120_000,
   },
 });

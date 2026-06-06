@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-06-06 -->
 # Feature: Metadata Extraction
 
 ## Purpose
@@ -32,13 +32,13 @@ Extract rich metadata from uploaded files and return it alongside upload results
 - `extract_metadata()` called with file bytes, filename, content type
 - Computes MD5 and SHA-256 hashes
 - If image: opens with Pillow, extracts dimensions and EXIF data
-- If PDF: opens with PyPDF2, extracts page count, author, title
+- If PDF: opens with pypdf, extracts page count, author, title
 - Returns `FileMetadataDetail` model
 - Frontend displays metadata in file-metadata-panel component
 
 ## Edge Cases
 - Corrupt image → Pillow fails silently, image fields remain null
-- Corrupt PDF → PyPDF2 fails silently, PDF fields remain null
+- Corrupt PDF → pypdf fails silently, PDF fields remain null
 - Unknown content type → only common fields populated (hashes, size, extension)
 - EXIF contains binary data → decoded as UTF-8 with replace, converted to string
 - Large file → hashing may be slow (computed in-memory)

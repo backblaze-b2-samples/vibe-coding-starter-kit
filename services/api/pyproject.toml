@@ -28,3 +28,6 @@ quote-style = "double"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "integration: hits a real Backblaze B2 bucket; auto-skipped when B2 creds are absent. Run with `pytest -m integration`.",
+]

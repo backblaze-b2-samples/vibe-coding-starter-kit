@@ -15,7 +15,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { CommandPalette } from "./command-palette";
+import { APP_NAME } from "@/lib/app-config";
 
+// Overrides for routes whose label differs from the derived segment
+// (e.g. "/" -> "Dashboard", "/design" -> "Design System").
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
   "/upload": "Upload",
@@ -24,10 +27,21 @@ const pageTitles: Record<string, string> = {
   "/design": "Design System",
 };
 
+// Fallback page label for routes not in the override map: title-case the last
+// non-empty path segment, splitting hyphens (e.g. "/file-browser" -> "File Browser").
+function deriveTitleFromPath(pathname: string): string {
+  const segment = pathname.split("/").filter(Boolean).pop() ?? "";
+  if (!segment) return "Home";
+  return segment
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const pageTitle = pageTitles[pathname] || "Page";
+  const pageTitle = pageTitles[pathname] ?? deriveTitleFromPath(pathname);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Global keyboard shortcut — cmd/ctrl-K or `/` toggles the palette.
@@ -57,7 +71,7 @@ export function Header() {
               href="/"
               className="text-nav-foreground/80 hover:text-nav-foreground font-medium"
             >
-              oss-starter-kit
+              {APP_NAME}
             </BreadcrumbLink>
           </BreadcrumbItem>
           {pathname !== "/" && (

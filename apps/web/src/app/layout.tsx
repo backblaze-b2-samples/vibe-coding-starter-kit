@@ -11,6 +11,7 @@ import { HealthBanner } from "@/components/layout/health-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClientProvider } from "@/lib/query-client";
 import { RefreshProvider } from "@/lib/refresh-context";
+import { APP_NAME, APP_DESCRIPTION } from "@/lib/app-config";
 
 // Display face — used for page titles. Body copy uses the system stack
 // defined in globals.css.
@@ -22,8 +23,8 @@ const monaSans = Mona_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "OSS Starter Kit",
-  description: "File management dashboard powered by Backblaze B2",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
 };
 
 export default function RootLayout({

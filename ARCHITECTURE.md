@@ -1,14 +1,16 @@
-<!-- last_verified: 2026-03-10 -->
+<!-- last_verified: 2026-05-28 -->
 # Architecture
 
 ## Components
 
 - **apps/web/** — Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
-  - Dashboard with stats, upload chart, recent uploads
+  - Intelligence dashboard: cluster grid, category breakdown, activity timeline, spec depth
+  - Snapshot management: trigger, list, drill-down per snapshot
   - File upload with drag-and-drop, progress tracking
   - File browser with preview, download, delete
   - Dark mode via `next-themes`
 - **services/api/** — FastAPI backend (layered architecture)
+  - Issue intelligence pipeline: ingest → embed → classify → cluster → analyze
   - REST API for file upload, listing, deletion
   - B2 S3 integration via boto3
   - File metadata extraction (images, PDFs)
@@ -49,17 +51,18 @@ runtime/   FastAPI routes — calls service, never repo directly
 services/api/
   main.py                  App entrypoint, middleware, router registration
   app/
-    types/                 Pydantic models (FileMetadata, UploadStats, etc.)
+    types/                 Pydantic models (FileMetadata, Issue, SnapshotReport, etc.)
     config/                Settings loaded from environment
-    repo/                  B2 S3 client (data access layer)
-    service/               Business logic (upload, files, metadata)
-    runtime/               FastAPI route handlers
+    repo/                  Data access: B2, GitHub, embedding, LLM clients
+    service/               Business logic: upload, files, ingestion, classification, clustering
+    service/prompts/       LLM prompt templates (versioned in repo)
+    runtime/               FastAPI route handlers + CLI entry points
   tests/                   pytest tests (structural + integration)
 ```
 
 ## Boundary Invariants
 
-- **No external SDK leakage**: `boto3` is only imported in `app/repo/`. All other layers interact with B2 through the repo interface.
+- **No external SDK leakage**: `boto3` (B2), `openai` (embeddings), and `anthropic` (LLM) are only imported in `app/repo/`. All other layers interact through the repo interface.
 - **No raw dicts at boundaries**: All data crossing layer boundaries uses typed Pydantic models.
 - **No mutable globals**: Configuration is read-only after init. No module-level mutable state shared between layers.
 - **Validated inputs**: All HTTP inputs validated by FastAPI/Pydantic. All file keys validated against prefix allowlist.
@@ -81,7 +84,10 @@ services/api/
 
 ## External Services
 
-- **Backblaze B2 S3 API** — file storage, retrieval, deletion, presigned URLs
+- **Backblaze B2 S3 API** — file storage, retrieval, deletion, presigned URLs; intelligence pipeline snapshots
+- **GitHub REST API** — issue fetch (read-only, fine-grained PAT)
+- **OpenAI API** — text embeddings (`text-embedding-3-small`)
+- **Anthropic API** — issue classification and cluster labeling (`claude-3-5-haiku-20241022`)
 
 ## Trust Boundaries
 
@@ -97,6 +103,10 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 - **List**: Browser -> `GET /files` -> service calls repo -> returns file list
 - **Download**: Browser -> `GET /files/{key}/download` -> service validates key -> repo generates presigned URL -> browser downloads
 - **Delete**: Browser -> `DELETE /files/{key}` -> service validates key -> repo deletes from B2
+- **Intelligence pipeline**: `POST /api/intelligence/snapshots` -> BackgroundTasks -> ingest (GitHub) -> embed (OpenAI) -> classify (Anthropic) -> cluster (HDBSCAN + Anthropic) -> analyze -> SnapshotReport in B2
+- **Dashboard**: Browser -> `GET /api/intelligence/snapshots/:id` -> reads SnapshotReport from B2 -> React renders ClusterGrid, charts
+
+Intelligence B2 layout: `intelligence/raw/issues/snapshot=<ts>/` + `intelligence/derived/{embeddings,classifications,clusters,reports}/snapshot=<ts>/`. See [docs/features/storage-layout.md](docs/features/storage-layout.md).
 
 ## Observability
 
@@ -118,9 +128,11 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 
 ## Core Features
 
+- [Intelligence Pipeline](docs/features/intelligence.md)
+- [Intelligence Dashboard](docs/features/intelligence-dashboard.md)
+- [Storage Layout](docs/features/storage-layout.md)
 - [File Upload](docs/features/file-upload.md)
 - [File Browser](docs/features/file-browser.md)
-- [Dashboard](docs/features/dashboard.md)
 - [Metadata Extraction](docs/features/metadata-extraction.md)
 
 ## References

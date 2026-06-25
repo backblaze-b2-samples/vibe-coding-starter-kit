@@ -13,7 +13,7 @@ import { SpecDepthHistogram } from "@/components/intelligence/SpecDepthHistogram
 import { useSnapshots, useSnapshotReport } from "@/lib/queries";
 import type { IssueSummary } from "@vibe-coding-starter-kit/shared";
 
-export default function DashboardPage() {
+export default function IntelligencePage() {
   const { data: snapshots = [], isLoading: loadingSnapshots, error: snapshotsError } = useSnapshots();
   const latest = snapshots.find((s) => s.status === "complete");
   const { data: report, isLoading: loadingReport, error: reportError } = useSnapshotReport(latest?.snapshot_id);
@@ -21,12 +21,10 @@ export default function DashboardPage() {
   if (loadingSnapshots || loadingReport) {
     return (
       <div className="space-y-8">
-        <div className="border-b border-border pb-5">
-          <Skeleton className="h-8 w-64 mb-2" />
-          <Skeleton className="h-4 w-48" />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
         </div>
         <Skeleton className="h-64" />
       </div>
@@ -40,19 +38,14 @@ export default function DashboardPage() {
   if (!latest || !report) {
     return (
       <div className="space-y-6">
-        <div className="animate-fade-in border-b border-border pb-5 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="page-title">Issue Intelligence</h1>
-            <p className="text-sm text-muted-foreground mt-1.5">
-              Analyze the demand-side-ai issue backlog — themes, specs, and B2 positioning.
-            </p>
-          </div>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Issue Intelligence</h1>
           <RunSnapshotButton />
         </div>
         <EmptyState
           icon={BarChart3}
           title="No snapshots yet"
-          description="Run a snapshot to embed, classify, and cluster the issue backlog."
+          description="Run a snapshot to analyze the backlog — it will embed, classify, and cluster all issues."
         />
       </div>
     );
@@ -64,15 +57,13 @@ export default function DashboardPage() {
     issuesByCluster[s.cluster_id].push(s);
   });
 
-  const fmtId = latest.snapshot_id.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/, "$1-$2-$3 $4:$5");
-
   return (
     <div className="space-y-8">
-      <div className="animate-fade-in border-b border-border pb-5 flex flex-wrap items-start justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="page-title">Issue Intelligence</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
-            {report.repo} · {report.total_issues} issues · snapshot {fmtId}
+          <h1 className="text-2xl font-bold">Issue Intelligence</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {report.repo} · {report.total_issues} issues · snapshot {latest.snapshot_id.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/, "$1-$2-$3 $4:$5")}
           </p>
         </div>
         <RunSnapshotButton />
@@ -81,10 +72,10 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         {[
           { label: "Total Issues", value: report.total_issues },
-          { label: "Open Issues", value: report.open_issues },
-          { label: "Theme Clusters", value: report.clusters.filter((c) => c.cluster_id !== "unclustered").length },
-        ].map((stat, i) => (
-          <div key={stat.label} className={`rounded-lg border border-border px-4 py-3 animate-fade-in-up stagger-${i + 1}`}>
+          { label: "Open", value: report.open_issues },
+          { label: "Clusters", value: report.clusters.filter((c) => c.cluster_id !== "unclustered").length },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-lg border border-border px-4 py-3">
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{stat.label}</p>
             <p className="text-2xl font-semibold tabular-nums mt-1">{stat.value}</p>
           </div>

@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-06-25 -->
 # Reliability
 
 Reliability expectations and practices for this project.
@@ -13,6 +13,8 @@ Reliability expectations and practices for this project.
 - HTTP handlers return structured error responses with appropriate status codes
 - External service failures (B2) are caught and surfaced as 500/503 responses
 - No unhandled exceptions leak stack traces to clients
+- Uncaught exceptions are converted to a typed JSON 500 (`{"detail": "Internal server error"}`, modeled by `app.types.ErrorResponse`) by the catch-all in `timing_middleware`
+- **Error responses carry CORS headers.** `CORSMiddleware` is registered LAST in `main.py` so it is the outermost middleware and wraps every response — including uncaught-exception 500s produced by the inner catch-all. This is intentional and load-bearing: if a 500 shipped without `Access-Control-Allow-Origin`, the browser would block it and the frontend would surface only an opaque "network error", hiding the real server bug. Regression-guarded by `tests/test_error_handling.py::test_unhandled_exception_500_carries_cors_headers`.
 
 ## Logging
 

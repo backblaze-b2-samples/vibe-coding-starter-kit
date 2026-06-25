@@ -110,6 +110,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# --- Middleware ordering matters for CORS-on-errors ---
+# Starlette wraps middleware so the LAST one registered is the OUTERMOST. We
+# need CORSMiddleware to be outermost (closest to the client) so that EVERY
+# response — including the 500 produced by the timing middleware's catch-all
+# for an uncaught exception — flows back out through CORS and gets an
+# `Access-Control-Allow-Origin` header.
+#
+# If CORS were registered last-but-one (inner to timing), an uncaught-exception
+# 500 would be generated outside CORS and ship without that header; the browser
+# would block it and the frontend would only see an opaque "network error",
+# masking the real server bug. So: register the inner middleware FIRST, CORS
+# LAST. Do not reorder these two without re-reading this comment.
+
+# Request ID + timing middleware (inner). Its except-clause is the catch-all
+# that turns uncaught exceptions into a typed 500 — see metrics.timing_middleware.
+app.add_middleware(BaseHTTPMiddleware, dispatch=metrics.timing_middleware)
+
+# CORS (outermost) — wraps every response, including error responses.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -120,9 +138,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
-
-# Request ID + timing middleware
-app.add_middleware(BaseHTTPMiddleware, dispatch=metrics.timing_middleware)
 
 app.include_router(health.router, tags=["health"])
 app.include_router(upload.router, tags=["upload"])

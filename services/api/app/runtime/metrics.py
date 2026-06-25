@@ -6,6 +6,8 @@ from threading import Lock
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import JSONResponse
 
+from app.types import ErrorResponse
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -77,7 +79,16 @@ async def timing_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
     except Exception:
-        # Catch-all: log the error, return a safe 500 response
+        # Catch-all: convert any uncaught exception into a safe, typed 500.
+        #
+        # This catch is the platform's single source of truth for unhandled
+        # errors. It is deliberately INNER to CORSMiddleware (see middleware
+        # registration order in main.py): because the 500 response is produced
+        # here, it still flows back out through CORSMiddleware, which attaches
+        # `Access-Control-Allow-Origin`. If this catch lived outside CORS (or we
+        # let the exception bubble to Starlette's ServerErrorMiddleware, which
+        # always sits OUTSIDE CORS), the browser would block the 500 and the UI
+        # would only see an opaque "network error" — hiding the real bug.
         logger.error(
             "Unhandled exception: %s %s",
             request.method,
@@ -86,7 +97,7 @@ async def timing_middleware(request: Request, call_next):
         )
         response = JSONResponse(
             status_code=500,
-            content={"detail": "Internal server error"},
+            content=ErrorResponse().model_dump(),
         )
     duration = time.time() - start
     # Use the matched route template to avoid unbounded cardinality

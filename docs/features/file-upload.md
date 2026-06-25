@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-10 -->
+<!-- last_verified: 2026-06-25 -->
 # Feature: File Upload
 
 ## Purpose
@@ -11,7 +11,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 ## Core Functions
 - `apps/web/src/components/upload/upload-form.tsx` — orchestrates dropzone + progress + upload state
 - `apps/web/src/components/upload/dropzone.tsx` — drag-and-drop via `react-dropzone`
-- `apps/web/src/components/upload/upload-progress.tsx` — per-file progress bars
+- `apps/web/src/components/upload/upload-progress.tsx` — per-file progress, errors, and retry controls
 - `apps/web/src/lib/api-client.ts` — `uploadFile()` using XHR for progress events
 - `services/api/app/runtime/upload.py` — HTTP handler, reads file chunks
 - `services/api/app/service/upload.py` — validates and orchestrates upload
@@ -33,7 +33,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 
 ## Flow
 - User drops or selects files in dropzone
-- Client validates file size (max 100MB) and type — rejected files show toast with reason
+- Client validates file size (max 100MB) and type — rejected files remain in the queue with a clear reason and show toast feedback
 - XHR sends multipart POST to `/upload` with progress events
 - API checks `Content-Length` header early to reject oversized requests before reading body
 - API validates content type against allowlist
@@ -45,23 +45,25 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - API calls `put_object` to B2
 - API extracts file metadata (checksums, image dimensions, PDF info)
 - API returns `FileUploadResponse`
-- Client shows toast and updates progress state
+- Client shows toast, updates progress state, and refreshes shared data after successful uploads
 
 ## Edge Cases
-- File exceeds 100MB → client-side rejection toast + API returns 413 if bypassed
+- File exceeds 100MB → client-side rejected row + toast; API returns 413 if bypassed
 - File type not in allowlist → API returns 415
 - File extension mismatches MIME type → API returns 415
 - No filename provided → API returns 400
 - Empty file → API returns 400
 - Duplicate filename → B2 creates a new version (buckets are always versioned)
-- B2 unreachable → API returns 500
+- B2 unreachable → API returns 500; UI keeps failed rows retryable when the file can be resubmitted
 - Upload aborted by user → XHR abort, error state in UI
 
 ## UX States
 - Empty: dropzone with instructions
 - Loading: per-file progress bars with spinner icon
-- Error: red status icon, error message per file
-- Complete: green checkmark, "Clear completed" button
+- Error: red status icon, error message per file, retry action when applicable
+- Complete: green checkmark, "Clear finished" button
+- Rejected: persistent row with non-retryable reason
+- Disabled: dropzone explains that new files can be added when the current queue finishes
 
 ## Verification
 - Test files: `services/api/tests/test_upload_conflict.py`, `services/api/tests/test_error_handling.py`

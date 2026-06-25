@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Bell, Search } from "lucide-react";
+import { Moon, Sun, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -14,6 +14,11 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CommandPalette } from "./command-palette";
 import { APP_NAME } from "@/lib/app-config";
 
@@ -40,9 +45,10 @@ function deriveTitleFromPath(pathname: string): string {
 
 export function Header() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const pageTitle = pageTitles[pathname] ?? deriveTitleFromPath(pathname);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
 
   // Global keyboard shortcut — cmd/ctrl-K or `/` toggles the palette.
   useEffect(() => {
@@ -90,6 +96,8 @@ export function Header() {
       </Breadcrumb>
 
       <button
+        type="button"
+        aria-label="Open command palette"
         onClick={() => setPaletteOpen(true)}
         className="ml-4 hidden md:flex items-center gap-2 h-8 flex-1 max-w-md px-3 rounded-md bg-white/10 border border-white/15 text-nav-foreground/70 text-sm hover:bg-white/15 hover:text-nav-foreground transition-colors"
       >
@@ -101,22 +109,28 @@ export function Header() {
       </button>
 
       <div className="ml-auto flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-nav-foreground/80 hover:text-nav-foreground hover:bg-white/10 rounded-md"
-        >
-          <Bell className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-nav-foreground/80 hover:text-nav-foreground hover:bg-white/10 rounded-md"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        >
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              aria-label="Toggle color theme"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-nav-foreground/80 hover:text-nav-foreground hover:bg-white/10 rounded-md"
+              onClick={() => setTheme(nextTheme)}
+            >
+              <Sun
+                aria-hidden
+                className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+              />
+              <Moon
+                aria-hidden
+                className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+              />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Toggle color theme</TooltipContent>
+        </Tooltip>
         {/* Placeholder avatar — swap for a real user chip when auth lands. */}
         <div
           aria-hidden

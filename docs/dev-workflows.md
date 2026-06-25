@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-21 -->
+<!-- last_verified: 2026-06-25 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -11,7 +11,7 @@ Engineering workflows for this repo.
 - [ ] Implement the smallest coherent change
 - [ ] Add or update tests
 - [ ] Run: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- [ ] Update docs in the same PR (see AGENTS.md §8)
+- [ ] Update docs in the same PR (see AGENTS.md §9)
 - [ ] Move plan to `docs/exec-plans/completed/` after validation
 
 ## Bugfix
@@ -30,7 +30,7 @@ Engineering workflows for this repo.
 
 ## Documentation Update
 
-- [ ] Update only the canonical location (see AGENTS.md §8 doc update mapping)
+- [ ] Update only the canonical location (see AGENTS.md §9 doc update mapping)
 - [ ] Never duplicate content — link instead
 - [ ] Update `<!-- last_verified: YYYY-MM-DD -->` header
 
@@ -51,7 +51,7 @@ Engineering workflows for this repo.
 
 ### Test placement
 - Backend: `services/api/tests/`
-- E2E: project root (Playwright)
+- E2E: `apps/web/e2e/` with config in `apps/web/playwright.config.ts`
 
 ### Commands
 - Quick (backend): `pnpm test:api`

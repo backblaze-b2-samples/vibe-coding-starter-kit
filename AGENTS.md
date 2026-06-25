@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-01 -->
+<!-- last_verified: 2026-06-25 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.

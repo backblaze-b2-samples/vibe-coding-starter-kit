@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-21 -->
+<!-- last_verified: 2026-06-25 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -51,7 +51,7 @@ Engineering workflows for this repo.
 
 ### Test placement
 - Backend: `services/api/tests/`
-- E2E: project root (Playwright)
+- E2E: `apps/web/e2e/` with config in `apps/web/playwright.config.ts`
 
 ### Commands
 - Quick (backend): `pnpm test:api`

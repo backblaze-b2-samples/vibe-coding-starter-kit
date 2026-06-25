@@ -6,8 +6,10 @@ import {
   deleteFile,
   getFiles,
   getFileStats,
+  getHealth,
   getPreviewUrl,
   getUploadActivity,
+  type HealthCheckResult,
 } from "@/lib/api-client";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
@@ -22,6 +24,9 @@ export const qk = {
   uploadActivity: (days: number) =>
     [...qk.all, "stats", "activity", days] as const,
   preview: (key: string) => [...qk.all, "preview", key] as const,
+  // health is infra, not app data — kept outside the "b2" key hierarchy so
+  // invalidating all b2 queries does not reset the health poll, and vice versa.
+  health: () => ["health"] as const,
 };
 
 export function useFiles(prefix = "", limit = 100) {
@@ -54,6 +59,27 @@ export function usePreviewUrl(key: string | undefined, enabled: boolean) {
     queryFn: () => getPreviewUrl(key as string),
     enabled: enabled && !!key,
     staleTime: 60_000,
+  });
+}
+
+/**
+ * Polls /health every 60 s; returns null on any network or API error.
+ * Intentionally swallows failures so the banner stays silent when the API is
+ * fully down (per-component ErrorState handles that case instead).
+ */
+export function useHealthCheck() {
+  return useQuery<HealthCheckResult | null>({
+    queryKey: qk.health(),
+    queryFn: async () => {
+      try {
+        return await getHealth();
+      } catch {
+        return null;
+      }
+    },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: false,
   });
 }
 

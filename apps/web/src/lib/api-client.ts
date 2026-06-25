@@ -49,8 +49,13 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export interface HealthCheckResult {
+  status: "healthy" | "degraded";
+  b2_connected: boolean;
+}
+
 export async function getHealth() {
-  return apiFetch<{ status: string; b2_connected: boolean }>("/health");
+  return apiFetch<HealthCheckResult>("/health");
 }
 
 export async function getFiles(prefix = "", limit = 100) {

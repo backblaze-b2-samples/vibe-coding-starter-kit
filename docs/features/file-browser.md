@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-04-22 -->
+<!-- last_verified: 2026-06-26 -->
 # Feature: File Browser
 
 ## Purpose
@@ -13,7 +13,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - `apps/web/src/components/files/file-preview.tsx` — dialog modal for file preview
 - `apps/web/src/components/files/file-metadata-panel.tsx` — structured metadata display
 - `apps/web/src/lib/file-tree.ts` — `buildFileTree()` converts flat S3 keys to folder/file hierarchy
-- `apps/web/src/lib/api-client.ts` — `getFiles()`, `getDownloadUrl()`, `deleteFile()`
+- `apps/web/src/lib/api-client.ts` — `getFiles()`, `getFile()`, `getDownloadUrl()`, `getPreviewUrl()`, `deleteFile()`; encodes object keys before interpolating them into URL paths
 - `services/api/app/runtime/files.py` — HTTP handlers for list, get, download, delete
 - `services/api/app/service/files.py` — business logic, key validation
 - `services/api/app/repo/b2_client.py` — `list_files()`, `get_file_metadata()`, `get_presigned_url()`, `delete_file()`
@@ -26,7 +26,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 ## Inputs
 - prefix: string (optional filter for file listing)
 - limit: int (max files to return, 1-1000, default 100)
-- key: string (file key for get/download/delete — no path traversal)
+- key: string (file key for get/download/delete — percent-encoded by the web client; no path traversal)
 
 ## Outputs
 - `GET /files` → `FileMetadata[]` (sorted most recent first)
@@ -44,11 +44,12 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Preview: opens dialog, fetches a preview-only presigned URL via `/files/{key}/preview` (does not count as a download) and renders image/PDF inline
 - Download: fetches presigned URL via `/files/{key}/download` (attachment disposition, 10-min expiry), opens in new tab, bumps the download counter, triggers a stats refresh
 - Delete: calls `DELETE /files/{key}`, removes row from tree, shows toast
-- All key-based API calls validated against path-traversal patterns
+- All key-based API calls encode the key on the web client before building the URL and validate it against path-traversal patterns in the API service layer
 
 ## Edge Cases
 - File not found (deleted externally) → API returns 404
 - Invalid file key (traversal attempt, empty key) → API returns 400
+- File key contains `/`, spaces, `#`, `?`, or other reserved URL characters → web client percent-encodes the key before calling get/download/preview/delete routes
 - B2 unreachable → API error, toast notification
 - Empty bucket → "No files found" message with upload prompt
 - Delete failure → API returns 500, toast error
@@ -63,7 +64,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Test files: `services/api/tests/` (no dedicated file browser tests yet)
 - Required cases: list files, empty list, file not found, presigned URL generation, delete success, delete failure
 - Quick verify command: `pnpm test:api`
-- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Full verify command: `pnpm lint && pnpm build && pnpm lint:api && pnpm test:api && pnpm check:structure`
 - Pass criteria: all pytest tests green, no ruff violations
 
 ## Related Docs

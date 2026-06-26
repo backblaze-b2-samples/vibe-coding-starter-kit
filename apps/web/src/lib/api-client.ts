@@ -49,11 +49,11 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-function fileKeyPath(key: string): string {
+function fileKeyQuery(key: string): string {
   if (key.length === 0) {
     throw new ApiError("File key is required", 400);
   }
-  return encodeURIComponent(key);
+  return new URLSearchParams({ key }).toString();
 }
 
 export async function getHealth() {
@@ -75,21 +75,21 @@ export async function getUploadActivity(days = 7) {
 }
 
 export async function getFile(key: string) {
-  return apiFetch<FileMetadata>(`/files/${fileKeyPath(key)}`);
+  return apiFetch<FileMetadata>(`/files-by-key/metadata?${fileKeyQuery(key)}`);
 }
 
 export async function getDownloadUrl(key: string) {
-  return apiFetch<{ url: string }>(`/files/${fileKeyPath(key)}/download`);
+  return apiFetch<{ url: string }>(`/files-by-key/download?${fileKeyQuery(key)}`);
 }
 
 /** Preview-only presigned URL — does NOT increment the download counter. */
 export async function getPreviewUrl(key: string) {
-  return apiFetch<{ url: string }>(`/files/${fileKeyPath(key)}/preview`);
+  return apiFetch<{ url: string }>(`/files-by-key/preview?${fileKeyQuery(key)}`);
 }
 
 export async function deleteFile(key: string) {
   return apiFetch<{ deleted: boolean; key: string }>(
-    `/files/${fileKeyPath(key)}`,
+    `/files-by-key?${fileKeyQuery(key)}`,
     {
       method: "DELETE",
     }

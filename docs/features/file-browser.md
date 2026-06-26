@@ -35,7 +35,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - `GET /files-by-key/download?key=...` → `{ url: string }` (presigned URL, attachment disposition, 10-min expiry). Increments the `total_downloads` counter exposed on `/files/stats`. The counter is persisted to `services/api/data/download_count.json` (override via `DOWNLOAD_COUNT_FILE` env var) so it survives API restarts.
 - `GET /files-by-key/preview?key=...` → `{ url: string }` (presigned URL for inline rendering, 10-min expiry). Does **not** increment the download counter — used by the preview modal for images / PDFs.
 - `DELETE /files-by-key?key=...` → `{ deleted: true, key: string }`
-- Legacy `/files/{key}` routes remain available for compatibility but new clients should use `/files-by-key` routes because encoded slashes in path segments can be decoded by proxies before routing.
+- Legacy `/files/{key}` routes remain available for compatibility. The web client uses them only as a rolling-deploy fallback when `/files-by-key` is unavailable and the key is safe to place in a legacy path.
 - Side effects: DELETE removes file from B2; `/download` increments the in-memory download counter
 
 ## Flow
@@ -47,6 +47,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Download: fetches presigned URL via `/files-by-key/download?key=...` (attachment disposition, 10-min expiry), opens in new tab, bumps the download counter, triggers a stats refresh
 - Delete: calls `DELETE /files-by-key?key=...`, removes row from tree, shows toast
 - All key-based API calls send the key in the query string and validate it against path-traversal patterns in the API service layer
+- During frontend/API version skew, the web client falls back to legacy path routes only for keys that cannot collide with reserved file routes such as stats, download, or preview.
 
 ## Edge Cases
 - File not found (deleted externally) → API returns 404

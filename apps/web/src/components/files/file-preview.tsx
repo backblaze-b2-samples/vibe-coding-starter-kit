@@ -17,30 +17,84 @@ interface FilePreviewProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function PreviewMetaRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={`min-w-0 break-all text-right ${
+          mono ? "font-mono text-xs tabular-nums" : ""
+        }`}
+        title={value}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function formatPreviewDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
 export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
   // Fetch a presigned preview URL only while the dialog is open. Falls
   // back to the file's stored URL if the API call fails (e.g. the
   // `/preview` endpoint is unreachable but we still have a static URL).
-  const { data, isLoading } = usePreviewUrl(file?.key, open && !!file);
+  const { data, isLoading, isError, error } = usePreviewUrl(
+    file?.key,
+    open && !!file,
+  );
   const previewUrl = data?.url ?? file?.url ?? null;
 
   if (!file) return null;
 
   const isImage = file.content_type.startsWith("image/");
   const isPdf = file.content_type === "application/pdf";
+  const previewError =
+    isError && error instanceof Error
+      ? error.message
+      : "The preview link could not be created.";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85svh] w-[calc(100vw-2rem)] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="truncate">{file.filename}</DialogTitle>
+          <DialogTitle className="min-w-0 break-words pr-6">
+            {file.filename}
+          </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="flex items-center justify-center rounded-lg border bg-muted/30 min-h-[200px]">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <div className="flex min-w-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/30 min-h-[220px]">
             {isLoading ? (
-              <Skeleton className="h-48 w-full" />
+              <div
+                className="w-full p-3"
+                role="status"
+                aria-live="polite"
+                aria-label="Loading file preview"
+              >
+                <p className="sr-only">Loading file preview...</p>
+                <Skeleton className="h-[min(55svh,400px)] min-h-[220px] w-full" />
+              </div>
             ) : isImage && previewUrl ? (
-              <div className="relative w-full h-[400px]">
+              <div className="relative h-[min(55svh,400px)] min-h-[220px] w-full">
                 {/* `unoptimized` because presigned URLs carry their own
                     short-lived expiry and we don't want Next's image
                     optimizer caching them past that window. */}
@@ -56,38 +110,29 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
             ) : isPdf && previewUrl ? (
               <iframe
                 src={previewUrl}
-                className="w-full h-[400px] rounded"
-                title={file.filename}
+                className="h-[min(55svh,400px)] min-h-[220px] w-full rounded"
+                title={`Preview of ${file.filename}`}
               />
             ) : (
-              <div className="text-center text-muted-foreground p-8">
-                <p className="text-sm">Preview not available</p>
-                <p className="text-xs mt-1">{file.content_type}</p>
+              <div className="max-w-sm p-8 text-center text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
+                  {isError ? "Preview URL unavailable" : "Preview not available"}
+                </p>
+                <p className="mt-1 text-xs break-words">
+                  {isError ? previewError : file.content_type}
+                </p>
               </div>
             )}
           </div>
-          <div className="space-y-4">
-            <div className="text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Size</span>
-                <span>{file.size_human}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Type</span>
-                <span>{file.content_type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Uploaded</span>
-                <span>
-                  {new Date(file.uploaded_at).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Key</span>
-                <span className="font-mono text-xs truncate max-w-[200px]">
-                  {file.key}
-                </span>
-              </div>
+          <div className="min-w-0 space-y-4">
+            <div className="space-y-2 text-sm">
+              <PreviewMetaRow label="Size" value={file.size_human} mono />
+              <PreviewMetaRow label="Type" value={file.content_type} />
+              <PreviewMetaRow
+                label="Uploaded"
+                value={formatPreviewDate(file.uploaded_at)}
+              />
+              <PreviewMetaRow label="Key" value={file.key} mono />
             </div>
           </div>
         </div>

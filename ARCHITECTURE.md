@@ -87,7 +87,7 @@ services/api/
 
 See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 
-- **Frontend -> API** — CORS-restricted to configured origins
+- **Frontend -> API** — CORS-restricted to configured origins. `CORSMiddleware` is registered LAST in `main.py` (outermost) so it wraps **every** response, including uncaught-exception 500s — otherwise the browser would block error responses and the UI would only see an opaque "network error". See [docs/RELIABILITY.md](docs/RELIABILITY.md#error-handling).
 - **API -> B2** — authenticated via application keys, signature v4
 - **Client -> B2** — presigned URLs for download (10-min expiry, forced attachment)
 
@@ -101,7 +101,7 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 ## Observability
 
 - Structured JSON logging on all requests with `request_id`
-- Request timing middleware (logs duration per request)
+- Request timing middleware (logs duration per request; also the catch-all that converts uncaught exceptions to a typed JSON 500)
 - `/metrics` endpoint (Prometheus format: request count, latency, upload count)
 - `/health` endpoint (B2 connectivity check)
 

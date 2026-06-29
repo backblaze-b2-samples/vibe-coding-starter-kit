@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUploadActivity } from "@/lib/queries";
 
 const chartConfig = {
@@ -28,8 +29,30 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const skeletonBarHeights = ["h-24", "h-32", "h-20", "h-36", "h-28", "h-40", "h-24"];
+
+function UploadChartSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="h-[240px] w-full rounded-md border border-border bg-muted/20 px-4 py-4"
+    >
+      <span className="sr-only">Loading upload activity</span>
+      <div aria-hidden className="flex h-full items-end gap-3">
+        {skeletonBarHeights.map((height, i) => (
+          <Skeleton
+            key={`${height}-${i}`}
+            className={`${height} min-w-0 flex-1 motion-reduce:animate-none`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function UploadChart() {
-  const { data: activity, error, refetch } = useUploadActivity(7);
+  const { data: activity, isLoading, error, refetch } = useUploadActivity(7);
 
   // Memoize so recharts doesn't re-render on identical fetches.
   const data = useMemo(
@@ -45,6 +68,7 @@ export function UploadChart() {
   );
 
   const total = data.reduce((sum, d) => sum + d.uploads, 0);
+  const hasKnownActivity = activity !== undefined;
 
   return (
     <Card>
@@ -52,16 +76,27 @@ export function UploadChart() {
         <CardTitle className="card-title">Upload Activity</CardTitle>
         <CardDescription className="text-xs">Last 7 days</CardDescription>
         <CardAction className="text-right self-center">
-          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Total
-          </div>
-          <div className="text-lg font-semibold tabular-nums tracking-tight leading-tight">
-            {total}
-          </div>
+          {isLoading ? (
+            <div aria-hidden className="space-y-1">
+              <Skeleton className="ml-auto h-2.5 w-10 motion-reduce:animate-none" />
+              <Skeleton className="ml-auto h-6 w-12 motion-reduce:animate-none" />
+            </div>
+          ) : (
+            <>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Total
+              </div>
+              <div className="text-lg font-semibold tabular-nums tracking-tight leading-tight">
+                {hasKnownActivity ? total : "-"}
+              </div>
+            </>
+          )}
         </CardAction>
       </CardHeader>
       <CardContent className="p-5">
-        {error ? (
+        {isLoading ? (
+          <UploadChartSkeleton />
+        ) : error ? (
           <ErrorState error={error} onRetry={() => refetch()} />
         ) : data.length === 0 ? (
           <EmptyState

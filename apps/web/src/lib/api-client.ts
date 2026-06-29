@@ -31,13 +31,33 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Build the right status-0 ApiError for a thrown fetch().
+ *
+ * fetch() rejects with a TypeError for genuinely-offline/DNS failures AND for
+ * responses the browser refused to expose — most notably a cross-origin 500
+ * that shipped without `Access-Control-Allow-Origin`. We can't tell those apart
+ * from the error object, but `navigator.onLine === false` reliably means the
+ * device has no connectivity. Anything else reached the network, so the most
+ * likely cause is the server erroring with a CORS-blocked response — point the
+ * developer at the API logs instead of blaming their connection.
+ */
+function networkError(): ApiError {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return new ApiError("You appear to be offline — check your connection", 0);
+  }
+  return new ApiError(
+    "Couldn't reach the API, or the server returned an error the browser blocked (CORS). Check the API logs.",
+    0,
+  );
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, init);
   } catch {
-    // Network failure (offline, DNS, CORS, etc.)
-    throw new ApiError("Network error — check your connection", 0);
+    throw networkError();
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -180,9 +200,7 @@ export function uploadFile(
       }
     });
 
-    xhr.addEventListener("error", () =>
-      reject(new ApiError("Network error — check your connection", 0)),
-    );
+    xhr.addEventListener("error", () => reject(networkError()));
     xhr.addEventListener("abort", () =>
       reject(new ApiError("Upload aborted", 0)),
     );

@@ -10,7 +10,8 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Legacy API: `GET /files/{key}`, `GET /files/{key}/download`, `GET /files/{key}/preview`, `DELETE /files/{key}`
 
 ## Core Functions
-- `apps/web/src/components/files/file-browser.tsx` — tree view with expand/collapse folders, type-specific icons, hover action menus
+- `apps/web/src/components/files/file-browser.tsx` — tree view container with loading, empty, error, refresh, preview, download, and delete flows
+- `apps/web/src/components/files/file-tree-row.tsx` — recursive folder/file rows with keyboard-friendly actions and long-name handling
 - `apps/web/src/components/files/file-preview.tsx` — dialog modal for file preview
 - `apps/web/src/components/files/file-metadata-panel.tsx` — structured metadata display
 - `apps/web/src/lib/file-tree.ts` — `buildFileTree()` converts flat S3 keys to folder/file hierarchy
@@ -42,7 +43,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Page loads → fetches file list from `GET /files` (sorted most recent first)
 - Files organized into tree view — folders expand/collapse, files shown with type-specific icons
 - Top-level folders auto-expand on load
-- User hovers file row → action buttons appear (preview / download / delete)
+- User hovers or focuses a file row → action menu appears (preview / download / delete); touch-sized menu button remains visible on small screens
 - Preview: opens dialog, fetches a preview-only presigned URL via `/files-by-key/preview?key=...` (does not count as a download) and renders image/PDF inline
 - Download: fetches presigned URL via `/files-by-key/download?key=...` (attachment disposition, 10-min expiry), opens in new tab, bumps the download counter, triggers a stats refresh
 - Delete: calls `DELETE /files-by-key?key=...`, removes row from tree, shows toast
@@ -53,15 +54,16 @@ List, preview, download, and delete files stored in Backblaze B2.
 - File not found (deleted externally) → API returns 404
 - Invalid file key (traversal attempt, empty key) → API returns 400
 - File key contains `/`, spaces, `#`, `?`, `%`, reserved route names, or suffixes like `/download` and `/preview` → web client sends the key as a query parameter before calling get/download/preview/delete routes
-- B2 unreachable → API error, toast notification
-- Empty bucket → "No files found" message with upload prompt
+- B2 unreachable → persistent error state with retry
+- Empty bucket → upload prompt with direct Upload action
 - Delete failure → API returns 500, toast error
 
 ## UX States
-- Empty: centered message with upload prompt
+- Empty: centered message with upload prompt and Upload action
 - Loading: skeleton rows
-- Error: toast notification
-- Loaded: tree view with expand/collapse folders and hover action menus
+- Error: inline error state with Retry
+- Loaded: tree view with expand/collapse folders and focus/hover action menus
+- Preview: responsive dialog with wrapped file names, fallback copy for preview URL failures, and metadata that tolerates long keys
 
 ## Verification
 - Test files: `services/api/tests/test_file_key_routes.py`, `apps/web/src/lib/api-client.test.ts`

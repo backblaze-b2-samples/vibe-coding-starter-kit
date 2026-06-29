@@ -23,6 +23,31 @@ async def test_unhandled_exception_returns_500(client, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_unhandled_exception_500_carries_cors_headers(client, monkeypatch):
+    """An uncaught-exception 500 must still carry CORS headers.
+
+    Regression guard for the structural bug where the catch-all middleware sat
+    OUTSIDE CORSMiddleware: its 500 shipped without `Access-Control-Allow-Origin`,
+    so browsers blocked it and the frontend saw an opaque "network error" instead
+    of the real server failure. CORS must be the outermost middleware (main.py)
+    so the 500 produced by the inner catch-all flows back out through it.
+    """
+
+    def explode(*args, **kwargs):
+        raise RuntimeError("B2 exploded")
+
+    monkeypatch.setattr(files_service, "list_files", explode)
+
+    origin = "http://localhost:3000"
+    response = await client.get("/files", headers={"Origin": origin})
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Internal server error"
+    # The whole point: the error response is readable cross-origin.
+    assert response.headers.get("access-control-allow-origin") == origin
+
+
+@pytest.mark.asyncio
 async def test_stats_b2_failure_returns_500(client, monkeypatch):
     """Stats endpoint returns 500 when B2 is unreachable."""
 

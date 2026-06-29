@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-10 -->
+<!-- last_verified: 2026-06-25 -->
 # Feature: Dashboard
 
 ## Purpose
@@ -32,16 +32,16 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 ## Flow
 - Page loads → three parallel API calls (stats, recent files, upload activity)
 - Stats cards display total files, storage used, uploads today, total downloads
-- Upload chart displays server-aggregated daily counts for last 7 days as bar chart
+- Upload chart displays server-aggregated daily counts for last 7 days as bar chart after activity data is known
 - Recent uploads table shows last 10 files with filename, size, type, date, status badge
 
 ## Edge Cases
-- API unavailable → stats default to zeros, table shows empty state
+- API unavailable → error states with retry where supported; activity chart does not show a false zero state while loading
 - No files uploaded → empty chart message, empty table message
 - Large file count → stats endpoint paginates through all objects using `ContinuationToken`
 
 ## UX States
-- Loading: skeleton placeholders for cards and table
+- Loading: skeleton placeholders for cards, table, and upload activity chart
 - Empty: "No files uploaded yet" / "No upload data available yet"
 - Loaded: populated cards, chart, table
 

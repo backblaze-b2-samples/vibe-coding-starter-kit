@@ -1,12 +1,14 @@
-<!-- last_verified: 2026-03-06 -->
+<!-- last_verified: 2026-07-14 -->
 # Feature: Metadata Extraction
 
 ## Purpose
 Extract rich metadata from uploaded files and return it alongside upload results.
 
 ## Used By
-- API: `POST /upload` (called after B2 upload)
-- UI: upload results, file metadata panel
+- API: `POST /upload` (called after B2 upload) — returns the full `FileMetadataDetail` in the upload response
+- UI: the Upload page renders it via `FileMetadataPanel`, behind a per-file "View details" disclosure on each completed upload (`apps/web/src/components/upload/upload-progress.tsx`)
+
+> Note: extraction runs at upload time from the in-memory file bytes; the result is **not** persisted. The Files browser preview dialog and the by-key metadata endpoint (`GET /files-by-key/metadata`) therefore expose only the core object fields (key, size, type, uploaded-at), not checksums/EXIF. Surfacing rich metadata for already-stored files would require persisting it at upload or recomputing on demand — see the tech-debt tracker.
 
 ## Core Functions
 - `services/api/app/service/metadata.py` — `extract_metadata()`, `_extract_image_metadata()`, `_extract_pdf_metadata()`
@@ -25,7 +27,7 @@ Extract rich metadata from uploaded files and return it alongside upload results
 - `FileMetadataDetail`: filename, size_bytes, size_human, mime_type, extension, md5, sha256, uploaded_at
 - Image-specific (optional): image_width, image_height, exif dict
 - PDF-specific (optional): pdf_pages, pdf_author, pdf_title
-- Audio/Video (optional): duration_seconds, codec, bitrate
+- Audio/Video (optional): duration_seconds, codec, bitrate — **reserved in the model but not yet extracted**; `extract_metadata()` only populates image and PDF fields today, so these are always null
 
 ## Flow
 - Upload route receives file and stores in B2
@@ -33,8 +35,8 @@ Extract rich metadata from uploaded files and return it alongside upload results
 - Computes MD5 and SHA-256 hashes
 - If image: opens with Pillow, extracts dimensions and EXIF data
 - If PDF: opens with PyPDF2, extracts page count, author, title
-- Returns `FileMetadataDetail` model
-- Frontend displays metadata in file-metadata-panel component
+- Returns `FileMetadataDetail` model in the `metadata` field of the upload response
+- Upload page stores that payload on the completed queue item and renders it in `FileMetadataPanel` under a collapsible "View details" toggle
 
 ## Edge Cases
 - Corrupt image → Pillow fails silently, image fields remain null
@@ -44,7 +46,9 @@ Extract rich metadata from uploaded files and return it alongside upload results
 - Large file → hashing may be slow (computed in-memory)
 
 ## UX States
-- Not applicable (metadata is part of upload response and file preview)
+- Collapsed (default): completed uploads show a "View details" toggle
+- Expanded: `FileMetadataPanel` renders checksums, plus image/PDF fields when present
+- Non-image/non-PDF file: only common fields shown (hashes, size, extension) — no image/PDF/media sections
 
 ## Verification
 - Test files: `services/api/tests/` (no dedicated metadata tests yet)

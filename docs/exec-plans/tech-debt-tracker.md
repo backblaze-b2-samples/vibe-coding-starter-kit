@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-03-10 -->
+<!-- last_verified: 2026-07-14 -->
 # Tech Debt Tracker
 
 Known tech debt items. Agents update this when they discover or create tech debt.
@@ -14,3 +14,5 @@ Known tech debt items. Agents update this when they discover or create tech debt
 | `humanizeBytes` duplicated in TypeScript | DRY violation | Extract to `lib/utils.ts` | Low | Open |
 | `formatDate` duplicated in TypeScript | DRY violation | Extract to `lib/utils.ts` | Low | Open |
 | No test harness for feature specs | No automated verification | Add pytest fixtures + test files per feature | Medium | Resolved (partial — tests added for upload, files, activity, errors) |
+| Rich metadata (checksums/EXIF) not available for already-stored files | Files browser preview + `GET /files-by-key/metadata` show core fields only; extraction result is computed at upload and discarded | Persist `FileMetadataDetail` at upload (e.g. S3 user-metadata, mind the ~2KB cap) or recompute on demand, then return it from the by-key endpoint and wire `FileMetadataPanel` into the preview dialog | Low | Open |
+| Audio/Video metadata fields declared but never extracted | `duration_seconds`/`codec`/`bitrate` always null | Add an audio/video extractor in `service/metadata.py` or drop the fields from `FileMetadataDetail` | Low | Open |

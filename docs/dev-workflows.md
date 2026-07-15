@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-06-25 -->
+<!-- last_verified: 2026-07-15 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -69,10 +69,31 @@ Engineering workflows for this repo.
 ## Frontend Conventions
 
 - Tailwind v4: config via CSS `@theme` blocks, NOT `tailwind.config.ts`
-- Colors: OKLch format
+- Colors: hex design tokens (GitHub Primer palette) in
+  `apps/web/src/app/globals.css`. Use via Tailwind utilities (`bg-primary`,
+  `text-muted-foreground`) or `var(--token)`. Restyle by editing tokens, not
+  component classes.
 - Dark mode: `next-themes` with `@custom-variant dark (&:is(.dark *))`
 - Animations: `tw-animate-css` (not `tailwindcss-animate`)
-- shadcn/ui components in `src/components/ui/` are generated — never modify them
+- shadcn/ui components in `src/components/ui/` are generated — never modify
+  them. To extend one (e.g. give a dialog action a variant), wrap it or pass
+  `buttonVariants()` / classes at the call site instead of editing the file.
+
+**Design system:** the full token + primitive catalog lives in
+[design-system.md](design-system.md), with a live reference at the `/design`
+route. Build new screens from these primitives and tokens — don't hand-roll.
+
+### Building a screen
+
+1. Page shell: a `page-title` heading + one-line `text-muted-foreground`
+   description, then content stacked with `space-y-*`.
+2. Group content in `Card` (`components/ui/card`); use `Section` for labelled
+   groupings on reference pages.
+3. Fetch through a `queries.ts` hook (see Data Fetching below) — never bare
+   `useEffect + fetch`.
+4. Cover every state: `Skeleton` while loading, `EmptyState` when there's no
+   data, `<ErrorState error={error} onRetry={...} />` on fetch failure.
+5. Style through tokens (`bg-*`, `text-*`, `var(--token)`) — no hex literals.
 
 ## Data Fetching
 

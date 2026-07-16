@@ -132,7 +132,7 @@ Open `.env` in your editor and keep it visible. Then head to the [Backblaze B2 d
 pnpm dev
 ```
 
-That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file and see it working.
+That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file and see it working. Interactive API docs (Swagger UI) are at `localhost:8000/docs`, with ReDoc at `/redoc`.
 
 `pnpm dev` runs `pnpm doctor` first — a preflight check that catches the common setup gotchas (wrong Node/Python version, missing venv, missing or placeholder `.env`, ports already taken) and tells you exactly how to fix each one. Run it standalone any time with `pnpm doctor`.
 
@@ -161,6 +161,8 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 - Structured JSON logging — every request traced with `request_id` and timing
 - `/health` endpoint — B2 connectivity check
 - `/metrics` endpoint — Prometheus-format counters (request count, latency, uploads)
+- `/docs` + `/redoc` — auto-generated interactive API docs (toggle off in prod with `ENABLE_DOCS=false`)
+- Per-IP rate limiting and magic-byte upload validation — see [SECURITY.md](docs/SECURITY.md)
 
 ## Tech Stack
 
@@ -180,6 +182,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm build` | Build frontend |
 | `pnpm lint` | Lint frontend |
 | `pnpm lint:api` | Lint backend (ruff) |
+| `pnpm test:web` | Run frontend unit tests (vitest) |
 | `pnpm test:api` | Run backend tests |
 | `pnpm check:structure` | Verify layering rules |
 | `pnpm test:e2e` | Playwright e2e tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |

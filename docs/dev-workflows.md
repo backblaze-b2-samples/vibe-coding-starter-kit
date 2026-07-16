@@ -55,16 +55,21 @@ Engineering workflows for this repo.
 
 ### Commands
 - Quick (backend): `pnpm test:api`
+- Frontend unit: `pnpm test:web` (vitest, excludes e2e)
 - Structure: `pnpm check:structure`
 - Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`
-- Full suite: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Full suite: `pnpm typecheck && pnpm lint && pnpm test:web && pnpm lint:api && pnpm test:api && pnpm check:structure`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
 
 ### When to run
 - After behavior change: run relevant subset
 - Before PR: run full suite
+
+### Continuous Integration
+- `.github/workflows/ci.yml` runs the web gates (`lint`, `test:web`, `build`) and API gates (`ruff`, `pytest`, structure tests) on every PR and push to `main`.
+- No secrets required — backend tests mock the B2 repo layer and `/health` tolerates a degraded connection. E2E is not in CI (it needs a running app + live B2).
 
 ## Frontend Conventions
 

@@ -77,6 +77,9 @@ def validate_key(key: str) -> None:
 
 
 def get_files(prefix: str = "", limit: int = 100) -> list[FileMetadata]:
+    # SECURITY: this lists the whole bucket (or `prefix`) with no per-user
+    # filter — see docs/SECURITY.md. A multi-tenant clone must scope this to
+    # the caller's own prefixes, or users see each other's files.
     if limit < 1 or limit > 1000:
         raise ValueError("Limit must be between 1 and 1000")
     # list_files paginates the whole prefix (not just the first 1000 keys).

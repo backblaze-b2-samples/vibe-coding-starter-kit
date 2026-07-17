@@ -9,6 +9,11 @@ Security principles and implementation for the vibe-coding-starter-kit.
 - **API -> B2**: Authenticated via `B2_KEY_ID` + `B2_APPLICATION_KEY`, signature v4
 - **Client -> B2**: Presigned URLs for download (10-min expiry, `Content-Disposition: attachment`)
 
+## Authentication & Multi-Tenancy
+
+- **No auth by design.** The file API (`/files`, `/files-by-key`, `/upload`) is unauthenticated and bucket-wide — any client can list, download, and delete every object. Acceptable for a single-tenant demo; the rate limiter guards the open endpoints.
+- **Adding auth to a clone does not close this automatically.** A login screen alone leaves an open, cross-user file API. You must both (1) require auth on every file route and (2) scope listings and reads to the caller's own prefixes — skipping either lets one signed-in user read and delete another's files. See the co-located notes in `runtime/files.py` and `service/files.py`.
+
 ## Upload Validation
 
 - Filename sanitization: path traversal, null bytes, unsafe chars stripped

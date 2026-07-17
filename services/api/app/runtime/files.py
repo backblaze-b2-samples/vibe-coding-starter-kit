@@ -31,6 +31,13 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# SECURITY: these routes are intentionally UNAUTHENTICATED and bucket-wide
+# (single-tenant demo stance — see docs/SECURITY.md, "Authentication &
+# Multi-Tenancy"). Adding a login screen to a clone is NOT enough: you must
+# add your auth dependency to every route here AND scope listings/reads to
+# the caller's own prefixes in service/files.py, or one signed-in user can
+# read and delete another user's files.
+
 
 def _file_url_response(key: str, *, preview: bool) -> dict[str, str]:
     try:

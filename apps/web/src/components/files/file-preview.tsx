@@ -103,7 +103,7 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[85svh] w-[calc(100vw-2rem)] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[85svh] w-[calc(100vw-2rem)] sm:max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="min-w-0 break-words pr-6">
             {file.filename}
@@ -152,52 +152,53 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
               </div>
             )}
           </div>
-          <div className="min-w-0 space-y-4">
-            <div className="space-y-2 text-sm">
-              <PreviewMetaRow label="Size" value={file.size_human} mono />
-              <PreviewMetaRow label="Type" value={file.content_type} />
-              <PreviewMetaRow
-                label="Uploaded"
-                value={formatPreviewDate(file.uploaded_at)}
-              />
-              <PreviewMetaRow label="Key" value={file.key} mono />
-            </div>
-            <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  aria-label={`Toggle detailed metadata for ${file.filename}`}
-                  className="h-7 gap-1 px-2 text-xs text-muted-foreground"
-                  size="sm"
-                  variant="ghost"
-                >
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 transition-transform ${
-                      detailsOpen ? "rotate-180" : ""
-                    }`}
-                    aria-hidden="true"
-                  />
-                  {detailsOpen ? "Hide details" : "Detailed metadata"}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2">
-                {detailLoading ? (
-                  <Skeleton
-                    className="h-40 w-full"
-                    role="status"
-                    aria-label="Loading detailed metadata"
-                  />
-                ) : detailError ? (
-                  <p className="text-xs text-destructive" aria-live="polite">
-                    Couldn&apos;t load detailed metadata. It&apos;s recomputed by
-                    downloading the file — try again, or check the API logs.
-                  </p>
-                ) : detail ? (
-                  <FileMetadataPanel metadata={detail} />
-                ) : null}
-              </CollapsibleContent>
-            </Collapsible>
+          <div className="min-w-0 space-y-2 text-sm">
+            <PreviewMetaRow label="Size" value={file.size_human} mono />
+            <PreviewMetaRow label="Type" value={file.content_type} />
+            <PreviewMetaRow
+              label="Uploaded"
+              value={formatPreviewDate(file.uploaded_at)}
+            />
+            <PreviewMetaRow label="Key" value={file.key} mono />
           </div>
         </div>
+        {/* Detailed metadata spans the full dialog width rather than the
+            right half-column, so long checksums / EXIF / PDF rows have room
+            to breathe instead of wrapping inside a cramped box. */}
+        <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              aria-label={`Toggle detailed metadata for ${file.filename}`}
+              className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+              size="sm"
+              variant="ghost"
+            >
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${
+                  detailsOpen ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
+              {detailsOpen ? "Hide details" : "Detailed metadata"}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            {detailLoading ? (
+              <Skeleton
+                className="h-40 w-full"
+                role="status"
+                aria-label="Loading detailed metadata"
+              />
+            ) : detailError ? (
+              <p className="text-xs text-destructive" aria-live="polite">
+                Couldn&apos;t load detailed metadata. It&apos;s recomputed by
+                downloading the file — try again, or check the API logs.
+              </p>
+            ) : detail ? (
+              <FileMetadataPanel metadata={detail} />
+            ) : null}
+          </CollapsibleContent>
+        </Collapsible>
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-05-01 -->
+<!-- last_verified: 2026-07-15 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -102,7 +102,7 @@ pnpm install
 
 ```bash
 cd services/api
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cd ../..
 ```
@@ -132,7 +132,7 @@ Open `.env` in your editor and keep it visible. Then head to the [Backblaze B2 d
 pnpm dev
 ```
 
-That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file and see it working.
+That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file and see it working. Interactive API docs (Swagger UI) are at `localhost:8000/docs`, with ReDoc at `/redoc`.
 
 `pnpm dev` runs `pnpm doctor` first — a preflight check that catches the common setup gotchas (wrong Node/Python version, missing venv, missing or placeholder `.env`, ports already taken) and tells you exactly how to fix each one. Run it standalone any time with `pnpm doctor`.
 
@@ -161,6 +161,8 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 - Structured JSON logging — every request traced with `request_id` and timing
 - `/health` endpoint — B2 connectivity check
 - `/metrics` endpoint — Prometheus-format counters (request count, latency, uploads)
+- `/docs` + `/redoc` — auto-generated interactive API docs (toggle off in prod with `ENABLE_DOCS=false`)
+- Per-IP rate limiting and magic-byte upload validation — see [SECURITY.md](docs/SECURITY.md)
 
 ## Tech Stack
 
@@ -180,6 +182,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm build` | Build frontend |
 | `pnpm lint` | Lint frontend |
 | `pnpm lint:api` | Lint backend (ruff) |
+| `pnpm test:web` | Run frontend unit tests (vitest) |
 | `pnpm test:api` | Run backend tests |
 | `pnpm check:structure` | Verify layering rules |
 | `pnpm test:e2e` | Playwright e2e tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |

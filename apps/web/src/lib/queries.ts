@@ -6,6 +6,7 @@ import {
   deleteFile,
   getFiles,
   getFileStats,
+  getHealth,
   getPreviewUrl,
   getUploadActivity,
 } from "@/lib/api-client";
@@ -22,7 +23,10 @@ export const qk = {
   uploadActivity: (days: number) =>
     [...qk.all, "stats", "activity", days] as const,
   preview: (key: string) => [...qk.all, "preview", key] as const,
+  health: () => [...qk.all, "health"] as const,
 };
+
+export type Health = Awaited<ReturnType<typeof getHealth>>;
 
 export function useFiles(prefix = "", limit = 100) {
   return useQuery<FileMetadata[], ApiError>({
@@ -54,6 +58,20 @@ export function usePreviewUrl(key: string | undefined, enabled: boolean) {
     queryFn: () => getPreviewUrl(key as string),
     enabled: enabled && !!key,
     staleTime: 60_000,
+  });
+}
+
+// Health poll for the top-of-app B2 banner. `retry: false` and letting a
+// failed fetch leave `data` undefined keeps a down API silent (the
+// per-component ErrorState covers that); the banner only reacts to an up API
+// reporting b2_connected: false. Polls every 60s and on window focus.
+export function useHealth() {
+  return useQuery<Health>({
+    queryKey: qk.health(),
+    queryFn: getHealth,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+    retry: false,
   });
 }
 

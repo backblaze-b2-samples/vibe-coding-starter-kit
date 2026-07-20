@@ -40,8 +40,9 @@ Extract rich metadata from uploaded files and surface it both at upload time and
 - If image: opens with Pillow, extracts dimensions and EXIF data
 - If PDF: opens with PyPDF2, extracts page count, author, title
 - Returns `FileMetadataDetail` model in the `metadata` field of the upload response
+- `uploaded_at` is passed in explicitly (the fresh upload time, or a stored object's `head_object` LastModified) so the panel shows the true upload time rather than the recompute wall-clock time; it defaults to now only when omitted
 - Upload page stores that payload on the completed queue item and renders it in `FileMetadataPanel` under a collapsible "View details" toggle
-- For a stored object: `get_file_detail()` heads the object (rejecting >`max_file_size`), downloads it via `get_object_bytes()`, and re-runs `extract_metadata()`; the Files preview dialog fetches this lazily when the user expands "Detailed metadata"
+- For a stored object: `get_file_detail()` heads the object (rejecting >`max_file_size`), downloads it via `get_object_bytes()`, and re-runs `extract_metadata()` with the object's real upload time; the Files preview dialog fetches this lazily when the user expands "Detailed metadata"
 
 ## Edge Cases
 - Corrupt image → Pillow fails silently, image fields remain null
@@ -57,7 +58,7 @@ Extract rich metadata from uploaded files and surface it both at upload time and
 - Non-image/non-PDF file: only common fields shown (hashes, size, extension) — no image/PDF/media sections
 
 ## Verification
-- Test files: `services/api/tests/test_file_detail.py` (stored-object detail: checksums, image dimensions, 404, 413 size guard)
+- Test files: `services/api/tests/test_file_detail.py` (stored-object detail: checksums, image dimensions, real upload time preserved, 404, 413 size guard, and streaming-read failure wrapped as RuntimeError → 502)
 - Required cases: image with EXIF, image without EXIF, PDF with metadata, PDF without metadata, unknown file type, corrupt file handling
 - Quick verify command: `pnpm test:api`
 - Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`

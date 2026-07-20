@@ -123,7 +123,9 @@ def get_file_detail(key: str) -> FileMetadataDetail:
             f"Max size: {humanize_bytes(settings.max_file_size)}"
         )
     data = get_object_bytes(key)
-    return extract_metadata(data, metadata.filename, metadata.content_type)
+    return extract_metadata(
+        data, metadata.filename, metadata.content_type, metadata.uploaded_at
+    )
 
 
 def get_preview_url(key: str) -> str:

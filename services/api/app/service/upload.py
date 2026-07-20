@@ -164,7 +164,9 @@ def process_upload(
     # version automatically.  No duplicate rejection needed.
     key = f"uploads/{safe_name}"
     result = upload_file(file_data, key, content_type)
-    metadata = extract_metadata(file_data, safe_name, content_type)
+    metadata = extract_metadata(
+        file_data, safe_name, content_type, result.uploaded_at
+    )
 
     return FileUploadResponse(
         key=result.key,

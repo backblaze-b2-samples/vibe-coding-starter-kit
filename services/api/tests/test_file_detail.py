@@ -16,6 +16,9 @@ from app.service import files as files_service
 from app.types import FileMetadata
 
 TEXT_BYTES = b"hello, world\n"
+# A fixed *past* upload time, distinct from "now", so the timestamp assertion
+# below proves the real upload time is threaded through the recompute.
+UPLOADED_AT = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
 
 
 def _fake_metadata(
@@ -31,7 +34,7 @@ def _fake_metadata(
         size_bytes=size_bytes,
         size_human=f"{size_bytes} B",
         content_type=content_type,
-        uploaded_at=datetime.now(UTC),
+        uploaded_at=UPLOADED_AT,
         url=None,
     )
 
@@ -60,6 +63,9 @@ async def test_detail_returns_checksums_for_text_file(client, monkeypatch):
     assert body["md5"] == hashlib.md5(TEXT_BYTES).hexdigest()
     assert body["sha256"] == hashlib.sha256(TEXT_BYTES).hexdigest()
     assert body["extension"] == "txt"
+    # The stored object's real upload time (head_object LastModified) is
+    # threaded through the recompute — not the recompute wall-clock time.
+    assert body["uploaded_at"].startswith("2026-01-02T03:04:05")
     # Non-image / non-PDF: media/image/pdf fields stay null.
     assert body["image_width"] is None
     assert body["pdf_pages"] is None
@@ -118,3 +124,28 @@ async def test_detail_oversized_file_rejected_without_download(client, monkeypat
     )
 
     assert resp.status_code == 413
+
+
+def test_get_object_bytes_wraps_streaming_read_failure(monkeypatch):
+    """A mid-stream read failure must become a RuntimeError, not escape.
+
+    `get_object` can succeed while the body's `.read()` fails partway through a
+    large download with a BotoCoreError (not a ClientError). The repo must wrap
+    it so the runtime's RuntimeError->502 mapping holds instead of leaking a 500.
+    """
+    from botocore.exceptions import ResponseStreamingError
+
+    from app.repo import b2_object
+
+    class _Body:
+        def read(self):
+            raise ResponseStreamingError(error="connection reset mid-stream")
+
+    class _Client:
+        def get_object(self, **kwargs):
+            return {"Body": _Body()}
+
+    monkeypatch.setattr(b2_object, "get_s3_client", lambda: _Client())
+
+    with pytest.raises(RuntimeError):
+        b2_object.get_object_bytes("uploads/big.bin")

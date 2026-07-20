@@ -1,6 +1,7 @@
 import type {
   DailyUploadCount,
   FileMetadata,
+  FileMetadataDetail,
   FileUploadResponse,
   UploadStats,
 } from "@vibe-coding-starter-kit/shared";
@@ -144,6 +145,19 @@ export async function getFile(key: string) {
   return apiFetchWithLegacyFallback<FileMetadata>(
     `/files-by-key/metadata?${fileKeyQuery(key)}`,
     () => `/files/${legacyFileKeyPath(key, { blockRouteCollisions: true })}`
+  );
+}
+
+/**
+ * Rich metadata (checksums, image/PDF fields) for an already-stored file.
+ * The server recomputes this on demand by downloading the object, so it's a
+ * heavier call than getFile — fetch it lazily (only when the user asks to see
+ * details). No legacy path fallback: this endpoint is new, so an older backend
+ * wouldn't serve it under any route.
+ */
+export async function getFileDetail(key: string) {
+  return apiFetch<FileMetadataDetail>(
+    `/files-by-key/detail?${fileKeyQuery(key)}`
   );
 }
 

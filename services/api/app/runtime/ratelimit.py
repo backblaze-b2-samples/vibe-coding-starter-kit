@@ -47,10 +47,15 @@ def _client_ip(request: Request) -> str:
 
 
 def _tier_and_limit(request: Request) -> tuple[str, int]:
-    """Expensive/mutating requests get the tighter 'write' cap."""
+    """Expensive/mutating requests get the tighter 'write' cap.
+
+    `/detail` is a GET but downloads the whole object to recompute metadata, so
+    it carries the same egress/cost-amplification risk as a download and shares
+    the tighter tier.
+    """
     path = request.url.path
     if request.method in ("POST", "DELETE") or path.endswith(
-        ("/download", "/preview")
+        ("/download", "/preview", "/detail")
     ):
         return "write", settings.rate_limit_write_per_minute
     return "read", settings.rate_limit_per_minute

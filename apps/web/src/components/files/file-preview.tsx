@@ -1,6 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePreviewUrl } from "@/lib/queries";
+import { FileMetadataPanel } from "@/components/files/file-metadata-panel";
+import { useFileDetail, usePreviewUrl } from "@/lib/queries";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 interface FilePreviewProps {
@@ -64,6 +73,25 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
   );
   const previewUrl = data?.url ?? file?.url ?? null;
 
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  // Collapse the disclosure when the dialog closes, so reopening (possibly for
+  // a different file) starts collapsed and doesn't auto-trigger the heavier
+  // detail fetch. Done in the close handler rather than an effect to avoid a
+  // cascading setState-in-effect render.
+  function handleOpenChange(next: boolean) {
+    if (!next) setDetailsOpen(false);
+    onOpenChange(next);
+  }
+
+  // Rich metadata is recomputed server-side (a full object download), so fetch
+  // it lazily: only once the dialog is open AND the user expands the details.
+  const {
+    data: detail,
+    isLoading: detailLoading,
+    isError: detailError,
+  } = useFileDetail(file?.key, open && detailsOpen);
+
   if (!file) return null;
 
   const isImage = file.content_type.startsWith("image/");
@@ -74,7 +102,7 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
       : "The preview link could not be created.";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[85svh] w-[calc(100vw-2rem)] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="min-w-0 break-words pr-6">
@@ -134,6 +162,40 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
               />
               <PreviewMetaRow label="Key" value={file.key} mono />
             </div>
+            <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  aria-label={`Toggle detailed metadata for ${file.filename}`}
+                  className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+                  size="sm"
+                  variant="ghost"
+                >
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${
+                      detailsOpen ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                  {detailsOpen ? "Hide details" : "Detailed metadata"}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                {detailLoading ? (
+                  <Skeleton
+                    className="h-40 w-full"
+                    role="status"
+                    aria-label="Loading detailed metadata"
+                  />
+                ) : detailError ? (
+                  <p className="text-xs text-destructive" aria-live="polite">
+                    Couldn&apos;t load detailed metadata. It&apos;s recomputed by
+                    downloading the file — try again, or check the API logs.
+                  </p>
+                ) : detail ? (
+                  <FileMetadataPanel metadata={detail} />
+                ) : null}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
       </DialogContent>

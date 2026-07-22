@@ -8,12 +8,15 @@ from app.repo import (
     delete_file,
     get_download_count,
     get_file_metadata,
+    get_object_bytes,
     get_presigned_url,
     get_upload_stats,
     increment_download_count,
     list_files,
 )
-from app.types import FileMetadata, UploadStats
+from app.service.metadata import extract_metadata
+from app.types import FileMetadata, FileMetadataDetail, UploadStats
+from app.types.formatting import humanize_bytes
 from app.types.stats import DailyUploadCount
 
 logger = logging.getLogger(__name__)
@@ -42,6 +45,19 @@ class FileNotFoundServiceError(Exception):
         super().__init__(detail)
 
 
+class FileTooLargeServiceError(Exception):
+    """Raised when an object is too large to recompute detailed metadata for.
+
+    Detailed extraction downloads and buffers the whole object in memory, so
+    objects above the upload size ceiling are refused rather than risking the
+    API process's memory.
+    """
+
+    def __init__(self, detail: str = "File too large for detailed metadata"):
+        self.detail = detail
+        super().__init__(detail)
+
+
 def validate_key(key: str) -> None:
     """Reject empty keys, path-traversal patterns, and — when configured — keys
     outside the allowed prefix.
@@ -61,6 +77,9 @@ def validate_key(key: str) -> None:
 
 
 def get_files(prefix: str = "", limit: int = 100) -> list[FileMetadata]:
+    # SECURITY: this lists the whole bucket (or `prefix`) with no per-user
+    # filter — see docs/SECURITY.md. A multi-tenant clone must scope this to
+    # the caller's own prefixes, or users see each other's files.
     if limit < 1 or limit > 1000:
         raise ValueError("Limit must be between 1 and 1000")
     # list_files paginates the whole prefix (not just the first 1000 keys).
@@ -83,6 +102,33 @@ def get_file(key: str) -> FileMetadata:
     if not metadata:
         raise FileNotFoundServiceError()
     return metadata
+
+
+def get_file_detail(key: str) -> FileMetadataDetail:
+    """Recompute rich metadata (checksums, image/PDF fields) for a stored object.
+
+    Extraction runs at upload time and is not persisted, so the Files browser
+    would otherwise only ever see the core object fields. This downloads the
+    object on demand and re-runs the same `extract_metadata()` used at upload.
+
+    It buffers the whole object in memory, so we `head` first to reject objects
+    above `max_file_size` before downloading. Raises FileKeyError (invalid key),
+    FileNotFoundServiceError (missing / deleted mid-read), or
+    FileTooLargeServiceError (over the ceiling).
+    """
+    validate_key(key)
+    metadata = get_file_metadata(key)
+    if not metadata:
+        raise FileNotFoundServiceError()
+    if metadata.size_bytes > settings.max_file_size:
+        raise FileTooLargeServiceError(
+            "File too large for detailed metadata. "
+            f"Max size: {humanize_bytes(settings.max_file_size)}"
+        )
+    data = get_object_bytes(key)
+    return extract_metadata(
+        data, metadata.filename, metadata.content_type, metadata.uploaded_at
+    )
 
 
 def get_preview_url(key: str) -> str:

@@ -151,7 +151,9 @@ async def test_successful_upload_increments_uploads_metric(client, monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        upload_service, "extract_metadata", lambda file_data, filename, content_type: None
+        upload_service,
+        "extract_metadata",
+        lambda file_data, filename, content_type, uploaded_at=None: None,
     )
 
     resp = await client.post(

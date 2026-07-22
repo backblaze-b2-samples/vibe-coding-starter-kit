@@ -103,7 +103,7 @@ export function UploadForm() {
           );
 
           try {
-            await uploadFile(item.file, (percent) => {
+            const response = await uploadFile(item.file, (percent) => {
               setItems((prev) =>
                 prev.map((i) =>
                   i.id === item.id ? { ...i, progress: percent } : i
@@ -113,7 +113,12 @@ export function UploadForm() {
             setItems((prev) =>
               prev.map((i) =>
                 i.id === item.id
-                  ? { ...i, status: "complete", progress: 100 }
+                  ? {
+                      ...i,
+                      status: "complete",
+                      progress: 100,
+                      metadata: response.metadata,
+                    }
                   : i
               )
             );

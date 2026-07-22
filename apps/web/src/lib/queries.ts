@@ -4,13 +4,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   deleteFile,
+  getFileDetail,
   getFiles,
   getFileStats,
   getHealth,
   getPreviewUrl,
   getUploadActivity,
 } from "@/lib/api-client";
-import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
+import type {
+  FileMetadata,
+  FileMetadataDetail,
+} from "@vibe-coding-starter-kit/shared";
 
 // Single source of truth for query keys. Keep these tightly scoped so that
 // invalidating "files" doesn't blow away unrelated caches, and so an IDE
@@ -23,6 +27,7 @@ export const qk = {
   uploadActivity: (days: number) =>
     [...qk.all, "stats", "activity", days] as const,
   preview: (key: string) => [...qk.all, "preview", key] as const,
+  detail: (key: string) => [...qk.all, "detail", key] as const,
   health: () => [...qk.all, "health"] as const,
 };
 
@@ -56,6 +61,19 @@ export function usePreviewUrl(key: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: qk.preview(key ?? ""),
     queryFn: () => getPreviewUrl(key as string),
+    enabled: enabled && !!key,
+    staleTime: 60_000,
+  });
+}
+
+// Rich metadata for an already-stored file. The server recomputes it on demand
+// (a full object download), so it's only fetched when `enabled` — i.e. the
+// preview dialog is open AND the user expands "Detailed metadata". Kept
+// short-lived like the preview URL; cheap correctness under key overwrites.
+export function useFileDetail(key: string | undefined, enabled: boolean) {
+  return useQuery<FileMetadataDetail, ApiError>({
+    queryKey: qk.detail(key ?? ""),
+    queryFn: () => getFileDetail(key as string),
     enabled: enabled && !!key,
     staleTime: 60_000,
   });

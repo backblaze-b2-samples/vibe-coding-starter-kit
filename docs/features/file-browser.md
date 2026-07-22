@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-06-26 -->
+<!-- last_verified: 2026-07-20 -->
 # Feature: File Browser
 
 ## Purpose
@@ -6,7 +6,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 
 ## Used By
 - UI: `/files` page, file browser component
-- API: `GET /files`, `GET /files-by-key/metadata?key=...`, `GET /files-by-key/download?key=...`, `GET /files-by-key/preview?key=...`, `DELETE /files-by-key?key=...`
+- API: `GET /files`, `GET /files-by-key/metadata?key=...`, `GET /files-by-key/detail?key=...`, `GET /files-by-key/download?key=...`, `GET /files-by-key/preview?key=...`, `DELETE /files-by-key?key=...`
 - Legacy API: `GET /files/{key}`, `GET /files/{key}/download`, `GET /files/{key}/preview`, `DELETE /files/{key}`
 
 ## Core Functions
@@ -15,10 +15,11 @@ List, preview, download, and delete files stored in Backblaze B2.
 - `apps/web/src/components/files/file-preview.tsx` — dialog modal for file preview
 - `apps/web/src/components/files/file-metadata-panel.tsx` — structured metadata display
 - `apps/web/src/lib/file-tree.ts` — `buildFileTree()` converts flat S3 keys to folder/file hierarchy
-- `apps/web/src/lib/api-client.ts` — `getFiles()`, `getFile()`, `getDownloadUrl()`, `getPreviewUrl()`, `deleteFile()`; sends object keys as query parameters so slashes and reserved route names cannot be decoded into path segments
-- `services/api/app/runtime/files.py` — HTTP handlers for list, get, download, delete
-- `services/api/app/service/files.py` — business logic, key validation
+- `apps/web/src/lib/api-client.ts` — `getFiles()`, `getFile()`, `getFileDetail()`, `getDownloadUrl()`, `getPreviewUrl()`, `deleteFile()`; sends object keys as query parameters so slashes and reserved route names cannot be decoded into path segments
+- `services/api/app/runtime/files.py` — HTTP handlers for list, get, detail, download, delete
+- `services/api/app/service/files.py` — business logic, key validation, `get_file_detail()` on-demand recompute
 - `services/api/app/repo/b2_client.py` — `list_files()`, `get_file_metadata()`, `get_presigned_url()`, `delete_file()`
+- `services/api/app/repo/b2_object.py` — `get_object_bytes()` (object download for detail recompute)
 
 ## Canonical Files
 - File route handlers: `services/api/app/runtime/files.py`
@@ -32,7 +33,8 @@ List, preview, download, and delete files stored in Backblaze B2.
 
 ## Outputs
 - `GET /files` → `FileMetadata[]` (sorted most recent first)
-- `GET /files-by-key/metadata?key=...` → `FileMetadata`
+- `GET /files-by-key/metadata?key=...` → `FileMetadata` (cheap `head_object`; core fields only)
+- `GET /files-by-key/detail?key=...` → `FileMetadataDetail` (checksums + image/PDF fields). Downloads the object and re-runs extraction on demand, so it's billed at the tighter write rate-limit tier and returns 413 for objects above `max_file_size`.
 - `GET /files-by-key/download?key=...` → `{ url: string }` (presigned URL, attachment disposition, 10-min expiry). Increments the `total_downloads` counter exposed on `/files/stats`. The counter is persisted via `repo/counter.py` to `services/api/data/download_count.json` (override via `DOWNLOAD_COUNT_FILE`). It survives a local process restart; see [RELIABILITY.md](../RELIABILITY.md#stateful-counters--durability-caveats) for its limits on ephemeral filesystems and across replicas.
 - `GET /files-by-key/preview?key=...` → `{ url: string }` (presigned URL for inline rendering, 10-min expiry). Does **not** increment the download counter — used by the preview modal for images / PDFs.
 - `DELETE /files-by-key?key=...` → `{ deleted: true, key: string }`
@@ -44,7 +46,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Files organized into tree view — folders expand/collapse, files shown with type-specific icons
 - Top-level folders auto-expand on load
 - User hovers or focuses a file row → action menu appears (preview / download / delete); touch-sized menu button remains visible on small screens
-- Preview: opens dialog, fetches a preview-only presigned URL via `/files-by-key/preview?key=...` (does not count as a download) and renders image/PDF inline
+- Preview: opens dialog, fetches a preview-only presigned URL via `/files-by-key/preview?key=...` (does not count as a download) and renders image/PDF inline. Expanding "Detailed metadata" lazily fetches `/files-by-key/detail?key=...` and renders checksums + image/PDF fields in `FileMetadataPanel`.
 - Download: fetches presigned URL via `/files-by-key/download?key=...` (attachment disposition, 10-min expiry), opens in new tab, bumps the download counter, triggers a stats refresh
 - Delete: calls `DELETE /files-by-key?key=...`, removes row from tree, shows toast
 - All key-based API calls send the key in the query string and validate it against path-traversal patterns in the API service layer
@@ -63,7 +65,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Loading: skeleton rows
 - Error: inline error state with Retry
 - Loaded: tree view with expand/collapse folders and focus/hover action menus
-- Preview: responsive dialog with wrapped file names, fallback copy for preview URL failures, and metadata that tolerates long keys
+- Preview: responsive dialog with wrapped file names, fallback copy for preview URL failures, and metadata that tolerates long keys; a "Detailed metadata" disclosure lazily loads checksums/EXIF/PDF fields (skeleton while loading, inline error if the recompute fails)
 
 ## Verification
 - Test files: `services/api/tests/test_file_key_routes.py`, `apps/web/src/lib/api-client.test.ts`

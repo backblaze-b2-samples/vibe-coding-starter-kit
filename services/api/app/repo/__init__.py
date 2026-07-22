@@ -7,6 +7,7 @@ from app.repo.b2_client import (
     list_files,
     upload_file,
 )
+from app.repo.b2_object import get_object_bytes
 from app.repo.counter import get_download_count, increment_download_count
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "delete_file",
     "get_download_count",
     "get_file_metadata",
+    "get_object_bytes",
     "get_presigned_url",
     "get_upload_stats",
     "increment_download_count",

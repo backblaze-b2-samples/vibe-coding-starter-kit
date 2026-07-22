@@ -10,19 +10,33 @@ from fastapi import APIRouter, HTTPException
 from app.service.files import (
     FileKeyError,
     FileNotFoundServiceError,
+    FileTooLargeServiceError,
     get_download_url,
     get_file,
+    get_file_detail,
     get_files,
     get_preview_url,
     get_stats,
     get_upload_activity,
     remove_file,
 )
-from app.types import DailyUploadCount, FileMetadata, UploadStats
+from app.types import (
+    DailyUploadCount,
+    FileMetadata,
+    FileMetadataDetail,
+    UploadStats,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# SECURITY: these routes are intentionally UNAUTHENTICATED and bucket-wide
+# (single-tenant demo stance — see docs/SECURITY.md, "Authentication &
+# Multi-Tenancy"). Adding a login screen to a clone is NOT enough: you must
+# add your auth dependency to every route here AND scope listings/reads to
+# the caller's own prefixes in service/files.py, or one signed-in user can
+# read and delete another user's files.
 
 
 def _file_url_response(key: str, *, preview: bool) -> dict[str, str]:
@@ -42,6 +56,21 @@ def _file_metadata_response(key: str) -> FileMetadata:
         raise HTTPException(status_code=400, detail=e.detail) from None
     except FileNotFoundServiceError as e:
         raise HTTPException(status_code=404, detail=e.detail) from None
+
+
+def _file_detail_response(key: str) -> FileMetadataDetail:
+    try:
+        return get_file_detail(key)
+    except FileKeyError as e:
+        raise HTTPException(status_code=400, detail=e.detail) from None
+    except FileNotFoundServiceError as e:
+        raise HTTPException(status_code=404, detail=e.detail) from None
+    except FileTooLargeServiceError as e:
+        raise HTTPException(status_code=413, detail=e.detail) from None
+    except RuntimeError:
+        raise HTTPException(
+            status_code=502, detail="Failed to read file from storage"
+        ) from None
 
 
 def _delete_file_response(key: str) -> dict[str, bool | str]:
@@ -89,6 +118,17 @@ def preview_file_by_key_endpoint(key: str):
 @router.get("/files-by-key/metadata", response_model=FileMetadata)
 def get_file_by_key_endpoint(key: str):
     return _file_metadata_response(key)
+
+
+@router.get("/files-by-key/detail", response_model=FileMetadataDetail)
+def get_file_detail_by_key_endpoint(key: str):
+    """Rich metadata (checksums, image/PDF fields) recomputed on demand.
+
+    Unlike /metadata (a cheap head_object), this downloads the object to
+    re-run extraction, so it is billed at the tighter 'write' rate-limit tier
+    (see runtime/ratelimit.py) to bound egress/cost amplification.
+    """
+    return _file_detail_response(key)
 
 
 @router.delete("/files-by-key")

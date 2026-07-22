@@ -23,7 +23,7 @@ def test_upload_allows_duplicate_filename(monkeypatch):
     monkeypatch.setattr(
         upload_service,
         "extract_metadata",
-        lambda file_data, filename, content_type: None,
+        lambda file_data, filename, content_type, uploaded_at=None: None,
     )
 
     result = upload_service.process_upload(
@@ -54,7 +54,7 @@ def test_upload_uses_original_filename(monkeypatch):
     monkeypatch.setattr(
         upload_service,
         "extract_metadata",
-        lambda file_data, filename, content_type: None,
+        lambda file_data, filename, content_type, uploaded_at=None: None,
     )
 
     result = upload_service.process_upload(

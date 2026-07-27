@@ -2,6 +2,7 @@
   "name": "vibe-coding-starter-kit",
   "private": true,
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "doctor": "node scripts/doctor.mjs",
     "predev": "node scripts/doctor.mjs",
     "dev": "sh scripts/dev.sh",

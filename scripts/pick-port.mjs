@@ -5,24 +5,31 @@
 //
 // Usage:  node scripts/pick-port.mjs [start]   (default start=8000)
 
-import { createServer } from "node:net";
+import { formatBindDiagnostic, probeBind } from "./local-bind.mjs";
 
 const RANGE = 10;
 const LOOPBACKS = ["127.0.0.1", "::1"];
 const start = Number.parseInt(process.argv[2] ?? "8000", 10);
 
-function isFreeOn(port, host) {
-  return new Promise((res) => {
-    const server = createServer();
-    server.once("error", () => res(false));
-    server.once("listening", () => server.close(() => res(true)));
-    server.listen(port, host);
-  });
-}
-
 async function isFree(port) {
-  const results = await Promise.all(LOOPBACKS.map((h) => isFreeOn(port, h)));
-  return results.every(Boolean);
+  const results = await Promise.all(LOOPBACKS.map((h) => probeBind(port, h)));
+  const denied = results.find((result) => result.status === "denied");
+  const error = results.find((result) => result.status === "error");
+
+  if (denied) {
+    console.error(
+      `pick-port: local bind permission denied while probing ${formatBindDiagnostic(denied)}\n` +
+        "fix: allow localhost server binding in your sandbox, or run dev/E2E in an environment that permits local servers.",
+    );
+    process.exit(2);
+  }
+
+  if (error) {
+    console.error(`pick-port: could not probe ${formatBindDiagnostic(error)}`);
+    process.exit(1);
+  }
+
+  return results.every((result) => result.status === "free");
 }
 
 for (let p = start; p < start + RANGE; p++) {

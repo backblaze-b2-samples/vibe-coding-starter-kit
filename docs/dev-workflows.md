@@ -43,6 +43,26 @@ Engineering workflows for this repo.
 
 ## Testing
 
+### Local environments
+
+Supported local development environments are macOS, Linux, and WSL2. Native
+Windows is not supported yet because the package scripts use POSIX shell syntax
+and `services/api/.venv/bin/*` paths; use WSL2 on Windows.
+
+Run `pnpm setup` on a fresh clone. It is idempotent: it installs workspace
+dependencies from `pnpm-lock.yaml`, creates `services/api/.venv` only when
+missing, installs `services/api/requirements.txt`, and copies `.env.example` to
+`.env` only if `.env` does not already exist. It does not solve Python
+dependency locking; Python requirements remain intentionally unchanged.
+
+Cloud or sandboxed agents need network permission for dependency downloads
+during `pnpm setup`. Dev and E2E runs also need localhost server binding:
+Next.js uses port 3000, and the API uses 8000-8009 via `scripts/pick-port.mjs`.
+Playwright E2E additionally needs permission to launch its Chromium browser. If
+binding is denied by the sandbox, `pnpm doctor` and `scripts/pick-port.mjs`
+report `EPERM`/`EACCES` with a local-server permission fix instead of treating
+the port as free or exhausted.
+
 ### Test types
 - **Unit**: pure logic (service layer)
 - **Integration**: HTTP handlers, B2 connectivity (`tests/`)
@@ -55,6 +75,7 @@ Engineering workflows for this repo.
 
 ### Commands
 - Agent docs health: `pnpm check:agent-docs`
+- Cold-start setup: `pnpm setup`
 - Canonical pre-PR suite: `pnpm verify`
 - Backend half only: `pnpm verify:api`
 - Frontend half only: `pnpm verify:web`

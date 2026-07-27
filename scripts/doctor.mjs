@@ -10,10 +10,12 @@
 // Run via pnpm:  pnpm doctor
 
 import { existsSync, readFileSync } from "node:fs";
-import { createServer } from "node:net";
 import { execSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { formatBindDiagnostic, probeBind } from "./local-bind.mjs";
+import { findPython, parseSemver, REQUIRED_PYTHON_MINOR } from "./python-runtime.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENV_FILE = resolve(REPO_ROOT, ".env");
@@ -22,8 +24,6 @@ const VENV_UVICORN = resolve(REPO_ROOT, "services/api/.venv/bin/uvicorn");
 // Required minimum versions. Bump as upstream support shifts.
 const REQUIRED_NODE_MAJOR = 20;
 const REQUIRED_PNPM_MAJOR = 9;
-const REQUIRED_PYTHON_MINOR = 11; // 3.11+
-
 // Required B2 env vars + the exact placeholder strings shipped in
 // .env.example. Keep in sync with services/api/main.py REQUIRED_B2_SETTINGS
 // and PLACEHOLDER_VALUES.
@@ -63,14 +63,16 @@ function tryExec(cmd) {
   }
 }
 
-function parseSemver(s) {
-  // Pulls "v20.10.0" / "20.10.0" / "9.15.0" / "Python 3.13.5" — lenient.
-  const match = s.match(/(\d+)\.(\d+)\.(\d+)/);
-  if (!match) return null;
-  return { major: +match[1], minor: +match[2], patch: +match[3] };
-}
-
 // ----- Tool versions -----
+
+function checkPlatform() {
+  if (process.platform !== "win32") return;
+
+  fail(
+    "Native Windows is not supported by the local dev scripts yet",
+    "Use macOS, Linux, or WSL2; the scripts expect POSIX shell and services/api/.venv/bin paths",
+  );
+}
 
 function checkNode() {
   const v = parseSemver(process.version);
@@ -98,29 +100,12 @@ function checkPnpm() {
 }
 
 function checkPython() {
-  // Try python3 first (canonical on macOS/Linux), then versioned names that
-  // Homebrew installs (python3.13, python3.12, python3.11), then the bare
-  // python shim (Windows / pyenv). Stop at the first one that satisfies the
-  // minimum version — this avoids false failures on macOS where `python3`
-  // resolves to the system 3.9 even when a newer Homebrew Python is on PATH.
-  const candidates = [
-    "python3",
-    "python3.13",
-    "python3.12",
-    "python3.11",
-    "python",
-  ];
-  for (const bin of candidates) {
-    const out = tryExec(`${bin} --version`);
-    if (!out) continue;
-    const v = parseSemver(out);
-    if (v && v.major >= 3 && v.minor >= REQUIRED_PYTHON_MINOR) return; // good
-  }
-  // Nothing suitable found — report using the first candidate that exists.
-  const found = candidates.map((b) => tryExec(`${b} --version`)).find(Boolean);
-  if (found) {
+  const { python, found } = findPython();
+  if (python) return;
+
+  if (found.length > 0) {
     fail(
-      `${found} is too old (need >= 3.${REQUIRED_PYTHON_MINOR})`,
+      `${found[0].text} is too old (need >= 3.${REQUIRED_PYTHON_MINOR})`,
       `Install Python 3.${REQUIRED_PYTHON_MINOR}+ via Homebrew (\`brew install python@3.12\`) or pyenv (\`pyenv install 3.${REQUIRED_PYTHON_MINOR}\`)`,
     );
   } else {
@@ -137,7 +122,7 @@ function checkVenv() {
   if (!existsSync(VENV_UVICORN)) {
     fail(
       "Backend virtualenv not set up (services/api/.venv/bin/uvicorn missing)",
-      "Run: `cd services/api && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ../..`",
+      "Run: `pnpm setup`",
     );
   }
 }
@@ -166,7 +151,7 @@ function checkEnv() {
   if (!existsSync(ENV_FILE)) {
     fail(
       ".env is missing at the repo root",
-      "Run: `cp .env.example .env`, then fill in your B2 credentials",
+      "Run: `pnpm setup`, then fill in your B2 credentials",
     );
     return;
   }
@@ -191,16 +176,6 @@ function checkEnv() {
 
 // ----- Network -----
 
-// Try to bind on a single host; resolves to true if EADDRINUSE.
-function isPortBoundOn(port, host) {
-  return new Promise((res) => {
-    const server = createServer();
-    server.once("error", (err) => res(err.code === "EADDRINUSE"));
-    server.once("listening", () => server.close(() => res(false)));
-    server.listen(port, host);
-  });
-}
-
 // We probe the wildcard interfaces (0.0.0.0 and ::) because that's what
 // `next dev` and `uvicorn` actually try to bind to. Probing only the
 // loopbacks misses the common case (on macOS) where a process bound to
@@ -208,11 +183,31 @@ function isPortBoundOn(port, host) {
 // `pnpm dev`'s own wildcard bind. If either wildcard is taken, the
 // port is effectively unusable for the dev server.
 async function checkPort({ port, name }) {
-  const [v4, v6] = await Promise.all([
-    isPortBoundOn(port, "0.0.0.0"),
-    isPortBoundOn(port, "::"),
+  const results = await Promise.all([
+    probeBind(port, "0.0.0.0"),
+    probeBind(port, "::"),
   ]);
-  if (v4 || v6) {
+  const denied = results.filter((result) => result.status === "denied");
+  const errors = results.filter((result) => result.status === "error");
+  const busy = results.some((result) => result.status === "busy");
+
+  if (denied.length > 0) {
+    fail(
+      `Local bind check for port ${port} (${name}) was denied: ${denied.map(formatBindDiagnostic).join("; ")}`,
+      "Allow localhost server binding in your sandbox, or run dev/E2E in an environment that permits local servers",
+    );
+    return;
+  }
+
+  if (errors.length > 0) {
+    fail(
+      `Could not probe port ${port} (${name}): ${errors.map(formatBindDiagnostic).join("; ")}`,
+      "Retry after checking local networking/firewall settings, or run in a standard macOS, Linux, or WSL2 shell",
+    );
+    return;
+  }
+
+  if (busy) {
     warn(
       `Port ${port} (${name}) is already in use`,
       `ok — \`pnpm dev\` will pick the next free port automatically. ` +
@@ -224,6 +219,7 @@ async function checkPort({ port, name }) {
 // ----- Run -----
 
 async function main() {
+  checkPlatform();
   checkNode();
   checkPnpm();
   checkPython();

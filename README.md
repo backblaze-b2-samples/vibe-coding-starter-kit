@@ -66,6 +66,19 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 
 You need: Node.js >= 20, pnpm >= 9, Python >= 3.11, and a free **[Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)**.
 
+### Supported local environments
+
+Local scripts are supported on macOS, Linux, and WSL2. Native Windows is not
+supported yet because the dev scripts use POSIX shell syntax and
+`services/api/.venv/bin/*` paths; use WSL2 on Windows.
+
+Cloud or sandboxed coding-agent environments also need permission for dependency
+downloads during `pnpm setup`. Running the app or Playwright E2E requires
+localhost server binding for the web server on port 3000 and the API on
+8000-8009, plus permission to launch the Playwright Chromium browser. If a
+sandbox denies binding, `pnpm doctor` and `scripts/pick-port.mjs` report
+`EPERM`/`EACCES` as a permissions issue instead of a busy port.
+
 ### Start a new project
 
 **Option 1: GitHub Template (recommended)**
@@ -92,28 +105,18 @@ Either way you get a clean project with no upstream history — ready to push to
 
 ### Setup
 
-**1. Install dependencies**
+**1. Run setup**
 
 ```bash
-pnpm install
+pnpm setup
 ```
 
-**2. Set up the backend**
+This installs workspace dependencies from the lockfile, creates
+`services/api/.venv` if missing, installs the API requirements, and copies
+`.env.example` to `.env` only when `.env` does not already exist. It is safe to
+rerun and never overwrites an existing `.env`.
 
-```bash
-cd services/api
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cd ../..
-```
-
-**3. Add your B2 credentials**
-
-Set up your local `.env`:
-
-```bash
-cp .env.example .env
-```
+**2. Add your B2 credentials**
 
 Open `.env` in your editor and keep it visible. Then head to the [Backblaze B2 dashboard](https://secure.backblaze.com/b2_buckets.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start) and:
 
@@ -126,7 +129,7 @@ Open `.env` in your editor and keep it visible. Then head to the [Backblaze B2 d
 
 > Want a walkthrough? See the docs for [creating a bucket](https://www.backblaze.com/docs/cloud-storage-create-and-manage-buckets) and [creating app keys](https://www.backblaze.com/docs/cloud-storage-create-and-manage-app-keys).
 
-**4. Run it**
+**3. Run it**
 
 ```bash
 pnpm dev
@@ -176,6 +179,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 
 | Command | What it does |
 |---------|-------------|
+| `pnpm setup` | Idempotently install workspace dependencies, create the backend venv, install API requirements, and copy `.env.example` to `.env` only if missing |
 | `pnpm dev` | Start frontend + backend |
 | `pnpm dev:web` | Frontend only |
 | `pnpm dev:api` | Backend only |
@@ -192,11 +196,13 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm check:structure` | Verify layering rules |
 | `pnpm test:e2e` | Playwright E2E smoke tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |
 
-Run `pnpm verify` before opening a PR — it needs `services/api/.venv` from step 2
-of Setup above. Run `pnpm verify:full` when you can start the local app stack and
-browser tests: `.env` must contain real B2 values, local server binding must be
-permitted, Playwright's Chromium browser must be installed, and port 3000 must be
-free (or already serving this app). Playwright waits on `http://localhost:3000`,
+Run `pnpm setup` once before local development, and rerun it after dependency
+changes. Run `pnpm verify` before opening a PR; it needs
+`services/api/.venv` from setup. Run `pnpm verify:full` when you can start the
+local app stack and browser tests: `.env` must contain real B2 values, local
+server binding must be permitted, Playwright's Chromium browser must be
+installed, and port 3000 must be free (or already serving this app). Playwright
+waits on `http://localhost:3000`,
 but `next dev` falls back to the next free port when 3000 is taken — so an
 unrelated process on 3000 makes the E2E run time out. The API starts at
 `localhost:8000` or the next free port chosen by `scripts/dev.sh`.

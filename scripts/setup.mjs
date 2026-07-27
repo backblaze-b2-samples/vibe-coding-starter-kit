@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+// Idempotent cold-start setup for local development.
+//
+// Run via pnpm: pnpm setup
+
+import { copyFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { findPython, REQUIRED_PYTHON_MINOR } from "./python-runtime.mjs";
+
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const API_DIR = resolve(REPO_ROOT, "services/api");
+const ENV_EXAMPLE = resolve(REPO_ROOT, ".env.example");
+const ENV_FILE = resolve(REPO_ROOT, ".env");
+const VENV_DIR = resolve(API_DIR, ".venv");
+const VENV_PYTHON = resolve(VENV_DIR, "bin/python");
+const REQUIREMENTS = resolve(API_DIR, "requirements.txt");
+
+function fail(message) {
+  console.error(`setup: ${message}`);
+  process.exit(1);
+}
+
+function run(command, args, cwd) {
+  console.log(`> ${[command, ...args].join(" ")}`);
+  const result = spawnSync(command, args, { cwd, stdio: "inherit" });
+
+  if (result.error) {
+    fail(
+      `${command} could not start (${result.error.code ?? result.error.message}). ` +
+        "Check that it is installed and on PATH.",
+    );
+  }
+
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+function ensureSupportedPlatform() {
+  if (process.platform !== "win32") return;
+
+  fail(
+    "native Windows is not supported by the local dev scripts yet. " +
+      "Use macOS, Linux, or WSL2 so the POSIX shell and .venv/bin paths work.",
+  );
+}
+
+function ensureEnvFile() {
+  if (existsSync(ENV_FILE)) {
+    console.log("OK .env already exists; leaving it unchanged");
+    return;
+  }
+
+  if (!existsSync(ENV_EXAMPLE)) {
+    fail(".env.example is missing, so .env cannot be created");
+  }
+
+  copyFileSync(ENV_EXAMPLE, ENV_FILE);
+  console.log("OK copied .env.example to .env; fill in your B2 credentials next");
+}
+
+function ensureVenv(pythonBin) {
+  if (existsSync(VENV_PYTHON)) {
+    console.log("OK backend virtualenv already exists");
+    return;
+  }
+
+  if (existsSync(VENV_DIR)) {
+    fail(
+      "services/api/.venv exists but .venv/bin/python is missing. " +
+        "Move the broken virtualenv aside, then rerun `pnpm setup`.",
+    );
+  }
+
+  run(pythonBin, ["-m", "venv", ".venv"], API_DIR);
+}
+
+function main() {
+  ensureSupportedPlatform();
+
+  const { python, found } = findPython();
+  if (!python) {
+    const seen = found.length > 0 ? ` Found: ${found.map((item) => item.text).join(", ")}.` : "";
+    fail(
+      `Python 3.${REQUIRED_PYTHON_MINOR}+ is required.${seen} ` +
+        "Install it with Homebrew, pyenv, or your OS package manager, then rerun `pnpm setup`.",
+    );
+  }
+
+  run("pnpm", ["install", "--frozen-lockfile"], REPO_ROOT);
+  ensureVenv(python.bin);
+  run(VENV_PYTHON, ["-m", "pip", "install", "-r", REQUIREMENTS], API_DIR);
+  ensureEnvFile();
+
+  console.log("\nSetup complete. Run `pnpm doctor` to validate credentials and local server access.");
+}
+
+main();

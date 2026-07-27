@@ -90,6 +90,7 @@ no git work tree, the whole group) that git cannot answer for is reported as
 
 ```bash
 # Run
+pnpm setup             # idempotent cold-start setup (deps, venv, .env copy)
 pnpm dev               # start both frontend and backend
 pnpm dev:web           # frontend only
 pnpm dev:api           # backend only

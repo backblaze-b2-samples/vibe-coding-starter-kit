@@ -12,6 +12,12 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege for GITHUB_TOKEN: both jobs only check out the repo and run
+# the verify gates. Applies to every job — add a narrower job-level block if a
+# future job needs more (e.g. `checks: write` to publish annotations).
+permissions:
+  contents: read
+
 jobs:
   verify-api:
     name: Verify API (pnpm verify:api)

@@ -111,6 +111,11 @@ when `pnpm test:e2e` runs.
 - No secrets required — backend tests mock the B2 repo layer and `/health`
   tolerates a degraded connection. `pnpm verify:full` and E2E are not in CI
   because they need a running app, browser install, and live B2 credentials.
+- The workflow declares `permissions: contents: read` at the top level, so
+  `GITHUB_TOKEN` is read-only for every job. Keep it that way; if a new job
+  genuinely needs to write (publish annotations, comment on a PR), add a
+  narrower job-level `permissions` block rather than widening the top-level
+  one. See [SECURITY.md](SECURITY.md#ci-permissions).
 
 ## Frontend Conventions
 

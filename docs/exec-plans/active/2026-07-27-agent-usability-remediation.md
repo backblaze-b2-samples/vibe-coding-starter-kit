@@ -71,6 +71,8 @@ None.
 
 ## Card 2: Add Canonical Verification Commands
 
+Status: Done — implemented on this branch (`chore: add canonical verification commands`). Root `package.json` now has `verify`, `verify:api`, `verify:web`, and `verify:full`; `AGENTS.md`, `README.md`, `docs/dev-workflows.md`, the feature docs, and `.github/workflows/ci.yml` all describe the same gates. The "Problem"/"Evidence" sections below describe the pre-change state — read them as history, not as current fact. Move the corresponding tracking issue to done and link this commit/PR before closing it.
+
 Metadata: Priority P1; suggested labels `CI/build`, `docs`, `agent-usability` if available; duplicate search terms `pnpm verify`, `verify:full`, `command drift`, `canonical verification`.
 
 ### Summary

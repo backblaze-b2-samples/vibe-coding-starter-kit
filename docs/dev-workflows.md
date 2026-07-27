@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-15 -->
+<!-- last_verified: 2026-07-27 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -10,7 +10,7 @@ Engineering workflows for this repo.
 - [ ] For non-trivial changes, create a plan in `docs/exec-plans/active/`
 - [ ] Implement the smallest coherent change
 - [ ] Add or update tests
-- [ ] Run: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- [ ] Run: `pnpm verify`
 - [ ] Update docs in the same PR (see AGENTS.md §9)
 - [ ] Move plan to `docs/exec-plans/completed/` after validation
 
@@ -37,7 +37,7 @@ Engineering workflows for this repo.
 ## Pull Request
 
 - [ ] One coherent change per PR
-- [ ] Run full lint + test suite before submitting
+- [ ] Run `pnpm verify` before submitting
 - [ ] Docs updated in the same PR as code changes
 - [ ] Only change files relevant to the task — no drive-by improvements
 
@@ -54,22 +54,68 @@ Engineering workflows for this repo.
 - E2E: `apps/web/e2e/` with config in `apps/web/playwright.config.ts`
 
 ### Commands
+- Canonical pre-PR suite: `pnpm verify`
+- Backend half only: `pnpm verify:api`
+- Frontend half only: `pnpm verify:web`
+- Full local suite: `pnpm verify:full`
 - Quick (backend): `pnpm test:api`
 - Frontend unit: `pnpm test:web` (vitest, excludes e2e)
 - Structure: `pnpm check:structure`
 - Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`
-- Full suite: `pnpm typecheck && pnpm lint && pnpm test:web && pnpm lint:api && pnpm test:api && pnpm check:structure`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
+
+`pnpm verify` is the canonical non-live gate for PRs. It is composed of two
+halves — `pnpm verify:api` (backend lint, backend tests, structural boundary
+tests) then `pnpm verify:web` (frontend lint, frontend unit tests, frontend
+typecheck + build) — so the fast backend gates report before the slow build,
+and so CI can run the two halves as parallel jobs. `package.json` is the single
+source of truth for the literal command chain; when it changes, don't paste the
+new chain into docs — update the plain-language gate list here and in
+`AGENTS.md` §6 (see "Documentation Update" above).
+
+`pnpm verify:full` runs `pnpm doctor` first (it fails fast on a missing venv,
+missing `.env`, or placeholder credentials, before the long suite starts), then
+`pnpm verify`, then `pnpm test:e2e`. Use it when live local prerequisites are
+available:
+
+- root `.env` contains real B2 credentials
+- the backend virtualenv `services/api/.venv` exists
+- local server binding is permitted
+- port 3000 is free, or already serving this app
+- Playwright Chromium has been installed
+
+Playwright starts `pnpm dev` from `apps/web/playwright.config.ts` and waits on
+`http://localhost:3000`. Note that `next dev` falls back to the next free port
+when 3000 is taken, so an unrelated process on 3000 makes `pnpm test:e2e` time
+out waiting on a URL the app never claimed — `pnpm doctor` warns about this but
+does not fail. The API starts at `localhost:8000` or the next free port chosen
+by `scripts/dev.sh`.
+
+`e2e/**` and `playwright.config.ts` are excluded from `apps/web/tsconfig.json`,
+so no gate in `pnpm verify` typechecks them; type errors there only surface
+when `pnpm test:e2e` runs.
 
 ### When to run
 - After behavior change: run relevant subset
-- Before PR: run full suite
+- Before PR: run `pnpm verify`
+- Before PRs that affect browser flows or live-service behavior: run
+  `pnpm verify:full` when the prerequisites above are available
 
 ### Continuous Integration
-- `.github/workflows/ci.yml` runs the web gates (`lint`, `test:web`, `build`) and API gates (`ruff`, `pytest`, structure tests) on every PR and push to `main`.
-- No secrets required — backend tests mock the B2 repo layer and `/health` tolerates a degraded connection. E2E is not in CI (it needs a running app + live B2).
+- `.github/workflows/ci.yml` runs the two halves of `pnpm verify` —
+  `pnpm verify:api` and `pnpm verify:web` — as parallel jobs on every PR and
+  push to `main`. Same gates as running `pnpm verify` locally, but they report
+  independently, so a frontend failure never hides a backend failure.
+- No secrets required — backend tests mock the B2 repo layer and `/health`
+  tolerates a degraded connection. `pnpm verify:full` and E2E are not in CI
+  because they need a running app, browser install, and live B2 credentials.
+- The workflow declares `permissions: contents: read` at the top level, so
+  `GITHUB_TOKEN` is read-only for every job. Keep it that way; if a new job
+  genuinely needs to write (publish annotations, comment on a PR), add a
+  narrower job-level `permissions` block rather than widening the top-level
+  one. See [SECURITY.md](SECURITY.md#ci-permissions).
 
 ## Frontend Conventions
 

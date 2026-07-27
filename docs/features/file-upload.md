@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-06-25 -->
+<!-- last_verified: 2026-07-27 -->
 # Feature: File Upload
 
 ## Purpose
@@ -70,9 +70,10 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 ## Verification
 - Test files: `services/api/tests/test_upload_validation.py`, `services/api/tests/test_upload_conflict.py`, `services/api/tests/test_error_handling.py`
 - Required cases: successful upload, oversized file rejection (413), disallowed type (415), extension mismatch (415), content-signature mismatch (415), missing filename, empty file, duplicate filename allowed, `uploads_total` metric increments
-- Quick verify command: `pnpm test:api`
-- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- Pass criteria: all pytest tests green, no ruff violations
+- Focused verify command: `pnpm test:api`
+- Default pre-PR verify command: `pnpm verify`
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Pass criteria: focused tests and `pnpm verify` green; explain any skipped `pnpm verify:full` prerequisites
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)

@@ -1,7 +1,9 @@
 name: CI
 
-# Runs the same quality gates AGENTS.md §5 documents. Without this, those
-# gates only ran when a human remembered to. No secrets required: backend
+# Runs the canonical non-live verification gate documented in AGENTS.md and
+# docs/dev-workflows.md. `pnpm verify` = `pnpm verify:api && pnpm verify:web`;
+# CI runs the two halves as parallel jobs so the suite stays fast and a
+# frontend failure never hides a backend failure. No secrets required: backend
 # tests mock the B2 repo layer and /health tolerates a degraded connection.
 
 on:
@@ -10,9 +12,52 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege for GITHUB_TOKEN: both jobs only check out the repo and run
+# the verify gates. Applies to every job — add a narrower job-level block if a
+# future job needs more (e.g. `checks: write` to publish annotations).
+permissions:
+  contents: read
+
 jobs:
-  web:
-    name: Web (lint · typecheck · build · unit)
+  verify-api:
+    name: Verify API (pnpm verify:api)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Only so `pnpm verify:api` resolves as a root script; the backend gates
+      # themselves shell out to services/api/.venv and need no Node packages.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install API dependencies
+        working-directory: services/api
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Backend lint, tests, structure boundaries
+        run: pnpm verify:api
+
+  verify-web:
+    name: Verify web (pnpm verify:web)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,40 +76,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Unit tests
-        run: pnpm test:web
-
-      - name: Typecheck + build
-        run: pnpm build
-
-  api:
-    name: API (ruff · pytest · structure)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/api
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Create venv and install dependencies
-        run: |
-          python -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -r requirements.txt
-
-      - name: Lint (ruff)
-        run: .venv/bin/ruff check .
-
-      - name: Tests (pytest)
-        run: .venv/bin/python -m pytest
-
-      - name: Structure boundary tests
-        run: .venv/bin/python -m pytest tests/test_structure.py -v
+      - name: Frontend lint, unit tests, typecheck + build
+        run: pnpm verify:web

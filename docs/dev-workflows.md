@@ -43,6 +43,39 @@ Engineering workflows for this repo.
 
 ## Testing
 
+### Local environments
+
+Supported local development environments are macOS, Linux, and WSL2. Native
+Windows is not supported yet because the package scripts use POSIX shell syntax
+and `services/api/.venv/bin/*` paths; use WSL2 on Windows.
+
+Run `pnpm run setup` on a fresh clone. It is idempotent: it copies
+`.env.example` to `.env` only if `.env` does not already exist (first, because it
+is the only step that needs no network), installs workspace dependencies from
+`pnpm-lock.yaml`, creates `services/api/.venv` only when missing, and installs
+`services/api/requirements.txt`. It installs with `--frozen-lockfile`, so run
+`pnpm install` yourself after editing `package.json`. It does not solve Python
+dependency locking; Python requirements remain intentionally unchanged.
+
+`setup` and `doctor` must always be invoked as `pnpm run setup` / `pnpm run
+doctor`. Both are built-in pnpm commands before pnpm 11 (the version CI pins and
+the minimum `engines` allows), and the bare `pnpm setup` / `pnpm doctor` forms
+run pnpm's own commands — `pnpm setup` silently edits your shell profile instead
+of preparing the repo. `predev` and `verify:full` therefore use the `run` form
+too, and `pnpm check:agent-docs` asserts it.
+
+Cloud or sandboxed agents need network permission for dependency downloads
+during `pnpm run setup`. Dev and E2E runs also need localhost server binding:
+Next.js uses port 3000, and the API uses 8000-8009 via `scripts/pick-port.mjs`.
+Playwright E2E additionally needs permission to launch its Chromium browser. If
+binding is denied by the sandbox, `pnpm run doctor` and `scripts/pick-port.mjs`
+report `EPERM`/`EACCES` with a local-server permission fix instead of treating
+the port as free or exhausted. A missing IPv6 stack is reported as neither: the
+`::`/`::1` probe answers `EAFNOSUPPORT`/`EADDRNOTAVAIL`, which both scripts
+ignore so an IPv6-less container still starts. Doctor also probes the two
+wildcards one after the other, because a dual-stack `::` bind on Linux collides
+with a concurrently held `0.0.0.0` bind and would report a free port as busy.
+
 ### Test types
 - **Unit**: pure logic (service layer)
 - **Integration**: HTTP handlers, B2 connectivity (`tests/`)
@@ -55,6 +88,8 @@ Engineering workflows for this repo.
 
 ### Commands
 - Agent docs health: `pnpm check:agent-docs`
+- Cold-start setup: `pnpm run setup`
+- Preflight environment check: `pnpm run doctor`
 - Canonical pre-PR suite: `pnpm verify`
 - Backend half only: `pnpm verify:api`
 - Frontend half only: `pnpm verify:web`
@@ -105,7 +140,7 @@ source of truth for the literal command chain; when it changes, don't paste the
 new chain into docs — update the plain-language gate list here and in
 `AGENTS.md` §6 (see "Documentation Update" above).
 
-`pnpm verify:full` runs `pnpm doctor` first (it fails fast on a missing venv,
+`pnpm verify:full` runs `pnpm run doctor` first (it fails fast on a missing venv,
 missing `.env`, or placeholder credentials, before the long suite starts), then
 `pnpm verify`, then `pnpm test:e2e`. Use it when live local prerequisites are
 available:
@@ -119,8 +154,8 @@ available:
 Playwright starts `pnpm dev` from `apps/web/playwright.config.ts` and waits on
 `http://localhost:3000`. Note that `next dev` falls back to the next free port
 when 3000 is taken, so an unrelated process on 3000 makes `pnpm test:e2e` time
-out waiting on a URL the app never claimed — `pnpm doctor` warns about this but
-does not fail. The API starts at `localhost:8000` or the next free port chosen
+out waiting on a URL the app never claimed — `pnpm run doctor` warns about this
+but does not fail. The API starts at `localhost:8000` or the next free port chosen
 by `scripts/dev.sh`.
 
 `e2e/**` and `playwright.config.ts` are excluded from `apps/web/tsconfig.json`,

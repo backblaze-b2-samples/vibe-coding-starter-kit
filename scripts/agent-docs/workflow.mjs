@@ -27,12 +27,15 @@ const BLOCK_SCALAR = /^([|>])[\d+-]*(?:\s+#.*)?$/;
 /** `jobs:`, tolerating trailing whitespace and a trailing comment. */
 const JOBS_KEY = /^jobs:[ \t]*(?:#.*)?$/;
 
-/** Gates each package.json script must still compose. Adding one is fine. */
+/** Gates each package.json script must still compose. Adding one is fine.
+ *  `pnpm run doctor`, not `pnpm doctor`: `doctor` and `setup` are built-in pnpm
+ *  commands before pnpm 11, and the bare forms run those instead of our
+ *  scripts. */
 const PACKAGE_GATES = {
   verify: ["pnpm check:agent-docs", "pnpm verify:api", "pnpm verify:web"],
   "verify:api": ["pnpm lint:api", "pnpm test:api", "pnpm check:structure"],
   "verify:web": ["pnpm lint", "pnpm test:web", "pnpm build"],
-  "verify:full": ["pnpm doctor", "pnpm verify", "pnpm test:e2e"],
+  "verify:full": ["pnpm run doctor", "pnpm verify", "pnpm test:e2e"],
 };
 
 const CI_COMMANDS = [
@@ -46,12 +49,20 @@ const CI_JOBS = ["verify-agent-docs", "verify-api", "verify-web"];
 /** Commands every command-doc surface must name. Presence only: the literal
  *  chain lives in package.json and must not be pasted into docs. */
 const DOCUMENTED_COMMANDS = [
+  "pnpm run setup",
   "pnpm check:agent-docs",
   "pnpm verify",
   "pnpm verify:api",
   "pnpm verify:web",
   "pnpm verify:full",
 ];
+
+/** Scripts that must keep pointing at the file the docs send readers to. */
+const SCRIPT_ENTRY_POINTS = {
+  "check:agent-docs": "scripts/check-agent-docs.mjs",
+  setup: "scripts/setup.mjs",
+  doctor: "scripts/doctor.mjs",
+};
 
 /** Whole-token match, so `pnpm verify` never matches `pnpm verify:api`. */
 function hasCommand(text, command) {
@@ -198,11 +209,13 @@ export function checkGateClaims(packageJsonText, ciText, docSurfaces) {
   if (packageJson) {
     const scripts = packageJson.scripts ?? {};
 
-    record(
-      (scripts["check:agent-docs"] ?? "").includes("scripts/check-agent-docs.mjs"),
-      "package.json script check:agent-docs runs scripts/check-agent-docs.mjs",
-      `expected a reference to scripts/check-agent-docs.mjs, actual: ${JSON.stringify(scripts["check:agent-docs"] ?? null)}`,
-    );
+    for (const [scriptName, entryPoint] of Object.entries(SCRIPT_ENTRY_POINTS)) {
+      record(
+        (scripts[scriptName] ?? "").includes(entryPoint),
+        `package.json script ${scriptName} runs ${entryPoint}`,
+        `expected a reference to ${entryPoint}, actual: ${JSON.stringify(scripts[scriptName] ?? null)}`,
+      );
+    }
 
     for (const [scriptName, gates] of Object.entries(PACKAGE_GATES)) {
       const command = scripts[scriptName] ?? "";

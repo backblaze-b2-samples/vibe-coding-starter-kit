@@ -2,6 +2,7 @@
   "name": "vibe-coding-starter-kit",
   "private": true,
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "doctor": "node scripts/doctor.mjs",
     "predev": "node scripts/doctor.mjs",
     "dev": "sh scripts/dev.sh",
@@ -13,7 +14,7 @@
     "verify": "pnpm check:agent-docs && pnpm verify:api && pnpm verify:web",
     "verify:api": "pnpm lint:api && pnpm test:api && pnpm check:structure",
     "verify:web": "pnpm lint && pnpm test:web && pnpm build",
-    "verify:full": "pnpm doctor && pnpm verify && pnpm test:e2e",
+    "verify:full": "pnpm run doctor && pnpm verify && pnpm test:e2e",
     "lint": "pnpm --filter @vibe-coding-starter-kit/web lint",
     "lint:api": "cd services/api && .venv/bin/ruff check .",
     "test:web": "pnpm --filter @vibe-coding-starter-kit/web test",

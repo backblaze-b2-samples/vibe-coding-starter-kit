@@ -251,12 +251,12 @@ passes.push(...gateClaims.passes);
 failures.push(...gateClaims.failures);
 
 // --- env files -----------------------------------------------------------
-// README setup runs `cp .env.example .env`, so the file must exist: asserting
-// an ignore pattern alone still passed with .env.example deleted.
+// `pnpm run setup` copies .env.example to .env, so the file must exist:
+// asserting an ignore pattern alone still passed with .env.example deleted.
 
 check(
   existsSync(repoPath(".env.example")),
-  ".env.example exists for README setup (cp .env.example .env)",
+  ".env.example exists for setup (scripts/setup.mjs copies it to .env)",
   "expected .env.example at the repo root, found nothing",
 );
 

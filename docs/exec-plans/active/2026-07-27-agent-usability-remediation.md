@@ -163,6 +163,8 @@ Best after Card 2, so `check:agent-docs` can validate the canonical verification
 
 ## Card 4: Improve Cold-Start Setup and Sandbox Diagnostics
 
+Status: Done — implemented on this branch (`chore: improve cold-start setup diagnostics`). `pnpm run setup` (`scripts/setup.mjs`) is the single cold-start command; `scripts/local-bind.mjs` classifies bind results as free/busy/denied/unsupported for both `scripts/doctor.mjs` and `scripts/pick-port.mjs`; `README.md` and `docs/dev-workflows.md` document supported platforms, ports, and sandbox permissions. The "Problem"/"Evidence" sections below describe the pre-change state — read them as history, not as current fact. Move the corresponding tracking issue to done and link this commit/PR before closing it.
+
 Metadata: Priority P2; suggested labels `tooling`, `docs`, `agent-usability` if available; duplicate search terms `pnpm setup`, `bootstrap`, `pick-port`, `EPERM`, `sandbox`, `devcontainer`, `WSL`.
 
 ### Summary

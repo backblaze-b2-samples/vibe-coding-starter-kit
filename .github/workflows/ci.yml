@@ -1,10 +1,11 @@
 name: CI
 
 # Runs the canonical non-live verification gate documented in AGENTS.md and
-# docs/dev-workflows.md. `pnpm verify` = `pnpm verify:api && pnpm verify:web`;
-# CI runs the two halves as parallel jobs so the suite stays fast and a
-# frontend failure never hides a backend failure. No secrets required: backend
-# tests mock the B2 repo layer and /health tolerates a degraded connection.
+# docs/dev-workflows.md. `pnpm verify` = `pnpm check:agent-docs &&
+# pnpm verify:api && pnpm verify:web`; CI runs those three checks as parallel
+# jobs so the suite stays fast and a frontend failure never hides a backend
+# failure. No secrets required: backend tests mock the B2 repo layer and
+# /health tolerates a degraded connection.
 
 on:
   push:
@@ -12,13 +13,35 @@ on:
   pull_request:
     branches: [main]
 
-# Least privilege for GITHUB_TOKEN: both jobs only check out the repo and run
-# the verify gates. Applies to every job — add a narrower job-level block if a
-# future job needs more (e.g. `checks: write` to publish annotations).
+# Least privilege for GITHUB_TOKEN: all three jobs only check out the repo and
+# run the verify gates. Applies to every job — add a narrower job-level block if
+# a future job needs more (e.g. `checks: write` to publish annotations).
 permissions:
   contents: read
 
 jobs:
+  verify-agent-docs:
+    name: Verify agent docs (pnpm check:agent-docs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # No `pnpm install`: the checker is a zero-dependency stdlib script and
+      # `pnpm run` resolves root scripts without node_modules. Skipping the
+      # install also drops a needless dependency on lockfile freshness.
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Agent instruction health check
+        run: pnpm check:agent-docs
+
   verify-api:
     name: Verify API (pnpm verify:api)
     runs-on: ubuntu-latest

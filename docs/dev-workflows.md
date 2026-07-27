@@ -54,6 +54,7 @@ Engineering workflows for this repo.
 - E2E: `apps/web/e2e/` with config in `apps/web/playwright.config.ts`
 
 ### Commands
+- Agent docs health: `pnpm check:agent-docs`
 - Canonical pre-PR suite: `pnpm verify`
 - Backend half only: `pnpm verify:api`
 - Frontend half only: `pnpm verify:web`
@@ -66,11 +67,40 @@ Engineering workflows for this repo.
 - Backend lint: `pnpm lint:api`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
 
-`pnpm verify` is the canonical non-live gate for PRs. It is composed of two
-halves — `pnpm verify:api` (backend lint, backend tests, structural boundary
-tests) then `pnpm verify:web` (frontend lint, frontend unit tests, frontend
-typecheck + build) — so the fast backend gates report before the slow build,
-and so CI can run the two halves as parallel jobs. `package.json` is the single
+`pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, thin
+cross-agent shims, command docs, CI claims, and `.env` ignore coverage
+(`scripts/check-agent-docs.mjs`, helpers in `scripts/agent-docs/`). It is
+dependency-free by design — it runs without `pnpm install`, which is why its CI
+job skips the install step. Register every new agent shim there so it can't be
+emptied or unlinked from `AGENTS.md` unnoticed (see AGENTS.md §9). A file that
+is missing *or* empty fails its own assertion rather than skipping the group it
+belongs to.
+
+Two rules about the secret-handling section are worth knowing before editing it:
+the rule must read as a prohibition (a sentence naming `.env`, credentials, keys
+or a leak surface only counts when the same sentence forbids something), and
+[SECURITY.md](SECURITY.md#agent-security-rules) must point at that heading with
+an anchored link whose target really exists. Renumbering the section therefore
+fails the check — fix the link in the same change rather than leaving a
+hyperlink that quietly lands the reader at the top of `AGENTS.md`.
+
+The `.env` ignore group asks git which repo-tracked `.gitignore` rule matches
+each path (global excludes and `.git/info/exclude` don't count). Each path is
+asked independently: one that git cannot answer for (say a symlinked
+`apps/web/`) is reported as its own `SKIPPED: .env ignore check for <path>
+(...)` line while every other path is still checked and can still fail the run.
+Only when *no* path is answerable — outside a git work tree, for instance — is
+the whole group abandoned with a single `SKIPPED: .env ignore checks (...)`
+notice. Skipped checks are never counted as passes and never fail the run.
+Example/template env files must stay trackable anywhere in the tree;
+`apps/web/.gitignore` overrides the root one for `apps/web/**`, so its negations
+live there too.
+
+`pnpm verify` is the canonical non-live gate for PRs. It is composed of
+`pnpm check:agent-docs`, then `pnpm verify:api` (backend lint, backend tests,
+structural boundary tests), then `pnpm verify:web` (frontend lint, frontend
+unit tests, frontend typecheck + build) — so the agent-doc guard runs first and
+CI can run all three checks as parallel jobs. `package.json` is the single
 source of truth for the literal command chain; when it changes, don't paste the
 new chain into docs — update the plain-language gate list here and in
 `AGENTS.md` §6 (see "Documentation Update" above).
@@ -104,10 +134,11 @@ when `pnpm test:e2e` runs.
   `pnpm verify:full` when the prerequisites above are available
 
 ### Continuous Integration
-- `.github/workflows/ci.yml` runs the two halves of `pnpm verify` —
-  `pnpm verify:api` and `pnpm verify:web` — as parallel jobs on every PR and
-  push to `main`. Same gates as running `pnpm verify` locally, but they report
-  independently, so a frontend failure never hides a backend failure.
+- `.github/workflows/ci.yml` runs `pnpm check:agent-docs` plus the two halves
+  of `pnpm verify` — `pnpm verify:api` and `pnpm verify:web` — as parallel jobs
+  on every PR and push to `main`. Same gates as running `pnpm verify` locally,
+  but they report independently, so a frontend failure never hides a backend
+  failure.
 - No secrets required — backend tests mock the B2 repo layer and `/health`
   tolerates a degraded connection. `pnpm verify:full` and E2E are not in CI
   because they need a running app, browser install, and live B2 credentials.

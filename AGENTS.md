@@ -70,6 +70,21 @@ When this repo is used as the foundation for a new app, the following pieces are
 | Import ordering | `ruff` rule I001 |
 | Frontend strict equality | `eslint` rule eqeqeq |
 | No unused vars | `eslint` + `ruff` rules |
+| This file stays agent-sized (≥ 1 KB, ≤ 20 KB, ≤ 250 lines) | `pnpm check:agent-docs` (`scripts/check-agent-docs.mjs`) |
+| Agent shims stay thin pointers to AGENTS.md (non-empty, ≤ 1 KB, ≤ 20 lines) | `pnpm check:agent-docs` |
+| Secret-handling rule stays in the "Secret Handling" section, phrased as a prohibition, and `docs/SECURITY.md` links to that heading by anchor | `pnpm check:agent-docs` |
+| Every verify command is named in AGENTS.md, README, and dev-workflows, and `package.json` still composes the expected gates | `pnpm check:agent-docs` |
+| CI runs the three verify gates it claims to | `pnpm check:agent-docs` |
+| `.env.example` exists (README setup copies it to `.env`) | `pnpm check:agent-docs` |
+| Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
+
+`pnpm check:agent-docs` is CI-blocking (job `verify-agent-docs`) and the first
+gate inside `pnpm verify`. It asserts the *set* of verify gates, not a literal
+command chain — that literal lives only in `package.json`. The env-file rules
+ask git which repo-tracked `.gitignore` matches each path, so a path (or, with
+no git work tree, the whole group) that git cannot answer for is reported as
+`SKIPPED` instead of passing or failing; see
+[docs/dev-workflows.md](docs/dev-workflows.md#testing).
 
 ## 6. Commands
 
@@ -80,6 +95,7 @@ pnpm dev:web           # frontend only
 pnpm dev:api           # backend only
 
 # Test & Lint
+pnpm check:agent-docs  # agent instruction/documentation drift check
 pnpm verify            # canonical non-live pre-PR suite
 pnpm verify:api        # backend half of verify (lint, tests, structure)
 pnpm verify:web        # frontend half of verify (lint, unit tests, typecheck + build)
@@ -93,11 +109,13 @@ pnpm check:structure   # structural boundary tests
 pnpm test:e2e          # Playwright e2e tests
 ```
 
-`pnpm verify` is the default non-live gate. It chains `pnpm verify:api` (backend
-lint, backend tests, structural boundary tests) then `pnpm verify:web` (frontend
+`pnpm check:agent-docs` validates this instruction surface, command docs, CI
+claims, and `.env` ignore coverage. `pnpm verify` is the default non-live gate.
+It chains `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint,
+backend tests, structural boundary tests), then `pnpm verify:web` (frontend
 lint, frontend unit tests, frontend typecheck + build). CI
-(`.github/workflows/ci.yml`) runs those two halves as parallel jobs on every PR
-and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
+(`.github/workflows/ci.yml`) runs those three checks as parallel jobs on every
+PR and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
 live-service prerequisites are available — see
 [docs/dev-workflows.md](docs/dev-workflows.md#commands) for the prerequisite list.
 
@@ -129,6 +147,7 @@ See [docs/dev-workflows.md](docs/dev-workflows.md) for full details.
 | Dev or testing process | `docs/dev-workflows.md` |
 | Setup or scope changes | `README.md` |
 | Security changes | `docs/SECURITY.md` |
+| Agent instruction surface (rules, a new agent shim) | `AGENTS.md` + the shims (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) + register it in `scripts/check-agent-docs.mjs` |
 | Reliability changes | `docs/RELIABILITY.md` |
 | Active work plans | `docs/exec-plans/active/` |
 | Known tech debt | `docs/exec-plans/tech-debt-tracker.md` |
@@ -155,3 +174,7 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 - Add tests with every change
 - Never bypass lint rules without explicit instruction
 - Ask before making destructive or irreversible changes
+
+## 12. Secret Handling
+
+- Never print `.env`, credentials, or API keys in chat, logs, reports, commits, or screenshots.

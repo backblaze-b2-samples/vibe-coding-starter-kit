@@ -18,9 +18,12 @@ venv/
 env/
 
 # Environment
+# Real env files are never tracked; example/template files always are.
+# Negations must stay after the ignore patterns above them to take effect.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env*.example
+!.env*.template
 
 # IDE
 .vscode/

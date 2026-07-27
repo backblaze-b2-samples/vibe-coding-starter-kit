@@ -58,6 +58,12 @@ Security principles and implementation for the vibe-coding-starter-kit.
 ## Agent Security Rules
 
 - Never commit `.env`, credentials, or API keys
+- Never print them either — the canonical rule lives in
+  [AGENTS.md §12 — Secret Handling](../AGENTS.md#12-secret-handling) (agents
+  read AGENTS.md first); don't restate it here, it only drifts. The link is
+  anchored and `pnpm check:agent-docs` verifies that it still resolves, so
+  renumbering that section fails the build instead of silently dropping the
+  reader at the top of the file
 - Never weaken validation without explicit instruction
 - Never bypass CORS, auth, or input sanitization
 - Always validate at system boundaries

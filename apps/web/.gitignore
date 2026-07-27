@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Keep example/template env files trackable (this file overrides the root
+# .gitignore for everything under apps/web/, negations included).
+!.env*.example
+!.env*.template
 
 # vercel
 .vercel

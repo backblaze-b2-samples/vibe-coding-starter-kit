@@ -28,7 +28,7 @@ The structure follows the principle that **repository knowledge is the system of
 
 ### How it works
 
-**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** A ~100 line entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, etc.) are thin pointers back to AGENTS.md.
+**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** A ~100 line entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, GEMINI.md, Copilot instructions, etc.) are thin pointers back to AGENTS.md.
 
 **Architecture is enforced mechanically, not by convention.** Layering rules, import boundaries, file size limits, and SDK containment are verified by structural tests and lints that run on every change. When rules are enforceable by code, agents follow them reliably.
 
@@ -179,7 +179,8 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm dev` | Start frontend + backend |
 | `pnpm dev:web` | Frontend only |
 | `pnpm dev:api` | Backend only |
-| `pnpm verify` | Canonical non-live pre-PR suite — chains `verify:api` then `verify:web` |
+| `pnpm check:agent-docs` | Validate agent shims, command docs, CI claims, and `.env` ignore coverage |
+| `pnpm verify` | Canonical non-live pre-PR suite — chains `check:agent-docs`, `verify:api`, then `verify:web` |
 | `pnpm verify:api` | Backend half: API lint, API tests, structure tests |
 | `pnpm verify:web` | Frontend half: web lint, web unit tests, web typecheck + build |
 | `pnpm verify:full` | `pnpm doctor`, then `pnpm verify`, then Playwright E2E; requires populated `.env`, local server/browser permission, port 3000 free, and Chromium installed |

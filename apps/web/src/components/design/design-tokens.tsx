@@ -37,10 +37,10 @@ const motion = [
 ];
 
 // Labels mirror the values declared in globals.css — keep in sync. Root
-// font-size is 14px, so 1rem = 14px. Only `.page-title` uses the Mona Sans
-// display face; card titles and body use the system stack.
+// font-size is 14px, so 1rem = 14px. The display role maps to the local
+// system stack so builds do not fetch fonts during compilation.
 const type = [
-  { label: "Page title — 1.75rem Mona Sans 600", className: "page-title" },
+  { label: "Page title — 1.75rem system 600", className: "page-title" },
   { label: "Card title — 0.875rem system 600", className: "card-title" },
   { label: "Body — 14px regular", className: "text-base" },
   { label: "Small — 0.875rem", className: "text-sm" },

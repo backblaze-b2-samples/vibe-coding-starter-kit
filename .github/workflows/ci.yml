@@ -13,9 +13,9 @@ on:
   pull_request:
     branches: [main]
 
-# Least privilege for GITHUB_TOKEN: both jobs only check out the repo and run
-# the verify gates. Applies to every job — add a narrower job-level block if a
-# future job needs more (e.g. `checks: write` to publish annotations).
+# Least privilege for GITHUB_TOKEN: all three jobs only check out the repo and
+# run the verify gates. Applies to every job — add a narrower job-level block if
+# a future job needs more (e.g. `checks: write` to publish annotations).
 permissions:
   contents: read
 
@@ -31,14 +31,13 @@ jobs:
         with:
           version: 9
 
+      # No `pnpm install`: the checker is a zero-dependency stdlib script and
+      # `pnpm run` resolves root scripts without node_modules. Skipping the
+      # install also drops a needless dependency on lockfile freshness.
       - name: Install Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Agent instruction health check
         run: pnpm check:agent-docs

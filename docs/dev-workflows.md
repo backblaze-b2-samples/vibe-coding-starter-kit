@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-15 -->
+<!-- last_verified: 2026-07-27 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -10,7 +10,7 @@ Engineering workflows for this repo.
 - [ ] For non-trivial changes, create a plan in `docs/exec-plans/active/`
 - [ ] Implement the smallest coherent change
 - [ ] Add or update tests
-- [ ] Run: `pnpm typecheck && pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- [ ] Run: `pnpm verify`
 - [ ] Update docs in the same PR (see AGENTS.md §9)
 - [ ] Move plan to `docs/exec-plans/completed/` after validation
 
@@ -37,7 +37,7 @@ Engineering workflows for this repo.
 ## Pull Request
 
 - [ ] One coherent change per PR
-- [ ] Run full lint + test suite before submitting
+- [ ] Run `pnpm verify` before submitting
 - [ ] Docs updated in the same PR as code changes
 - [ ] Only change files relevant to the task — no drive-by improvements
 
@@ -54,22 +54,43 @@ Engineering workflows for this repo.
 - E2E: `apps/web/e2e/` with config in `apps/web/playwright.config.ts`
 
 ### Commands
+- Canonical pre-PR suite: `pnpm verify`
+- Full local suite: `pnpm verify:full`
 - Quick (backend): `pnpm test:api`
 - Frontend unit: `pnpm test:web` (vitest, excludes e2e)
 - Structure: `pnpm check:structure`
 - Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`
-- Full suite: `pnpm typecheck && pnpm lint && pnpm test:web && pnpm lint:api && pnpm test:api && pnpm check:structure`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
+
+`pnpm verify` is the canonical non-live gate for PRs. It expands to frontend
+lint, frontend unit tests, frontend build, backend lint, backend tests, and
+structural boundary tests:
+
+```bash
+pnpm lint && pnpm test:web && pnpm build && pnpm lint:api && pnpm test:api && pnpm check:structure
+```
+
+`pnpm verify:full` runs `pnpm verify`, then `pnpm doctor`, then
+`pnpm test:e2e`. Use it when live local prerequisites are available: root `.env`
+contains real B2 credentials, the backend virtualenv exists, local server binding
+is permitted, and Playwright Chromium has been installed. Playwright starts
+`pnpm dev` from `apps/web/playwright.config.ts`; the web app binds on
+`localhost:3000`, and the API starts at `localhost:8000` or the next free port
+chosen by `scripts/dev.sh`.
 
 ### When to run
 - After behavior change: run relevant subset
-- Before PR: run full suite
+- Before PR: run `pnpm verify`
+- Before PRs that affect browser flows or live-service behavior: run
+  `pnpm verify:full` when the prerequisites above are available
 
 ### Continuous Integration
-- `.github/workflows/ci.yml` runs the web gates (`lint`, `test:web`, `build`) and API gates (`ruff`, `pytest`, structure tests) on every PR and push to `main`.
-- No secrets required — backend tests mock the B2 repo layer and `/health` tolerates a degraded connection. E2E is not in CI (it needs a running app + live B2).
+- `.github/workflows/ci.yml` runs `pnpm verify` on every PR and push to `main`.
+- No secrets required — backend tests mock the B2 repo layer and `/health`
+  tolerates a degraded connection. `pnpm verify:full` and E2E are not in CI
+  because they need a running app, browser install, and live B2 credentials.
 
 ## Frontend Conventions
 

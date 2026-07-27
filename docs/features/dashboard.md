@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-06-25 -->
+<!-- last_verified: 2026-07-27 -->
 # Feature: Dashboard
 
 ## Purpose
@@ -48,9 +48,10 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 ## Verification
 - Test files: `services/api/tests/test_upload_activity.py`, `services/api/tests/test_recent_files.py`
 - Required cases: stats with files, stats with empty bucket, API error fallback
-- Quick verify command: `pnpm test:api`
-- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- Pass criteria: all pytest tests green, no ruff violations
+- Focused verify command: `pnpm test:api`
+- Default pre-PR verify command: `pnpm verify`
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Pass criteria: focused tests and `pnpm verify` green; explain any skipped `pnpm verify:full` prerequisites
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)

@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-20 -->
+<!-- last_verified: 2026-07-27 -->
 # Feature: Metadata Extraction
 
 ## Purpose
@@ -60,9 +60,10 @@ Extract rich metadata from uploaded files and surface it both at upload time and
 ## Verification
 - Test files: `services/api/tests/test_file_detail.py` (stored-object detail: checksums, image dimensions, real upload time preserved, 404, 413 size guard, and streaming-read failure wrapped as RuntimeError → 502)
 - Required cases: image with EXIF, image without EXIF, PDF with metadata, PDF without metadata, unknown file type, corrupt file handling
-- Quick verify command: `pnpm test:api`
-- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- Pass criteria: all pytest tests green, no ruff violations
+- Focused verify command: `pnpm test:api`
+- Default pre-PR verify command: `pnpm verify`
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Pass criteria: focused tests and `pnpm verify` green; explain any skipped `pnpm verify:full` prerequisites
 
 ## Related Docs
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)

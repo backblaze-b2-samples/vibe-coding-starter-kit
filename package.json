@@ -9,6 +9,8 @@
     "dev:api": "cd services/api && .venv/bin/uvicorn main:app --reload --port ${API_PORT:-8000}",
     "build": "pnpm --filter @vibe-coding-starter-kit/web build",
     "typecheck": "pnpm --filter @vibe-coding-starter-kit/web typecheck",
+    "verify": "pnpm lint && pnpm test:web && pnpm build && pnpm lint:api && pnpm test:api && pnpm check:structure",
+    "verify:full": "pnpm verify && pnpm doctor && pnpm test:e2e",
     "lint": "pnpm --filter @vibe-coding-starter-kit/web lint",
     "lint:api": "cd services/api && .venv/bin/ruff check .",
     "test:web": "pnpm --filter @vibe-coding-starter-kit/web test",

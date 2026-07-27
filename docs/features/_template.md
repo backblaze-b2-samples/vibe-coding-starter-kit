@@ -39,8 +39,9 @@ One sentence describing the problem this feature solves.
 ## Verification
 - Test files: `path/to/tests`
 - Required cases: happy path + 2-5 edge cases
-- Quick verify command: `<exact command>`
-- Full verify command: `<exact command>`
+- Focused verify command: `<exact command>`
+- Default pre-PR verify command: `pnpm verify`
+- Full local verify command: `pnpm verify:full` when E2E/live prerequisites apply
 - Pass criteria: what "green" looks like for this feature
 
 ## Related Docs

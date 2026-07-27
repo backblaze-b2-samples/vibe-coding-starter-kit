@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-15 -->
+<!-- last_verified: 2026-07-27 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -179,13 +179,21 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm dev` | Start frontend + backend |
 | `pnpm dev:web` | Frontend only |
 | `pnpm dev:api` | Backend only |
+| `pnpm verify` | Canonical non-live pre-PR suite: web lint, web unit tests, web build, API lint, API tests, structure tests |
+| `pnpm verify:full` | `pnpm verify` plus `pnpm doctor` and Playwright E2E; requires populated `.env`, local server/browser permission, and Chromium installed |
 | `pnpm build` | Build frontend |
 | `pnpm lint` | Lint frontend |
 | `pnpm lint:api` | Lint backend (ruff) |
 | `pnpm test:web` | Run frontend unit tests (vitest) |
 | `pnpm test:api` | Run backend tests |
 | `pnpm check:structure` | Verify layering rules |
-| `pnpm test:e2e` | Playwright e2e tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |
+| `pnpm test:e2e` | Playwright E2E smoke tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |
+
+Run `pnpm verify` before opening a PR. Run `pnpm verify:full` when you can start
+the local app stack and browser tests: `.env` must contain real B2 values, local
+server binding must be permitted, and Playwright's Chromium browser must be
+installed. The web app binds on `localhost:3000`; the API starts at
+`localhost:8000` or the next free port chosen by `scripts/dev.sh`.
 
 ## Documentation Map
 

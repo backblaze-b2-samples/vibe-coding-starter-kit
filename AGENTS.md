@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-06-25 -->
+<!-- last_verified: 2026-07-27 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -80,6 +80,8 @@ pnpm dev:web           # frontend only
 pnpm dev:api           # backend only
 
 # Test & Lint
+pnpm verify            # canonical non-live pre-PR suite
+pnpm verify:full       # verify + doctor + Playwright E2E (requires browser + live local app prerequisites)
 pnpm lint              # frontend lint (eslint)
 pnpm build             # frontend type check + build
 pnpm test:web          # frontend unit tests (vitest)
@@ -89,7 +91,11 @@ pnpm check:structure   # structural boundary tests
 pnpm test:e2e          # Playwright e2e tests
 ```
 
-CI (`.github/workflows/ci.yml`) runs these gates on every PR and push to `main`.
+`pnpm verify` runs the default non-live gates: frontend lint, frontend unit tests,
+frontend build, backend lint, backend tests, and structural boundary tests. CI
+(`.github/workflows/ci.yml`) runs `pnpm verify` on every PR and push to `main`.
+Use `pnpm verify:full` locally when browser/E2E and live-service prerequisites are
+available.
 
 ## 7. Agent Workflow
 
@@ -97,7 +103,7 @@ CI (`.github/workflows/ci.yml`) runs these gates on every PR and push to `main`.
 2. Review [ARCHITECTURE.md](ARCHITECTURE.md) before structural changes.
 3. For non-trivial changes, create a plan in `docs/exec-plans/active/`.
 4. Implement the smallest coherent change.
-5. Run: `pnpm lint && pnpm test:web && pnpm lint:api && pnpm test:api && pnpm check:structure`
+5. Run: `pnpm verify`
 6. Update docs in the same PR (see §9).
 7. Move completed plans to `docs/exec-plans/completed/`.
 8. Only change files relevant to the task. No drive-by improvements.

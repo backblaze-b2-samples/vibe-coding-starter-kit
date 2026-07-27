@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Idempotent cold-start setup for local development.
 //
-// Run via pnpm: pnpm setup
+// Run directly:  node scripts/setup.mjs
+// Run via pnpm:  pnpm run setup  (`pnpm setup` is a built-in pnpm command
+//                before pnpm 11, so the bare form would not run this script)
 
 import { copyFileSync, existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -71,7 +73,7 @@ function ensureVenv(pythonBin) {
   if (existsSync(VENV_DIR)) {
     fail(
       "services/api/.venv exists but .venv/bin/python is missing. " +
-        "Move the broken virtualenv aside, then rerun `pnpm setup`.",
+        "Move the broken virtualenv aside, then rerun `pnpm run setup`.",
     );
   }
 
@@ -86,16 +88,19 @@ function main() {
     const seen = found.length > 0 ? ` Found: ${found.map((item) => item.text).join(", ")}.` : "";
     fail(
       `Python 3.${REQUIRED_PYTHON_MINOR}+ is required.${seen} ` +
-        "Install it with Homebrew, pyenv, or your OS package manager, then rerun `pnpm setup`.",
+        "Install it with Homebrew, pyenv, or your OS package manager, then rerun `pnpm run setup`.",
     );
   }
 
+  // .env first: it is the only step that needs no network, so a sandbox that
+  // blocks package downloads still leaves a usable .env to fill in instead of
+  // exiting before it is created.
+  ensureEnvFile();
   run("pnpm", ["install", "--frozen-lockfile"], REPO_ROOT);
   ensureVenv(python.bin);
   run(VENV_PYTHON, ["-m", "pip", "install", "-r", REQUIREMENTS], API_DIR);
-  ensureEnvFile();
 
-  console.log("\nSetup complete. Run `pnpm doctor` to validate credentials and local server access.");
+  console.log("\nSetup complete. Run `pnpm run doctor` to validate credentials and local server access.");
 }
 
 main();

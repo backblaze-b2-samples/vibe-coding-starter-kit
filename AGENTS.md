@@ -73,9 +73,9 @@ When this repo is used as the foundation for a new app, the following pieces are
 | This file stays agent-sized (≥ 1 KB, ≤ 20 KB, ≤ 250 lines) | `pnpm check:agent-docs` (`scripts/check-agent-docs.mjs`) |
 | Agent shims stay thin pointers to AGENTS.md (non-empty, ≤ 1 KB, ≤ 20 lines) | `pnpm check:agent-docs` |
 | Secret-handling rule stays in the "Secret Handling" section, phrased as a prohibition, and `docs/SECURITY.md` links to that heading by anchor | `pnpm check:agent-docs` |
-| Every verify command is named in AGENTS.md, README, and dev-workflows, and `package.json` still composes the expected gates | `pnpm check:agent-docs` |
+| Every setup/verify command is named in AGENTS.md, README, and dev-workflows; `setup`, `doctor`, and `check:agent-docs` still point at their scripts; and `package.json` still composes the expected gates | `pnpm check:agent-docs` |
 | CI runs the three verify gates it claims to | `pnpm check:agent-docs` |
-| `.env.example` exists (README setup copies it to `.env`) | `pnpm check:agent-docs` |
+| `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
 
 `pnpm check:agent-docs` is CI-blocking (job `verify-agent-docs`) and the first
@@ -90,7 +90,8 @@ no git work tree, the whole group) that git cannot answer for is reported as
 
 ```bash
 # Run
-pnpm setup             # idempotent cold-start setup (deps, venv, .env copy)
+pnpm run setup         # idempotent cold-start setup (.env copy, deps, venv)
+pnpm run doctor        # preflight environment check (also runs before pnpm dev)
 pnpm dev               # start both frontend and backend
 pnpm dev:web           # frontend only
 pnpm dev:api           # backend only
@@ -110,6 +111,10 @@ pnpm check:structure   # structural boundary tests
 pnpm test:e2e          # Playwright e2e tests
 ```
 
+`setup` and `doctor` use the `pnpm run` form on purpose: both are built-in pnpm
+commands before pnpm 11, and `pnpm setup` / `pnpm doctor` run pnpm's own
+commands instead of these scripts. Never shorten them in docs or scripts.
+
 `pnpm check:agent-docs` validates this instruction surface, command docs, CI
 claims, and `.env` ignore coverage. `pnpm verify` is the default non-live gate.
 It chains `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint,
@@ -120,8 +125,8 @@ PR and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
 live-service prerequisites are available — see
 [docs/dev-workflows.md](docs/dev-workflows.md#commands) for the prerequisite list.
 
-`pnpm verify` needs `services/api/.venv` to exist (see README setup); without it
-`pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`.
+`pnpm verify` needs `services/api/.venv` to exist (run `pnpm run setup`); without
+it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`.
 
 ## 7. Agent Workflow
 

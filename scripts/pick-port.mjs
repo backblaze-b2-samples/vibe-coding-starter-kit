@@ -5,7 +5,7 @@
 //
 // Usage:  node scripts/pick-port.mjs [start]   (default start=8000)
 
-import { formatBindDiagnostic, probeBind } from "./local-bind.mjs";
+import { BIND_DENIED_FIX, formatBindDiagnostic, probeBind } from "./local-bind.mjs";
 
 const RANGE = 10;
 const LOOPBACKS = ["127.0.0.1", "::1"];
@@ -19,7 +19,7 @@ async function isFree(port) {
   if (denied) {
     console.error(
       `pick-port: local bind permission denied while probing ${formatBindDiagnostic(denied)}\n` +
-        "fix: allow localhost server binding in your sandbox, or run dev/E2E in an environment that permits local servers.",
+        `fix: ${BIND_DENIED_FIX}.`,
     );
     process.exit(2);
   }
@@ -29,7 +29,12 @@ async function isFree(port) {
     process.exit(1);
   }
 
-  return results.every((result) => result.status === "free");
+  // `unsupported` means the loopback family itself is missing (an IPv6-disabled
+  // container answering the ::1 probe). That is not a reason to skip the port —
+  // uvicorn will bind the family that does exist.
+  return results.every(
+    (result) => result.status === "free" || result.status === "unsupported",
+  );
 }
 
 for (let p = start; p < start + RANGE; p++) {

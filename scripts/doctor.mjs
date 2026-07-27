@@ -7,15 +7,17 @@
 // fresh clone before anyone has run `pnpm install`.
 //
 // Run directly:  node scripts/doctor.mjs
-// Run via pnpm:  pnpm doctor
+// Run via pnpm:  pnpm run doctor  (`pnpm doctor` is a built-in pnpm command
+//                before pnpm 11, so the bare form would not run this script)
 
 import { existsSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { formatBindDiagnostic, probeBind } from "./local-bind.mjs";
-import { findPython, parseSemver, REQUIRED_PYTHON_MINOR } from "./python-runtime.mjs";
+import { BIND_DENIED_FIX, formatBindDiagnostic, probeBind } from "./local-bind.mjs";
+import { findPython, REQUIRED_PYTHON_MINOR } from "./python-runtime.mjs";
+import { parseSemver } from "./semver.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENV_FILE = resolve(REPO_ROOT, ".env");
@@ -122,7 +124,7 @@ function checkVenv() {
   if (!existsSync(VENV_UVICORN)) {
     fail(
       "Backend virtualenv not set up (services/api/.venv/bin/uvicorn missing)",
-      "Run: `pnpm setup`",
+      "Run: `pnpm run setup`",
     );
   }
 }
@@ -151,7 +153,7 @@ function checkEnv() {
   if (!existsSync(ENV_FILE)) {
     fail(
       ".env is missing at the repo root",
-      "Run: `pnpm setup`, then fill in your B2 credentials",
+      "Run: `pnpm run setup`, then fill in your B2 credentials",
     );
     return;
   }
@@ -182,11 +184,16 @@ function checkEnv() {
 // `::` doesn't conflict with a `127.0.0.1` probe but DOES conflict with
 // `pnpm dev`'s own wildcard bind. If either wildcard is taken, the
 // port is effectively unusable for the dev server.
+//
+// The two probes run one after the other, never in parallel: on Linux a `::`
+// bind is dual-stack by default, so it collides with a concurrently held
+// `0.0.0.0` bind and every run would report a free port as busy.
 async function checkPort({ port, name }) {
-  const results = await Promise.all([
-    probeBind(port, "0.0.0.0"),
-    probeBind(port, "::"),
-  ]);
+  const probed = [await probeBind(port, "0.0.0.0"), await probeBind(port, "::")];
+  // A host with no usable IPv6 (common in containers) answers the `::` probe
+  // with EAFNOSUPPORT/EADDRNOTAVAIL. That says nothing about the port, so it is
+  // dropped rather than reported as busy or as a failure.
+  const results = probed.filter((result) => result.status !== "unsupported");
   const denied = results.filter((result) => result.status === "denied");
   const errors = results.filter((result) => result.status === "error");
   const busy = results.some((result) => result.status === "busy");
@@ -194,7 +201,7 @@ async function checkPort({ port, name }) {
   if (denied.length > 0) {
     fail(
       `Local bind check for port ${port} (${name}) was denied: ${denied.map(formatBindDiagnostic).join("; ")}`,
-      "Allow localhost server binding in your sandbox, or run dev/E2E in an environment that permits local servers",
+      BIND_DENIED_FIX,
     );
     return;
   }
@@ -203,6 +210,14 @@ async function checkPort({ port, name }) {
     fail(
       `Could not probe port ${port} (${name}): ${errors.map(formatBindDiagnostic).join("; ")}`,
       "Retry after checking local networking/firewall settings, or run in a standard macOS, Linux, or WSL2 shell",
+    );
+    return;
+  }
+
+  if (results.length === 0) {
+    warn(
+      `Could not probe port ${port} (${name}) on any interface: ${probed.map(formatBindDiagnostic).join("; ")}`,
+      "ok if this host has no IPv4/IPv6 stack for local servers — `pnpm dev` will report the real bind error if it can't start.",
     );
     return;
   }

@@ -179,8 +179,10 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm dev` | Start frontend + backend |
 | `pnpm dev:web` | Frontend only |
 | `pnpm dev:api` | Backend only |
-| `pnpm verify` | Canonical non-live pre-PR suite: web lint, web unit tests, web build, API lint, API tests, structure tests |
-| `pnpm verify:full` | `pnpm verify` plus `pnpm doctor` and Playwright E2E; requires populated `.env`, local server/browser permission, and Chromium installed |
+| `pnpm verify` | Canonical non-live pre-PR suite — chains `verify:api` then `verify:web` |
+| `pnpm verify:api` | Backend half: API lint, API tests, structure tests |
+| `pnpm verify:web` | Frontend half: web lint, web unit tests, web typecheck + build |
+| `pnpm verify:full` | `pnpm doctor`, then `pnpm verify`, then Playwright E2E; requires populated `.env`, local server/browser permission, port 3000 free, and Chromium installed |
 | `pnpm build` | Build frontend |
 | `pnpm lint` | Lint frontend |
 | `pnpm lint:api` | Lint backend (ruff) |
@@ -189,10 +191,13 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm check:structure` | Verify layering rules |
 | `pnpm test:e2e` | Playwright E2E smoke tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |
 
-Run `pnpm verify` before opening a PR. Run `pnpm verify:full` when you can start
-the local app stack and browser tests: `.env` must contain real B2 values, local
-server binding must be permitted, and Playwright's Chromium browser must be
-installed. The web app binds on `localhost:3000`; the API starts at
+Run `pnpm verify` before opening a PR — it needs `services/api/.venv` from step 2
+of Setup above. Run `pnpm verify:full` when you can start the local app stack and
+browser tests: `.env` must contain real B2 values, local server binding must be
+permitted, Playwright's Chromium browser must be installed, and port 3000 must be
+free (or already serving this app). Playwright waits on `http://localhost:3000`,
+but `next dev` falls back to the next free port when 3000 is taken — so an
+unrelated process on 3000 makes the E2E run time out. The API starts at
 `localhost:8000` or the next free port chosen by `scripts/dev.sh`.
 
 ## Documentation Map

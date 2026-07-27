@@ -1,8 +1,10 @@
 name: CI
 
 # Runs the canonical non-live verification gate documented in AGENTS.md and
-# docs/dev-workflows.md. No secrets required: backend tests mock the B2 repo
-# layer and /health tolerates a degraded connection.
+# docs/dev-workflows.md. `pnpm verify` = `pnpm verify:api && pnpm verify:web`;
+# CI runs the two halves as parallel jobs so the suite stays fast and a
+# frontend failure never hides a backend failure. No secrets required: backend
+# tests mock the B2 repo layer and /health tolerates a degraded connection.
 
 on:
   push:
@@ -11,8 +13,45 @@ on:
     branches: [main]
 
 jobs:
-  verify:
-    name: Verify (pnpm verify)
+  verify-api:
+    name: Verify API (pnpm verify:api)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Only so `pnpm verify:api` resolves as a root script; the backend gates
+      # themselves shell out to services/api/.venv and need no Node packages.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install API dependencies
+        working-directory: services/api
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Backend lint, tests, structure boundaries
+        run: pnpm verify:api
+
+  verify-web:
+    name: Verify web (pnpm verify:web)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,17 +70,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install API dependencies
-        working-directory: services/api
-        run: |
-          python -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -r requirements.txt
-
-      - name: Canonical non-live verify suite
-        run: pnpm verify
+      - name: Frontend lint, unit tests, typecheck + build
+        run: pnpm verify:web

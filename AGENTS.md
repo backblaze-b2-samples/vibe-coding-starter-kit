@@ -81,7 +81,9 @@ pnpm dev:api           # backend only
 
 # Test & Lint
 pnpm verify            # canonical non-live pre-PR suite
-pnpm verify:full       # verify + doctor + Playwright E2E (requires browser + live local app prerequisites)
+pnpm verify:api        # backend half of verify (lint, tests, structure)
+pnpm verify:web        # frontend half of verify (lint, unit tests, typecheck + build)
+pnpm verify:full       # doctor + verify + Playwright E2E (requires browser + live local app prerequisites)
 pnpm lint              # frontend lint (eslint)
 pnpm build             # frontend type check + build
 pnpm test:web          # frontend unit tests (vitest)
@@ -91,11 +93,16 @@ pnpm check:structure   # structural boundary tests
 pnpm test:e2e          # Playwright e2e tests
 ```
 
-`pnpm verify` runs the default non-live gates: frontend lint, frontend unit tests,
-frontend build, backend lint, backend tests, and structural boundary tests. CI
-(`.github/workflows/ci.yml`) runs `pnpm verify` on every PR and push to `main`.
-Use `pnpm verify:full` locally when browser/E2E and live-service prerequisites are
-available.
+`pnpm verify` is the default non-live gate. It chains `pnpm verify:api` (backend
+lint, backend tests, structural boundary tests) then `pnpm verify:web` (frontend
+lint, frontend unit tests, frontend typecheck + build). CI
+(`.github/workflows/ci.yml`) runs those two halves as parallel jobs on every PR
+and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
+live-service prerequisites are available — see
+[docs/dev-workflows.md](docs/dev-workflows.md#commands) for the prerequisite list.
+
+`pnpm verify` needs `services/api/.venv` to exist (see README setup); without it
+`pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`.
 
 ## 7. Agent Workflow
 

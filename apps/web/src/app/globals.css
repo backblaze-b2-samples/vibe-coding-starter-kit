@@ -59,6 +59,8 @@
 :root {
   --font-sans-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
     Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  /* Kept as its own custom property (not collapsed into --font-sans-stack)
+     so a future self-hosted display face is a one-line change here. */
   --font-display-stack: var(--font-sans-stack);
   --font-mono-stack: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;

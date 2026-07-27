@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-15 -->
+<!-- last_verified: 2026-07-27 -->
 # Design System
 
 The starter uses a GitHub Primer-flavored token palette with shadcn/ui
@@ -71,9 +71,11 @@ resolve to the system sans stack:
 `-apple-system, BlinkMacSystemFont, "Segoe UI", ...`
 
 The display role is still exposed as `--font-display` / the `font-display`
-Tailwind utility for `h1`, `.page-title`, and the sidebar logo mark. Keeping
-the role separate preserves the design contract while making the font source
-network-independent.
+Tailwind utility for `h1`, `.page-title`, and the sidebar logo mark, so those
+surfaces stay easy to re-target later — e.g. swapping in a self-hosted
+`next/font/local` display face — by changing one token instead of hunting
+down every usage. Today they render identically to body text; no distinct
+display face ships until that swap happens.
 
 Monospace stack: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, ...` — used
 for sizes, keys, shortcuts, and file paths.

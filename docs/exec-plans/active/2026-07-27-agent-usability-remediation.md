@@ -26,6 +26,8 @@ PRs 1 and 2 should stay separate unless schedule pressure is high. PR 1 removes 
 
 ## Card 1: Make the Next.js Build Network-Independent
 
+Status: Done — implemented in commit `d62f4dd` (`fix(web): remove remote font build dependency`) on this branch. Move the corresponding tracking issue to done and link this commit/PR before closing it.
+
 Metadata: Priority P0; suggested labels `CI/build`, `frontend`, `agent-usability` if available; duplicate search terms `Mona Sans`, `next/font/google`, `deterministic build`, `network-independent build`.
 
 ### Summary
@@ -34,14 +36,14 @@ Make `pnpm build` pass without external network access by removing the Google Fo
 
 ### Problem
 
-The production build imports `Mona_Sans` from `next/font/google`, which fetches Google Fonts during build. Restricted or offline agent environments fail even when dependencies are already installed.
+Before this fix, the production build imported `Mona_Sans` from `next/font/google`, which fetched Google Fonts during build. Restricted or offline agent environments failed even when dependencies were already installed.
 
 ### Evidence / Examples
 
-- `.local/agent-usability-audit.md` reports `pnpm build` failing in the default sandbox while fetching `https://fonts.googleapis.com/...`.
+- `.local/agent-usability-audit.md` reports `pnpm build` failing in the default sandbox while fetching `https://fonts.googleapis.com/...`. This file is gitignored (local-only audit note) — it isn't reachable to other reviewers, so treat it as provenance, not verifiable evidence.
 - The same build passed only after network access was approved.
-- Current source: `apps/web/src/app/layout.tsx`.
-- Current docs mention Google font loading in `docs/design-system.md`.
+- Former source: `apps/web/src/app/layout.tsx`.
+- Former docs mention of Google font loading: `docs/design-system.md`.
 
 ### Expected Result
 
@@ -54,7 +56,7 @@ Use a system font stack or self-host the display font with `next/font/local`. Pr
 ### Acceptance Criteria
 
 - `pnpm build` passes without external network.
-- `rg -n "next/font/google|fonts.googleapis|Mona_Sans" apps/web/src docs` has no stale remote-font dependency.
+- `rg -n "next/font/google|fonts.googleapis|Mona_Sans" apps/web/src docs --glob '!docs/exec-plans/**'` has no stale remote-font dependency (the glob excludes plan docs like this one, which quote those strings as historical evidence, not live references).
 - `docs/design-system.md` describes the chosen font source.
 - Verification evidence includes `pnpm build`, `pnpm lint`, and `pnpm test:web`.
 
@@ -165,13 +167,14 @@ Add an idempotent setup command, document supported environments, and improve lo
 
 ### Problem
 
-Cold-start setup requires manual sequencing. Platform and cloud-agent support are under-documented. When a sandbox denies local server binding, `scripts/pick-port.mjs` reports ordinary port exhaustion, which sends agents down the wrong path.
+Cold-start setup requires manual sequencing. Platform and cloud-agent support are under-documented. When a sandbox denies local server binding, `scripts/pick-port.mjs` reports ordinary port exhaustion, which sends agents down the wrong path. `scripts/doctor.mjs`'s `isPortBoundOn` has the same `EPERM`/`EADDRINUSE` conflation, but worse: it resolves any non-`EADDRINUSE` error (including `EPERM`/`EACCES`) to "not bound," so `pnpm doctor` — which runs automatically via `predev` before every `pnpm dev` — actively reports a sandboxed port as free instead of surfacing the permission denial.
 
 ### Evidence / Examples
 
 - README setup currently requires manual `pnpm install`, Python venv creation, dependency installation, and `.env` copy.
 - Root `package.json` has no `setup` or `bootstrap`.
 - Audit confirmed bind probes returned `EPERM`, while `pick-port` reported `no free port`.
+- `scripts/doctor.mjs`'s `isPortBoundOn` (`res(err.code === "EADDRINUSE")`) treats `EPERM`/`EACCES` as "port free," masking the same class of sandbox bind denial in the tool meant to catch it.
 - API scripts use Unix-style venv paths, so Windows support expectations are unclear.
 
 ### Expected Result
@@ -180,13 +183,14 @@ A new agent can run one setup command, validate with `pnpm doctor`, and understa
 
 ### Proposed Approach
 
-Add `pnpm setup` backed by an idempotent script. It should install workspace dependencies, create `services/api/.venv` if missing, install API requirements, and copy `.env.example` to `.env` only if `.env` is absent. Update `pick-port` to distinguish `EADDRINUSE` from `EPERM`/`EACCES`. Document macOS, Linux, WSL, native Windows status, cloud agents, required ports, and network assumptions.
+Add `pnpm setup` backed by an idempotent script. It should install workspace dependencies, create `services/api/.venv` if missing, install API requirements, and copy `.env.example` to `.env` only if `.env` is absent. Update both `pick-port` and `doctor.mjs`'s `isPortBoundOn` to distinguish `EADDRINUSE` (port taken) from `EPERM`/`EACCES` (sandbox/permission denial) and report each distinctly. Document macOS, Linux, WSL, native Windows status, cloud agents, required ports, and network assumptions.
 
 ### Acceptance Criteria
 
 - `pnpm setup` can be rerun safely and does not overwrite `.env`.
 - `pnpm setup` followed by `pnpm doctor` succeeds or fails with actionable credential guidance.
 - `node scripts/pick-port.mjs 8000` reports permission/sandbox denial clearly when bind returns `EPERM` or `EACCES`.
+- `pnpm doctor` (and its `isPortBoundOn` check) reports permission/sandbox denial distinctly from "port in use," instead of resolving to "port free."
 - README and `docs/dev-workflows.md` document E2E local server/browser permission requirements.
 - Verification evidence includes `pnpm setup`, `pnpm doctor`, `node scripts/pick-port.mjs 8000`, and `pnpm test:e2e` when local server startup is allowed.
 
@@ -254,7 +258,7 @@ FastAPI exposes OpenAPI at runtime, but there is no checked-in contract artifact
 ### Evidence / Examples
 
 - Audit found runtime OpenAPI only.
-- `docs/exec-plans/tech-debt-tracker.md` already notes that `api-client.ts` is hand-synced to FastAPI.
+- This card supersedes the tracker row, not duplicates it: `docs/exec-plans/tech-debt-tracker.md` already has an open "`api-client.ts` hand-synced to FastAPI" entry. Remove that row (move to Resolved, pointing at this card's PR) once this card ships, instead of letting both drift independently.
 
 ### Expected Result
 
@@ -284,4 +288,4 @@ Can be implemented independently after the verification command exists.
 - Keep one PR per card unless two cards share one implementation surface and the combined diff remains easy to review.
 - Each PR should update docs in the same PR as code changes.
 - When a card changes after investigation, update the GitHub issue with what changed, what was found, the decision made, blockers, and the next step.
-- After all cards are complete, move this plan to `docs/exec-plans/completed/`.
+- Follow AGENTS.md Section 7 (Agent Workflow), step 7, for moving this plan to `docs/exec-plans/completed/` once all cards are done.

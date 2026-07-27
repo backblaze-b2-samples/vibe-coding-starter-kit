@@ -119,6 +119,8 @@ Depends on Card 1 so `verify` can include `pnpm build` without network approval.
 
 ## Card 3: Protect the Agent Instruction Surface
 
+Status: Done — implemented on this branch (`chore: protect agent instruction surface`). `GEMINI.md` and `.github/copilot-instructions.md` are thin shims to `AGENTS.md`; `pnpm check:agent-docs` validates the canonical instruction surface, shims, command docs, CI claims, and `.env` ignore coverage; `pnpm verify` and CI include the new check.
+
 Metadata: Priority P1; suggested labels `docs`, `tooling`, `agent-usability` if available; duplicate search terms `GEMINI.md`, `copilot-instructions`, `check:agent-docs`, `agent doc health`.
 
 ### Summary

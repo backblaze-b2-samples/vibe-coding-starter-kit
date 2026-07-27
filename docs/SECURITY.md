@@ -58,6 +58,7 @@ Security principles and implementation for the vibe-coding-starter-kit.
 ## Agent Security Rules
 
 - Never commit `.env`, credentials, or API keys
+- Never print `.env`, credentials, or API keys in chat, logs, reports, commits, or screenshots
 - Never weaken validation without explicit instruction
 - Never bypass CORS, auth, or input sanitization
 - Always validate at system boundaries

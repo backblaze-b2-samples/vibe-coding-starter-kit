@@ -80,6 +80,7 @@ pnpm dev:web           # frontend only
 pnpm dev:api           # backend only
 
 # Test & Lint
+pnpm check:agent-docs  # agent instruction/documentation drift check
 pnpm verify            # canonical non-live pre-PR suite
 pnpm verify:api        # backend half of verify (lint, tests, structure)
 pnpm verify:web        # frontend half of verify (lint, unit tests, typecheck + build)
@@ -93,11 +94,13 @@ pnpm check:structure   # structural boundary tests
 pnpm test:e2e          # Playwright e2e tests
 ```
 
-`pnpm verify` is the default non-live gate. It chains `pnpm verify:api` (backend
-lint, backend tests, structural boundary tests) then `pnpm verify:web` (frontend
+`pnpm check:agent-docs` validates this instruction surface, command docs, CI
+claims, and `.env` ignore coverage. `pnpm verify` is the default non-live gate.
+It chains `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint,
+backend tests, structural boundary tests), then `pnpm verify:web` (frontend
 lint, frontend unit tests, frontend typecheck + build). CI
-(`.github/workflows/ci.yml`) runs those two halves as parallel jobs on every PR
-and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
+(`.github/workflows/ci.yml`) runs those three checks as parallel jobs on every
+PR and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
 live-service prerequisites are available — see
 [docs/dev-workflows.md](docs/dev-workflows.md#commands) for the prerequisite list.
 
@@ -155,3 +158,7 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 - Add tests with every change
 - Never bypass lint rules without explicit instruction
 - Ask before making destructive or irreversible changes
+
+## 12. Secret Handling
+
+- Never print `.env`, credentials, or API keys in chat, logs, reports, commits, or screenshots.

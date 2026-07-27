@@ -54,6 +54,7 @@ Engineering workflows for this repo.
 - E2E: `apps/web/e2e/` with config in `apps/web/playwright.config.ts`
 
 ### Commands
+- Agent docs health: `pnpm check:agent-docs`
 - Canonical pre-PR suite: `pnpm verify`
 - Backend half only: `pnpm verify:api`
 - Frontend half only: `pnpm verify:web`
@@ -66,11 +67,14 @@ Engineering workflows for this repo.
 - Backend lint: `pnpm lint:api`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
 
-`pnpm verify` is the canonical non-live gate for PRs. It is composed of two
-halves — `pnpm verify:api` (backend lint, backend tests, structural boundary
-tests) then `pnpm verify:web` (frontend lint, frontend unit tests, frontend
-typecheck + build) — so the fast backend gates report before the slow build,
-and so CI can run the two halves as parallel jobs. `package.json` is the single
+`pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, thin
+cross-agent shims, command docs, CI claims, and `.env` ignore coverage.
+
+`pnpm verify` is the canonical non-live gate for PRs. It is composed of
+`pnpm check:agent-docs`, then `pnpm verify:api` (backend lint, backend tests,
+structural boundary tests), then `pnpm verify:web` (frontend lint, frontend
+unit tests, frontend typecheck + build) — so the agent-doc guard runs first and
+CI can run all three checks as parallel jobs. `package.json` is the single
 source of truth for the literal command chain; when it changes, don't paste the
 new chain into docs — update the plain-language gate list here and in
 `AGENTS.md` §6 (see "Documentation Update" above).
@@ -104,10 +108,11 @@ when `pnpm test:e2e` runs.
   `pnpm verify:full` when the prerequisites above are available
 
 ### Continuous Integration
-- `.github/workflows/ci.yml` runs the two halves of `pnpm verify` —
-  `pnpm verify:api` and `pnpm verify:web` — as parallel jobs on every PR and
-  push to `main`. Same gates as running `pnpm verify` locally, but they report
-  independently, so a frontend failure never hides a backend failure.
+- `.github/workflows/ci.yml` runs `pnpm check:agent-docs` plus the two halves
+  of `pnpm verify` — `pnpm verify:api` and `pnpm verify:web` — as parallel jobs
+  on every PR and push to `main`. Same gates as running `pnpm verify` locally,
+  but they report independently, so a frontend failure never hides a backend
+  failure.
 - No secrets required — backend tests mock the B2 repo layer and `/health`
   tolerates a degraded connection. `pnpm verify:full` and E2E are not in CI
   because they need a running app, browser install, and live B2 credentials.

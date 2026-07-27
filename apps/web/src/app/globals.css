@@ -13,7 +13,7 @@
   --color-attention-subtle: var(--attention-subtle);
   --color-accent-subtle: var(--accent-subtle);
   --font-sans: var(--font-sans-stack);
-  --font-display: var(--font-display), var(--font-sans-stack);
+  --font-display: var(--font-display-stack);
   --font-mono: var(--font-mono-stack);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -59,6 +59,9 @@
 :root {
   --font-sans-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
     Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  /* Kept as its own custom property (not collapsed into --font-sans-stack)
+     so a future self-hosted display face is a one-line change here. */
+  --font-display-stack: var(--font-sans-stack);
   --font-mono-stack: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
 
@@ -216,11 +219,10 @@
   table, pre, code, [data-slot="table"] {
     text-rendering: optimizeSpeed;
   }
-  /* Mona Sans is reserved for the page-level display moment (h1 / .page-title
-     / .font-display). Everything else — card titles, stat values, body —
-     uses the system stack. */
+  /* The display role intentionally reuses the local system stack so builds stay
+     network-independent. */
   h1, .font-display {
-    font-family: var(--font-display), var(--font-sans-stack);
+    font-family: var(--font-display-stack);
     letter-spacing: -0.015em;
   }
   h1 { font-weight: 600; }
@@ -340,10 +342,10 @@ table[data-slot="table"] th {
   transition: background-color var(--duration-short) var(--ease-productive);
 }
 
-/* Page title — 28px Mona Sans semibold. The sole display-font moment. */
+/* Page title — 28px system display semibold. */
 .page-title {
   color: var(--foreground);
-  font-family: var(--font-display), var(--font-sans-stack);
+  font-family: var(--font-display-stack);
   font-weight: 600;
   font-size: 1.75rem;
   letter-spacing: -0.02em;

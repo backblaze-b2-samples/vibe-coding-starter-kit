@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-15 -->
+<!-- last_verified: 2026-07-27 -->
 # Design System
 
 The starter uses a GitHub Primer-flavored token palette with shadcn/ui
@@ -65,15 +65,17 @@ Prefer opacity + translate transitions. Avoid scale > 1.02 — it reads as
 
 ## Typography
 
-Two font families:
+The web app uses local system fonts only, so production builds do not fetch
+font files from external services. Both `--font-sans` and `--font-display`
+resolve to the system sans stack:
+`-apple-system, BlinkMacSystemFont, "Segoe UI", ...`
 
-- **Display — Mona Sans** (GitHub's open-source display face), loaded via
-  `next/font/google` in `layout.tsx`, exposed as `--font-display` / the
-  `font-display` Tailwind utility. Used for: `h1` / `.page-title` and the
-  sidebar logo mark. Everything else — section/card titles, stat values,
-  body, labels — uses the system stack.
-- **Body — system stack**: `-apple-system, BlinkMacSystemFont, "Segoe UI", ...`
-  Fast, native, zero payload.
+The display role is still exposed as `--font-display` / the `font-display`
+Tailwind utility for `h1`, `.page-title`, and the sidebar logo mark, so those
+surfaces stay easy to re-target later — e.g. swapping in a self-hosted
+`next/font/local` display face — by changing one token instead of hunting
+down every usage. Today they render identically to body text; no distinct
+display face ships until that swap happens.
 
 Monospace stack: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, ...` — used
 for sizes, keys, shortcuts, and file paths.
@@ -89,7 +91,7 @@ uses rem). At the 14px root, `1rem` = `14px`.
 
 | Role | Size | Weight | Font | Tracking |
 |------|------|--------|------|----------|
-| Page title | `1.75rem` (`.page-title`) | 600 | Display | `-0.02em` |
+| Page title | `1.75rem` (`.page-title`) | 600 | System display | `-0.02em` |
 | Section title | `1.25rem` (`.section-title`) | 600 | Body | `-0.01em` |
 | Stat value | `2rem` (`.stat-value`) | 600 | Body | `-0.02em` |
 | Card title | `0.875rem` (`.card-title`) | 600 | Body | `0` |

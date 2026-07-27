@@ -34,6 +34,18 @@ const eslintConfig = defineConfig([
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "next/font/google",
+              message:
+                "Google Fonts fetch at build time and break network-restricted builds. Use the local system font stack in globals.css, or next/font/local with vendored font files.",
+            },
+          ],
+        },
+      ],
     },
   },
 ]);

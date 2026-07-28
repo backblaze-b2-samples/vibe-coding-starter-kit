@@ -41,6 +41,27 @@ Engineering workflows for this repo.
 - [ ] Docs updated in the same PR as code changes
 - [ ] Only change files relevant to the task — no drive-by improvements
 
+GitHub surfaces this contract automatically through two templates, so reviewers
+see it without opening this file:
+
+- `.github/PULL_REQUEST_TEMPLATE.md` — prefills every PR with scope, a
+  verification table, skipped-check explanations, UI evidence, docs, and
+  risk/rollback.
+- `.github/ISSUE_TEMPLATE/coding-agent-handoff.md` — prefills a scoped
+  implementation request with the context a coding agent needs.
+
+The templates are prompts for evidence, not a second rulebook: the rules live in
+`AGENTS.md` and in this file. Keep them thin and link back here rather than
+restating a rule in template prose, where it would be copied verbatim into every
+future issue and PR body and could never be corrected retroactively.
+
+### Review ownership
+
+This starter kit has no `CODEOWNERS` file, so GitHub assigns no reviewer
+automatically — request one manually. This is the canonical statement of that
+status: if `CODEOWNERS` is ever added, update this section, and the templates
+that point here stay correct without edits.
+
 ## Testing
 
 ### Local environments

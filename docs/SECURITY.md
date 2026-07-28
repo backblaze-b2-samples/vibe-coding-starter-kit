@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-27 -->
+<!-- last_verified: 2026-07-28 -->
 # Security
 
 Security principles and implementation for the vibe-coding-starter-kit.
@@ -54,6 +54,15 @@ Security principles and implementation for the vibe-coding-starter-kit.
 - All secrets loaded via environment variables (pydantic-settings)
 - Never committed to source control
 - `.env.example` documents required variables without values
+
+## Deployment Configuration
+
+The [Railway delivery contract](../infra/railway/README.md) is the canonical
+location for production variable classification and environment access rules.
+In particular, `B2_KEY_ID` and `B2_APPLICATION_KEY` are secrets; the web
+service's `NEXT_PUBLIC_API_URL` is intentionally public build-time
+configuration and must never contain a credential. Keep production variables,
+logs, and metrics restricted to authorized operators.
 
 ## Agent Security Rules
 

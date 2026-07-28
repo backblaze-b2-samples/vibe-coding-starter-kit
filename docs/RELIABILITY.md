@@ -50,6 +50,12 @@ The download counter and the `/metrics` counters are **in-process, per replica**
 
 ## Deployment
 
-- Railway health checks on `/health`
-- Zero-downtime deploys via rolling updates
-- Environment-specific configuration via env vars (no config files in prod)
+- The API Railway contract checks `/health`; it confirms process readiness, but
+  the response is still HTTP 200 when B2 is degraded. Promotion therefore also
+  requires `b2_connected: true` and an affected-flow smoke test.
+- The web contract checks `/`, and both service configs use restart-on-failure
+  with bounded retries. See [infra/railway/README.md](../infra/railway/README.md)
+  for the versioned service configuration, approval, rollback, and cleanup
+  procedure.
+- Environment-specific configuration uses Railway variables; no environment
+  values are committed to the repository.

@@ -69,8 +69,11 @@ services/api/
 - **Local dev** — `pnpm dev` runs both services via `concurrently`
   - Web: `localhost:3000`
   - API: `localhost:8000`
-- **Railway** — two services from the same repo
-  - See `infra/railway/README.md` for configuration
+- **Railway** — two services from the same repository: `web` builds from the
+  repository root because it consumes `packages/shared`; `api` builds from
+  `services/api`. The versioned per-service configs and the human-approved
+  staging/production contract live in [infra/railway/README.md](infra/railway/README.md).
+  External provisioning and deployment remain explicit user-approved actions.
 
 ## Data Stores
 

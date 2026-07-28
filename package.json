@@ -10,6 +10,8 @@
     "dev:api": "cd services/api && .venv/bin/uvicorn main:app --reload --port ${API_PORT:-8000}",
     "build": "pnpm --filter @vibe-coding-starter-kit/web build",
     "typecheck": "pnpm --filter @vibe-coding-starter-kit/web typecheck",
+    "contract:export": "services/api/.venv/bin/python services/api/scripts/export_openapi.py",
+    "contract:check": "services/api/.venv/bin/python services/api/scripts/export_openapi.py --check && pnpm --filter @vibe-coding-starter-kit/web exec vitest run src/lib/api-contract.test.ts",
     "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "verify": "pnpm check:agent-docs && pnpm verify:api && pnpm verify:web",
     "verify:api": "pnpm lint:api && pnpm test:api && pnpm check:structure",

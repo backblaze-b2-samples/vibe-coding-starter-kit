@@ -211,6 +211,8 @@ Can follow Card 2. E2E verification may need local server/browser permission.
 
 ## Card 5: Add GitHub Review Handoff Templates
 
+Status: Done — implemented on this branch (`chore: add GitHub review handoff templates`). `.github/PULL_REQUEST_TEMPLATE.md` and `.github/ISSUE_TEMPLATE/coding-agent-handoff.md` prefill scope, acceptance criteria, command evidence, skipped checks, UI evidence, docs, and risk/rollback; `docs/dev-workflows.md` documents both templates and carries the canonical "Review ownership" statement that no `CODEOWNERS` file is configured. No `CODEOWNERS` was invented — ownership stays explicitly unset per the non-goal below. The "Problem"/"Evidence" sections below describe the pre-change state — read them as history, not as current fact. Move the corresponding tracking issue to done and link this commit/PR before closing it.
+
 Metadata: Priority P2; suggested labels `process`, `docs`, `agent-usability` if available; duplicate search terms `PR template`, `issue template`, `CODEOWNERS`, `command evidence`, `review handoff`.
 
 ### Summary

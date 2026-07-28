@@ -2,8 +2,6 @@
 name: Coding agent handoff
 about: Request a scoped implementation with enough context for agents and reviewers
 title: "[area] "
-labels: ""
-assignees: ""
 ---
 
 ## Summary
@@ -18,7 +16,13 @@ assignees: ""
 
 <!-- List the files, routes, docs, or behaviors that are in scope. Keep this tight. -->
 
-- <!-- In-scope item -->
+## Expected result
+
+<!-- Describe the end state once this ships: what a user, agent, or reviewer can do that they cannot do today. -->
+
+## Proposed approach
+
+<!-- Optional. Suggest a direction if you have one, or write "Implementer's choice". -->
 
 ## Acceptance criteria
 
@@ -28,19 +32,17 @@ assignees: ""
 
 ## Evidence / references
 
-<!-- Link issues, docs, logs, screenshots, designs, or prior discussion. Avoid secrets. -->
-
-- <!-- Reference -->
+<!-- Link issues, docs, logs, screenshots, designs, or prior discussion. Never paste secrets: see AGENTS.md section 12 (Secret Handling). -->
 
 ## UI notes
 
-<!-- Add screenshots, mockups, or "Not UI-facing". For UI changes, include the expected before/after or key states. -->
-
-- <!-- UI note -->
+<!-- Add screenshots, mockups, or "Not UI-facing". For UI changes, include the expected before/after or key states.
+     Redact credentials, `.env` contents, and API keys before attaching anything — screenshots are a leak surface
+     (AGENTS.md section 12). -->
 
 ## Docs and tests
 
-<!-- Name expected docs and verification commands, or explain why none apply. -->
+<!-- Name expected docs (see the doc update mapping in AGENTS.md section 9) and verification commands, or explain why none apply. -->
 
 - Docs:
 - Verification:
@@ -49,13 +51,9 @@ assignees: ""
 
 <!-- List anything tempting that should stay out of this PR. -->
 
-- <!-- Non-goal -->
-
 ## Dependencies / blockers
 
 <!-- Link prior PRs/issues or say "None". -->
-
-- <!-- Blocker or "None" -->
 
 ## Risk / rollback
 
@@ -66,4 +64,5 @@ assignees: ""
 
 ## Review ownership
 
-No `CODEOWNERS` file is configured for this starter kit yet. If a specific reviewer or owner is known, note them here; otherwise write `Unset`.
+<!-- Note a specific reviewer or owner if one is known, otherwise write "Unset".
+     Current repo-wide ownership status is documented in `docs/dev-workflows.md` under "Review ownership". -->

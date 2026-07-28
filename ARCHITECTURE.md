@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-15 -->
+<!-- last_verified: 2026-07-28 -->
 # Architecture
 
 ## Components
@@ -105,6 +105,18 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 - `/metrics` endpoint (Prometheus format: request count, latency, upload count)
 - `/health` endpoint (B2 connectivity check)
 
+## API Contract
+
+- Checked-in OpenAPI artifact: `docs/api/openapi.json`
+- Export/check command: `pnpm contract:export` / `pnpm contract:check`
+- FastAPI freshness test: `services/api/tests/test_openapi_contract.py`
+- Frontend route drift test: `apps/web/src/lib/api-contract.test.ts`
+
+The frontend client keeps a small `API_CLIENT_ROUTES` registry in
+`apps/web/src/lib/api-client.ts`. Tests compare that registry to the checked-in
+OpenAPI artifact so route changes fail loudly before the hand-written client can
+silently drift from FastAPI. `GET /metrics` is intentionally server-only.
+
 ## Canonical Files
 
 - Layered API handler: `services/api/app/runtime/upload.py`
@@ -113,6 +125,8 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 - Pydantic models: `services/api/app/types/` (`files.py`, `upload.py`, `stats.py`, `formatting.py`)
 - Config (pydantic-settings): `services/api/app/config/settings.py`
 - Structural tests: `services/api/tests/test_structure.py`
+- OpenAPI contract: `docs/api/openapi.json`
+- OpenAPI exporter: `services/api/scripts/export_openapi.py`
 - Frontend API client: `apps/web/src/lib/api-client.ts`
 - Shared TypeScript types: `packages/shared/src/types.ts`
 

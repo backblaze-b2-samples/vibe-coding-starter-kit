@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-27 -->
+<!-- last_verified: 2026-07-28 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -165,6 +165,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 - Inline error handling — fetch failures surface *what's wrong* (API offline, 401, 5xx) and offer a Retry, instead of silently rendering empty state.
 - Single-source config — one `.env` at the repo root powers both API and web app, validated at startup so misconfig fails fast with a readable message.
 - Centralized data layer — every fetch goes through TanStack Query hooks in `apps/web/src/lib/queries.ts`; cache invalidation is one call after a mutation.
+- Checked API contract — `docs/api/openapi.json` plus `pnpm contract:check` catch FastAPI/client route drift.
 - Structural tests — verify layering rules, import boundaries, SDK containment, file size limits
 - Structured JSON logging — every request traced with `request_id` and timing
 - `/health` endpoint — B2 connectivity check
@@ -189,6 +190,8 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm dev` | Start frontend + backend |
 | `pnpm dev:web` | Frontend only |
 | `pnpm dev:api` | Backend only |
+| `pnpm contract:export` | Export deterministic FastAPI OpenAPI JSON to `docs/api/openapi.json` |
+| `pnpm contract:check` | Verify the checked-in OpenAPI artifact and frontend API client route registry |
 | `pnpm check:agent-docs` | Validate agent shims, command docs, CI claims, and `.env` ignore coverage |
 | `pnpm verify` | Canonical non-live pre-PR suite — chains `check:agent-docs`, `verify:api`, then `verify:web` |
 | `pnpm verify:api` | Backend half: API lint, API tests, structure tests |

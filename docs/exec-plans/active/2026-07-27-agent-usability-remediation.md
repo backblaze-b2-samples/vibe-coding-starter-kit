@@ -253,6 +253,13 @@ None.
 
 ## Card 6: Add an API Contract Workflow
 
+Status: Done — implemented on this branch (`chore: add API contract workflow`).
+`docs/api/openapi.json` is checked in; `pnpm contract:export` refreshes it;
+`pnpm contract:check` verifies artifact freshness and the frontend route
+registry; `pnpm test:api` and `pnpm test:web` include the same drift coverage.
+Full OpenAPI codegen stays out of scope unless this lightweight workflow proves
+insufficient.
+
 Metadata: Priority P2; suggested labels `backend`, `frontend`, `tooling` if available; duplicate search terms `OpenAPI`, `api-client`, `contract drift`, `codegen`, `openapi.json`.
 
 ### Summary

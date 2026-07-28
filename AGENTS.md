@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-27 -->
+<!-- last_verified: 2026-07-28 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -44,7 +44,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 
 **Frontend**: shadcn/ui components in `src/components/ui/` are generated — never modify them.
 
-**Data fetching**: every API call flows through TanStack Query hooks in `apps/web/src/lib/queries.ts`. No bare `useEffect + fetch` patterns. New endpoints touch three files: `runtime/<router>.py`, `lib/api-client.ts`, `lib/queries.ts`.
+**Data fetching**: every API call flows through TanStack Query hooks in `apps/web/src/lib/queries.ts`. No bare `useEffect + fetch` patterns. Frontend-consumed endpoints update `runtime/<router>.py`, `lib/api-client.ts` (`API_CLIENT_ROUTES`), `lib/queries.ts`, and `docs/api/openapi.json`.
 
 ## 4. Quality Expectations
 
@@ -95,6 +95,8 @@ pnpm run doctor        # preflight environment check (also runs before pnpm dev)
 pnpm dev               # start both frontend and backend
 pnpm dev:web           # frontend only
 pnpm dev:api           # backend only
+pnpm contract:export   # export deterministic FastAPI OpenAPI JSON
+pnpm contract:check    # check OpenAPI artifact + frontend client routes
 
 # Test & Lint
 pnpm check:agent-docs  # agent instruction/documentation drift check

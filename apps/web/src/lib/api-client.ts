@@ -8,6 +8,28 @@ import type {
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+type ApiClientRoute = {
+  method: "delete" | "get" | "post";
+  path: string;
+};
+
+export const API_CLIENT_ROUTES = {
+  health: { method: "get", path: "/health" },
+  files: { method: "get", path: "/files" },
+  fileStats: { method: "get", path: "/files/stats" },
+  uploadActivity: { method: "get", path: "/files/stats/activity" },
+  fileByKeyDownload: { method: "get", path: "/files-by-key/download" },
+  fileByKeyPreview: { method: "get", path: "/files-by-key/preview" },
+  fileByKeyMetadata: { method: "get", path: "/files-by-key/metadata" },
+  fileByKeyDetail: { method: "get", path: "/files-by-key/detail" },
+  fileByKeyDelete: { method: "delete", path: "/files-by-key" },
+  legacyFileDownload: { method: "get", path: "/files/{key}/download" },
+  legacyFilePreview: { method: "get", path: "/files/{key}/preview" },
+  legacyFileMetadata: { method: "get", path: "/files/{key}" },
+  legacyFileDelete: { method: "delete", path: "/files/{key}" },
+  upload: { method: "post", path: "/upload" },
+} as const satisfies Record<string, ApiClientRoute>;
+
 /** Typed API error with HTTP status code for caller-side branching. */
 export class ApiError extends Error {
   constructor(
@@ -110,6 +132,14 @@ function legacyFileKeyPath(
   return encodeURIComponent(key);
 }
 
+function legacyFileKeyRoute(
+  path: string,
+  key: string,
+  options: { blockRouteCollisions?: boolean } = {}
+): string {
+  return path.replace("{key}", legacyFileKeyPath(key, options));
+}
+
 function isLegacyPathFallbackSafe(
   key: string,
   { blockRouteCollisions = false }: { blockRouteCollisions?: boolean } = {}
@@ -124,27 +154,34 @@ function isLegacyPathFallbackSafe(
 }
 
 export async function getHealth() {
-  return apiFetch<{ status: string; b2_connected: boolean }>("/health");
+  return apiFetch<{ status: string; b2_connected: boolean }>(
+    API_CLIENT_ROUTES.health.path
+  );
 }
 
 export async function getFiles(prefix = "", limit = 100) {
   return apiFetch<FileMetadata[]>(
-    `/files?prefix=${encodeURIComponent(prefix)}&limit=${limit}`
+    `${API_CLIENT_ROUTES.files.path}?prefix=${encodeURIComponent(prefix)}&limit=${limit}`
   );
 }
 
 export async function getFileStats() {
-  return apiFetch<UploadStats>("/files/stats");
+  return apiFetch<UploadStats>(API_CLIENT_ROUTES.fileStats.path);
 }
 
 export async function getUploadActivity(days = 7) {
-  return apiFetch<DailyUploadCount[]>(`/files/stats/activity?days=${days}`);
+  return apiFetch<DailyUploadCount[]>(
+    `${API_CLIENT_ROUTES.uploadActivity.path}?days=${days}`
+  );
 }
 
 export async function getFile(key: string) {
   return apiFetchWithLegacyFallback<FileMetadata>(
-    `/files-by-key/metadata?${fileKeyQuery(key)}`,
-    () => `/files/${legacyFileKeyPath(key, { blockRouteCollisions: true })}`
+    `${API_CLIENT_ROUTES.fileByKeyMetadata.path}?${fileKeyQuery(key)}`,
+    () =>
+      legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFileMetadata.path, key, {
+        blockRouteCollisions: true,
+      })
   );
 }
 
@@ -157,29 +194,29 @@ export async function getFile(key: string) {
  */
 export async function getFileDetail(key: string) {
   return apiFetch<FileMetadataDetail>(
-    `/files-by-key/detail?${fileKeyQuery(key)}`
+    `${API_CLIENT_ROUTES.fileByKeyDetail.path}?${fileKeyQuery(key)}`
   );
 }
 
 export async function getDownloadUrl(key: string) {
   return apiFetchWithLegacyFallback<{ url: string }>(
-    `/files-by-key/download?${fileKeyQuery(key)}`,
-    () => `/files/${legacyFileKeyPath(key)}/download`
+    `${API_CLIENT_ROUTES.fileByKeyDownload.path}?${fileKeyQuery(key)}`,
+    () => legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFileDownload.path, key)
   );
 }
 
 /** Preview-only presigned URL — does NOT increment the download counter. */
 export async function getPreviewUrl(key: string) {
   return apiFetchWithLegacyFallback<{ url: string }>(
-    `/files-by-key/preview?${fileKeyQuery(key)}`,
-    () => `/files/${legacyFileKeyPath(key)}/preview`
+    `${API_CLIENT_ROUTES.fileByKeyPreview.path}?${fileKeyQuery(key)}`,
+    () => legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFilePreview.path, key)
   );
 }
 
 export async function deleteFile(key: string) {
   return apiFetchWithLegacyFallback<{ deleted: boolean; key: string }>(
-    `/files-by-key?${fileKeyQuery(key)}`,
-    () => `/files/${legacyFileKeyPath(key)}`,
+    `${API_CLIENT_ROUTES.fileByKeyDelete.path}?${fileKeyQuery(key)}`,
+    () => legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFileDelete.path, key),
     {
       method: "DELETE",
     }
@@ -219,7 +256,7 @@ export function uploadFile(
       reject(new ApiError("Upload aborted", 0)),
     );
 
-    xhr.open("POST", `${API_BASE}/upload`);
+    xhr.open("POST", `${API_BASE}${API_CLIENT_ROUTES.upload.path}`);
     xhr.send(formData);
   });
 }

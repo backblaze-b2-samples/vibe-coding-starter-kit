@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-27 -->
+<!-- last_verified: 2026-07-28 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -101,6 +101,7 @@ with a concurrently held `0.0.0.0` bind and would report a free port as busy.
 - **Unit**: pure logic (service layer)
 - **Integration**: HTTP handlers, B2 connectivity (`tests/`)
 - **Structural**: layering rules, import boundaries (`tests/test_structure.py`)
+- **Contract**: checked-in OpenAPI artifact and frontend route drift
 - **E2E**: Playwright browser-driven smoke tests
 
 ### Test placement
@@ -111,6 +112,8 @@ with a concurrently held `0.0.0.0` bind and would report a free port as busy.
 - Agent docs health: `pnpm check:agent-docs`
 - Cold-start setup: `pnpm run setup`
 - Preflight environment check: `pnpm run doctor`
+- API contract export: `pnpm contract:export`
+- API contract drift check: `pnpm contract:check`
 - Canonical pre-PR suite: `pnpm verify`
 - Backend half only: `pnpm verify:api`
 - Frontend half only: `pnpm verify:web`
@@ -122,6 +125,26 @@ with a concurrently held `0.0.0.0` bind and would report a free port as busy.
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
+
+### API Contract
+
+The checked-in FastAPI contract lives at `docs/api/openapi.json`. Refresh it
+with `pnpm contract:export` after changing route declarations, response models,
+or request models. The exporter imports `services/api/main.py`, calls
+`app.openapi()`, and writes sorted, indented JSON so diffs stay deterministic.
+
+Run `pnpm contract:check` for a fast API/client drift check. It verifies that
+`docs/api/openapi.json` matches the generated FastAPI contract, then runs the
+frontend contract test that compares `API_CLIENT_ROUTES` in
+`apps/web/src/lib/api-client.ts` against the artifact. `GET /metrics` is the
+only current server-only operation; add future backend-only routes to that test
+deliberately rather than letting them pass unnoticed.
+
+`pnpm verify` catches the same drift without a separate command: `pnpm test:api`
+includes the OpenAPI freshness test, and `pnpm test:web` includes the frontend
+route-contract test. This is intentionally a lightweight hand-written workflow;
+do not add full OpenAPI codegen until this first contract check proves
+insufficient.
 
 `pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, thin
 cross-agent shims, command docs, CI claims, and `.env` ignore coverage

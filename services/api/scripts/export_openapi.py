@@ -25,7 +25,10 @@ def write_stderr(message: str) -> None:
 
 def load_contract() -> dict[str, Any]:
     """Import the FastAPI app and return its OpenAPI schema."""
-    sys.path.insert(0, str(API_ROOT))
+    # Guarded: an unconditional insert grows sys.path on every call when this
+    # module is imported and used more than once (e.g. from the contract test).
+    if str(API_ROOT) not in sys.path:
+        sys.path.insert(0, str(API_ROOT))
     from main import app
 
     return app.openapi()
@@ -49,7 +52,14 @@ def limited_diff(existing: str, generated: str, target: Path) -> str:
         return "".join(diff)
     shown = "".join(diff[:MAX_DIFF_LINES])
     hidden = len(diff) - MAX_DIFF_LINES
-    return f"{shown}\n... diff truncated ({hidden} more lines)\n"
+    return f"{shown}... diff truncated ({hidden} more lines)"
+
+
+STALE_HINT = (
+    "Run `pnpm contract:export` and commit the result. A FastAPI or Pydantic "
+    "upgrade can also change the generated schema, so re-export after "
+    "dependency bumps too."
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -82,6 +92,13 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     target = args.target.resolve()
+
+    # Checked before importing the app: a missing artifact needs no schema
+    # generation, and the actionable message should not wait on the import.
+    if args.check and not target.exists():
+        write_stderr(f"OpenAPI contract missing at {target}. {STALE_HINT}")
+        return 1
+
     generated = render_contract(load_contract())
 
     if args.stdout:
@@ -89,12 +106,6 @@ def main() -> int:
         return 0
 
     if args.check:
-        if not target.exists():
-            write_stderr(
-                f"OpenAPI contract missing at {target}. Run `pnpm contract:export`.",
-            )
-            return 1
-
         existing = target.read_text(encoding="utf-8")
         if existing == generated:
             write_stdout(f"OpenAPI contract is current: {target}")
@@ -102,9 +113,9 @@ def main() -> int:
 
         write_stderr(
             f"OpenAPI contract is out of date: {target}\n"
-            "Run `pnpm contract:export` and commit the result."
+            f"{STALE_HINT}\n"
+            f"{limited_diff(existing, generated, target).rstrip()}"
         )
-        write_stderr(limited_diff(existing, generated, target))
         return 1
 
     target.parent.mkdir(parents=True, exist_ok=True)

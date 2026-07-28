@@ -46,6 +46,8 @@ When this repo is used as the foundation for a new app, the following pieces are
 
 **Data fetching**: every API call flows through TanStack Query hooks in `apps/web/src/lib/queries.ts`. No bare `useEffect + fetch` patterns. Frontend-consumed endpoints update `runtime/<router>.py`, `lib/api-client.ts` (`API_CLIENT_ROUTES`), `lib/queries.ts`, and `docs/api/openapi.json`.
 
+**API contract**: *every* route change — including backend-only routes — re-exports `docs/api/openapi.json` (`pnpm contract:export`), or `pnpm test:api` fails. A backend-only route additionally goes in `SERVER_ONLY_OPERATIONS` in `apps/web/src/lib/api-contract.test.ts`, or `pnpm test:web` fails.
+
 ## 4. Quality Expectations
 
 - **DRY** — do not duplicate logic, types, or constants. Extract shared code only when used in 2+ places.
@@ -75,6 +77,8 @@ When this repo is used as the foundation for a new app, the following pieces are
 | Secret-handling rule stays in the "Secret Handling" section, phrased as a prohibition, and `docs/SECURITY.md` links to that heading by anchor | `pnpm check:agent-docs` |
 | Every setup/verify command is named in AGENTS.md, README, and dev-workflows; `setup`, `doctor`, and `check:agent-docs` still point at their scripts; and `package.json` still composes the expected gates | `pnpm check:agent-docs` |
 | CI runs the three verify gates it claims to | `pnpm check:agent-docs` |
+| `docs/api/openapi.json` matches the FastAPI app | `tests/test_openapi_contract.py` (also `pnpm contract:check`) |
+| Frontend `API_CLIENT_ROUTES` and the OpenAPI artifact agree in both directions | `apps/web/src/lib/api-contract.test.ts` (also `pnpm contract:check`) |
 | `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
 
@@ -128,7 +132,9 @@ live-service prerequisites are available — see
 [docs/dev-workflows.md](docs/dev-workflows.md#commands) for the prerequisite list.
 
 `pnpm verify` needs `services/api/.venv` to exist (run `pnpm run setup`); without
-it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`.
+it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`, and
+`pnpm contract:export` / `pnpm contract:check` fail the same way on
+`.venv/bin/python`.
 
 ## 7. Agent Workflow
 

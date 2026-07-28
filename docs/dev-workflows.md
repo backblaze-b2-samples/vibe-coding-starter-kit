@@ -132,6 +132,14 @@ The checked-in FastAPI contract lives at `docs/api/openapi.json`. Refresh it
 with `pnpm contract:export` after changing route declarations, response models,
 or request models. The exporter imports `services/api/main.py`, calls
 `app.openapi()`, and writes sorted, indented JSON so diffs stay deterministic.
+Both contract commands run `services/api/.venv/bin/python`, so they need
+`pnpm run setup` first.
+
+The comparison is byte-exact, and `services/api/requirements.txt` pins only
+lower bounds — so a FastAPI or Pydantic release that changes schema generation
+makes the check fail with no repo change at all. That is the expected failure
+mode after a dependency bump: re-run `pnpm contract:export`, eyeball the diff,
+and commit it.
 
 Run `pnpm contract:check` for a fast API/client drift check. It verifies that
 `docs/api/openapi.json` matches the generated FastAPI contract, then runs the
@@ -145,6 +153,11 @@ includes the OpenAPI freshness test, and `pnpm test:web` includes the frontend
 route-contract test. This is intentionally a lightweight hand-written workflow;
 do not add full OpenAPI codegen until this first contract check proves
 insufficient.
+
+Scope: the check covers **routes** (path + verb), not payloads. Response and
+request *shapes* — and the hand-written mirrors of the Pydantic models in
+`packages/shared/src/types.ts` — are still synced by hand and unverified. See
+the tech-debt tracker.
 
 `pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, thin
 cross-agent shims, command docs, CI claims, and `.env` ignore coverage

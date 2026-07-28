@@ -132,8 +132,14 @@ function legacyFileKeyPath(
   return encodeURIComponent(key);
 }
 
+/**
+ * Substitute a file key into a legacy `{key}` path template. The parameter type
+ * requires the literal `{key}` placeholder, so passing a registry path that has
+ * no placeholder is a compile error rather than a silent no-op that would send
+ * the request to a keyless URL.
+ */
 function legacyFileKeyRoute(
-  path: string,
+  path: `${string}{key}${string}`,
   key: string,
   options: { blockRouteCollisions?: boolean } = {}
 ): string {
@@ -218,7 +224,9 @@ export async function deleteFile(key: string) {
     `${API_CLIENT_ROUTES.fileByKeyDelete.path}?${fileKeyQuery(key)}`,
     () => legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFileDelete.path, key),
     {
-      method: "DELETE",
+      // Derived from the registry so the verb the contract test checks is the
+      // verb actually sent — a hardcoded "DELETE" could silently disagree.
+      method: API_CLIENT_ROUTES.fileByKeyDelete.method.toUpperCase(),
     }
   );
 }
@@ -256,7 +264,10 @@ export function uploadFile(
       reject(new ApiError("Upload aborted", 0)),
     );
 
-    xhr.open("POST", `${API_BASE}${API_CLIENT_ROUTES.upload.path}`);
+    xhr.open(
+      API_CLIENT_ROUTES.upload.method.toUpperCase(),
+      `${API_BASE}${API_CLIENT_ROUTES.upload.path}`
+    );
     xhr.send(formData);
   });
 }

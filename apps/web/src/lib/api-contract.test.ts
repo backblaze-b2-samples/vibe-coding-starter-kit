@@ -1,10 +1,25 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { API_CLIENT_ROUTES } from "./api-client";
 
-type RouteMethod = "delete" | "get" | "patch" | "post" | "put";
+/**
+ * Every OpenAPI operation verb, not just the ones the client happens to use:
+ * omitting a verb here silently exempts operations declared with it from the
+ * "no unmapped operation" assertion below. The client's own narrower verb union
+ * lives in `api-client.ts` on purpose — it is the set of verbs the hand-written
+ * client supports, which is a different set from what the spec may declare.
+ */
+type RouteMethod =
+  | "delete"
+  | "get"
+  | "head"
+  | "options"
+  | "patch"
+  | "post"
+  | "put"
+  | "trace";
 
 type OpenApiContract = {
   paths: Record<string, Partial<Record<RouteMethod, unknown>>>;
@@ -13,15 +28,25 @@ type OpenApiContract = {
 const CONTRACT_PATH = fileURLToPath(
   new URL("../../../../docs/api/openapi.json", import.meta.url)
 );
+
+if (!existsSync(CONTRACT_PATH)) {
+  throw new Error(
+    `${CONTRACT_PATH} is missing. Run \`pnpm contract:export\` and commit the result.`
+  );
+}
+
 const CONTRACT = JSON.parse(
   readFileSync(CONTRACT_PATH, "utf8")
 ) as OpenApiContract;
 const OPENAPI_METHODS = new Set<RouteMethod>([
   "delete",
   "get",
+  "head",
+  "options",
   "patch",
   "post",
   "put",
+  "trace",
 ]);
 
 // Prometheus metrics are intentionally scraped server-side, not called by the

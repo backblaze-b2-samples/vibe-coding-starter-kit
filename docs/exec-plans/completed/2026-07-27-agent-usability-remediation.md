@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-27 -->
+<!-- last_verified: 2026-07-28 -->
 # Agent Usability Remediation Plan
 
 Source: local agent-usability audit, 2026-07-27.

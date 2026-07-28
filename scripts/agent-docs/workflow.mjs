@@ -51,6 +51,8 @@ const CI_JOBS = ["verify-agent-docs", "verify-api", "verify-web"];
 const DOCUMENTED_COMMANDS = [
   "pnpm run setup",
   "pnpm check:agent-docs",
+  "pnpm contract:export",
+  "pnpm contract:check",
   "pnpm verify",
   "pnpm verify:api",
   "pnpm verify:web",

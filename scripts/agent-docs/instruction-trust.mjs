@@ -1,41 +1,6 @@
 /** Instruction-trust boundary coverage for `pnpm check:agent-docs`. */
 
-function sectionBody(markdown) {
-  const lines = markdown.split(/\r?\n/);
-  let fence = null;
-  let start = null;
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const fenceMark = /^\s{0,3}(`{3,}|~{3,})/.exec(line)?.[1][0] ?? null;
-
-    if (fenceMark) {
-      fence = fence === fenceMark ? null : (fence ?? fenceMark);
-      continue;
-    }
-
-    if (fence !== null) {
-      continue;
-    }
-
-    const heading = /^(#{1,6})\s+(.*)$/.exec(line);
-
-    if (!heading) {
-      continue;
-    }
-
-    if (start === null && heading[1].length === 2 && /instruction authority/i.test(heading[2])) {
-      start = index + 1;
-      continue;
-    }
-
-    if (start !== null && heading[1].length <= 2) {
-      return lines.slice(start, index).join("\n");
-    }
-  }
-
-  return start === null ? null : lines.slice(start).join("\n");
-}
+import { sectionBody } from "./markdown.mjs";
 
 function sentenceWith(body, tests) {
   return body
@@ -46,7 +11,7 @@ function sentenceWith(body, tests) {
 export function checkInstructionTrustBoundary(markdown) {
   const passes = [];
   const failures = [];
-  const boundary = sectionBody(markdown);
+  const boundary = sectionBody(markdown, /instruction authority/i);
   const record = (ok, message, detail) => {
     if (ok) {
       passes.push(message);

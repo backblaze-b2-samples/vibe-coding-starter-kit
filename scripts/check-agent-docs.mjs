@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 import { checkEnvIgnores } from "./agent-docs/env-ignore.mjs";
 import { checkInstructionTrustBoundary } from "./agent-docs/instruction-trust.mjs";
+import { headings, sectionBody } from "./agent-docs/markdown.mjs";
 import { checkGateClaims } from "./agent-docs/workflow.mjs";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -57,65 +58,6 @@ function readText(relativePath) {
     );
 
   return nonEmpty ? text : null;
-}
-
-/**
- * Prose headings in document order. Lines inside a fenced code block are never
- * headings: a `# comment` in a shell example used to be read as one, truncating
- * the section body above it.
- */
-function headings(markdown) {
-  const found = [];
-  let fence = null;
-
-  markdown.split(/\r?\n/).forEach((line, index) => {
-    const mark = /^\s{0,3}(`{3,}|~{3,})/.exec(line)?.[1][0] ?? null;
-
-    if (mark) {
-      // A fence only closes with the character that opened it.
-      fence = fence === mark ? null : (fence ?? mark);
-      return;
-    }
-
-    const heading = fence === null ? /^(#{1,6})\s+(.*)$/.exec(line) : null;
-    const text = heading ? heading[2].trim() : "";
-
-    if (heading) {
-      found.push({ index, level: heading[1].length, text, anchor: anchorOf(text) });
-    }
-  });
-
-  return found;
-}
-
-/** GitHub heading anchor: `## 12. Secret Handling` -> `12-secret-handling`. */
-function anchorOf(headingText) {
-  return headingText
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-");
-}
-
-/**
- * Body of the first `##`..`####` heading matching `headingPattern`. Matched by
- * heading text, not section number: numbering churns, the rule must not.
- */
-function sectionBody(markdown, headingPattern) {
-  const lines = markdown.split(/\r?\n/);
-  const all = headings(markdown);
-  const at = all.findIndex(
-    ({ level, text }) => level >= 2 && level <= 4 && headingPattern.test(text),
-  );
-
-  if (at === -1) {
-    return null;
-  }
-
-  const next = all.slice(at + 1).find((heading) => heading.level <= 4);
-
-  return lines
-    .slice(all[at].index + 1, next ? next.index : lines.length)
-    .join("\n");
 }
 
 /** "never", "do/must not", "don't", "no", "avoid", "forbidden", "prohibited". */
@@ -181,7 +123,8 @@ if (agents) {
   }
 
   const instructionTrust = checkInstructionTrustBoundary(agents);
-  passes.push(...instructionTrust.passes); failures.push(...instructionTrust.failures);
+  passes.push(...instructionTrust.passes);
+  failures.push(...instructionTrust.failures);
 }
 
 // --- docs/SECURITY.md defers to the canonical rule -----------------------
@@ -190,21 +133,26 @@ if (agents) {
 // reader at the top of AGENTS.md.
 
 if (security && agents) {
-  const anchor = /\(\.\.\/AGENTS\.md#([\w-]+)\)/.exec(security)?.[1] ?? null;
+  // Scan every ../AGENTS.md#anchor link, not just the first: SECURITY.md now
+  // carries more than one (e.g. Instruction Authority), so requiring the *first*
+  // to be secret-handling would break on a reorder even while the anchor is fine.
+  const anchors = [...security.matchAll(/\(\.\.\/AGENTS\.md#([\w-]+)\)/g)].map((match) => match[1]);
   const agentHeadings = headings(agents);
-  const target = agentHeadings.find((heading) => heading.anchor === anchor);
+  const secretHeading = agentHeadings.find((heading) => /secret handling/i.test(heading.text));
+  const resolvesToSecretHandling =
+    secretHeading !== undefined && anchors.includes(secretHeading.anchor);
 
   if (
     check(
-      anchor !== null,
+      anchors.length > 0,
       "docs/SECURITY.md links into AGENTS.md by anchor",
       "expected a link like [AGENTS.md §12 — Secret Handling](../AGENTS.md#12-secret-handling), actual: no anchored AGENTS.md link",
     )
   ) {
     check(
-      target !== undefined && /secret handling/i.test(target.text),
-      `docs/SECURITY.md anchor #${anchor} resolves to the AGENTS.md secret-handling heading`,
-      `expected #${anchor} to match a heading containing "Secret Handling", actual AGENTS.md anchors: ${JSON.stringify(agentHeadings.map((heading) => heading.anchor))}`,
+      resolvesToSecretHandling,
+      "docs/SECURITY.md anchors the AGENTS.md secret-handling heading",
+      `expected one ../AGENTS.md#… link to resolve to the "Secret Handling" heading (anchor ${secretHeading ? `#${secretHeading.anchor}` : "not found"}), actual SECURITY.md anchors: ${JSON.stringify(anchors)}`,
     );
   }
 }

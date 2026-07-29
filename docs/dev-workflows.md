@@ -165,6 +165,12 @@ the tech-debt tracker.
 `services/api/requirements.lock` is the complete exact-version Python 3.11
 resolution used by setup and CI. Do not edit the lock for routine feature work.
 
+The lock is resolved for CPython 3.11 on Linux/macOS and its pins carry no
+environment markers, so Windows is not a supported setup target (for example,
+`uvloop` ships no Windows wheels). If Windows support is ever required,
+regenerate the lock with a marker-preserving tool such as pip-tools'
+`pip-compile` instead of `pip freeze`.
+
 When deliberately adding or updating an API dependency:
 
 1. Edit `services/api/requirements.txt` and use a clean Python 3.11 virtual

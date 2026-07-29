@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-07-29 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -28,7 +28,7 @@ The structure follows the principle that **repository knowledge is the system of
 
 ### How it works
 
-**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** A ~100 line entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, GEMINI.md, Copilot instructions, etc.) are thin pointers back to AGENTS.md.
+**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** Its bounded, agent-sized entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, GEMINI.md, Copilot instructions, etc.) are thin pointers back to AGENTS.md.
 
 **Architecture is enforced mechanically, not by convention.** Layering rules, import boundaries, file size limits, and SDK containment are verified by structural tests and lints that run on every change. When rules are enforceable by code, agents follow them reliably.
 
@@ -50,7 +50,7 @@ docs/
 
 | Principle | Implementation |
 |-----------|---------------|
-| Give agents a single source of truth | AGENTS.md ~100 lines — layout, invariants, commands, conventions |
+| Give agents a single source of truth | AGENTS.md — bounded layout, invariants, commands, conventions |
 | Enforce invariants mechanically | Structural tests + ruff + ESLint verify boundaries |
 | DRY documentation | Each fact lives in one place; no redundant files to drift |
 | Strict layered architecture | `types -> config -> repo -> service -> runtime`, enforced by tests |
@@ -194,7 +194,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm contract:export` | Export deterministic FastAPI OpenAPI JSON to `docs/api/openapi.json` |
 | `pnpm contract:check` | Verify the checked-in OpenAPI artifact and frontend API client route registry |
 | `pnpm check:agent-docs` | Validate agent shims, command docs, CI claims, and `.env` ignore coverage |
-| `pnpm verify` | Canonical non-live pre-PR suite — chains `check:agent-docs`, `verify:api`, then `verify:web` |
+| `pnpm verify` | Credential-free canonical non-live pre-PR suite — runs `check:agent-docs`, `verify:api`, then `verify:web` |
 | `pnpm verify:api` | Backend half: API lint, API tests, structure tests |
 | `pnpm verify:web` | Frontend half: web lint, web unit tests, web typecheck + build |
 | `pnpm verify:full` | `pnpm run doctor`, then `pnpm verify`, then Playwright E2E; requires populated `.env`, local server/browser permission, port 3000 free, and Chromium installed |
@@ -222,6 +222,12 @@ but `next dev` falls back to the next free port when 3000 is taken — so an
 unrelated process on 3000 makes the E2E run time out. The API starts at
 `localhost:8000` or the next free port chosen by `scripts/dev.sh`.
 
+`pnpm verify` needs neither B2 credentials nor a browser. For parallel agents,
+use one Git worktree per verification run as documented in [the verification
+workflow](docs/dev-workflows.md#non-live-verification). That page also covers
+normal timing, slow-run recovery, and installing the optional local pre-commit
+hooks.
+
 ## Documentation Map
 
 | Doc | Purpose |
@@ -238,7 +244,7 @@ unrelated process on 3000 makes the E2E run time out. The API starts at
 
 ## Contributing
 
-Start with [AGENTS.md](AGENTS.md). It's the map — everything else is discoverable from there.
+Start with [AGENTS.md](AGENTS.md). It's the map — everything else is discoverable from there. For local commit hooks, follow [the pre-commit workflow](docs/dev-workflows.md#pre-commit).
 
 ## License
 

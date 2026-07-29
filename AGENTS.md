@@ -110,7 +110,7 @@ pnpm contract:check    # check OpenAPI artifact + frontend client routes
 
 # Test & Lint
 pnpm check:agent-docs  # agent instruction/documentation drift check
-pnpm verify            # canonical non-live pre-PR suite
+pnpm verify            # credential-free canonical non-live pre-PR suite
 pnpm verify:api        # backend half of verify (lint, tests, structure)
 pnpm verify:web        # frontend half of verify (lint, unit tests, typecheck + build)
 pnpm verify:full       # doctor + verify + Playwright E2E (requires browser + live local app prerequisites)
@@ -128,7 +128,8 @@ commands before pnpm 11, and `pnpm setup` / `pnpm doctor` run pnpm's own
 commands instead of these scripts. Never shorten them in docs or scripts.
 
 `pnpm check:agent-docs` validates this instruction surface, command docs, CI
-claims, and `.env` ignore coverage. `pnpm verify` is the default non-live gate.
+claims, and `.env` ignore coverage. `pnpm verify` is the default credential-free
+non-live gate.
 It chains `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint,
 backend tests, structural boundary tests), then `pnpm verify:web` (frontend
 lint, frontend unit tests, frontend typecheck + build). CI
@@ -137,7 +138,12 @@ PR and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
 live-service prerequisites are available — see
 [docs/dev-workflows.md](docs/dev-workflows.md#commands) for the prerequisite list.
 
-`pnpm verify` needs `services/api/.venv` to exist (run `pnpm run setup`); without
+`pnpm verify` supports parallel agents when each uses a separate Git worktree;
+run it only once at a time within one checkout because Next.js locks `.next`
+during the build. A warm local run is normally about 30 seconds; see
+`docs/dev-workflows.md` for the worktree, slow-run, and interrupted-run
+recovery workflows. `pnpm verify` needs `services/api/.venv` to exist (run
+`pnpm run setup`); without
 it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`, and
 `pnpm contract:export` / `pnpm contract:check` fail the same way on
 `.venv/bin/python`. The API's complete Python 3.11 resolution is committed in

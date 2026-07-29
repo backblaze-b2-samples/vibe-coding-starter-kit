@@ -44,10 +44,10 @@ the separately scoped live E2E workflow.
   `Unable to acquire lock at apps/web/.next/lock` error. Same-checkout
   concurrency is therefore intentionally unsupported.
 - Separate-worktree command: `(cd <worktree-a> && pnpm verify) &
-  (cd <worktree-b> && pnpm verify) & wait`. On 2026-07-29, runs in
-  `/private/tmp/vibe-coding-starter-kit-412` and the unchanged main worktree
-  both exited `0` in 15s and 17s, respectively. Additional concise output is
-  retained at `/private/tmp/vibe-verify-worktrees.sXTEv8`.
+  (cd <worktree-b> && pnpm verify) & wait`. On 2026-07-29, a run in a separate
+  temporary worktree and the unchanged main worktree both exited `0` (15s and
+  17s, respectively), confirming separate-worktree concurrency is safe. (The
+  temporary worktrees lived under `/private/tmp` and were removed after the run.)
 - `pre-commit validate-config`
 - `pnpm check:agent-docs` — passed (97 checks)
 - `pnpm verify` — passed: 136 API tests, 158 web tests, lint, structure, and

@@ -131,16 +131,21 @@ with a concurrently held `0.0.0.0` bind and would report a free port as busy.
 The tracked [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) is an
 optional local guard for staged changes; CI remains the required enforcement
 path. Install the `pre-commit` command with your preferred isolated Python tool
-(for example, `pipx install pre-commit`), then enable and use the hooks:
+(for example, `pipx install pre-commit`), then enable the hooks so they run
+against staged changes on each commit:
 
 ```bash
 pre-commit install
-pre-commit run --all-files
+pre-commit run            # check currently staged files
 ```
 
 Run `pre-commit validate-config` after editing the configuration. The hooks
 include staged-change secret detection, Ruff checks for API files, and small
-repository hygiene checks. They do not replace `pnpm verify`.
+repository hygiene checks. They do not replace `pnpm verify`. A full-tree
+`pre-commit run --all-files` scan is optional: `detect-secrets` ships without a
+committed `.secrets.baseline`, so expect it to surface pre-existing high-entropy
+strings (for example, the example-key patterns in docs) to triage rather than a
+clean pass.
 
 ### API Contract
 
@@ -247,15 +252,16 @@ plain-language list here and in `AGENTS.md` §6 (see "Documentation Update"
 above), not a duplicated shell chain.
 
 One checkout supports one active `pnpm verify`: concurrent Next.js builds
-contend for `apps/web/.next/lock`. For parallel agents, use one Git worktree per
-run, each based on the same target commit, then run setup and verification from
-that worktree:
+contend for `apps/web/.next/lock`. For parallel agents, give each run its own
+Git worktree checked out at the commit it needs to verify, then run setup and
+verification inside that worktree:
 
 ```bash
-git worktree add <path> -b <branch> origin/main
+git worktree add <path> <target-commit>   # e.g. HEAD to verify your current branch
 cd <path>
 pnpm run setup
 pnpm verify
+git worktree remove <path>                 # remove the worktree when done
 ```
 
 This is also the recovery path for shared-checkout contention. If a terminated

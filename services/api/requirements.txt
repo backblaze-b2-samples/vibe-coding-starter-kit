@@ -2,7 +2,7 @@
 # that (tests/test_dependency_lock.py). The exact resolution lives in
 # requirements.lock (used by setup and CI); regenerate it per
 # docs/dev-workflows.md#python-dependency-updates after editing this file.
-fastapi>=0.115.0
+fastapi>=0.141.1
 uvicorn[standard]>=0.34.0
 python-multipart>=0.0.18
 python-dotenv>=1.0.0

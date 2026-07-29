@@ -19,16 +19,40 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { LoadingNotice } from "@/components/common/loading-notice";
 import { FilePreview } from "./file-preview";
 import { FileTreeRow } from "./file-tree-row";
-import { ApiError, getDownloadUrl } from "@/lib/api-client";
-import { useDeleteFile, useFiles } from "@/lib/queries";
-import { buildFileTree, type TreeFolder } from "@/lib/file-tree";
+import { ApiError } from "@/lib/api-client";
+import { startBrowserDownload } from "@/lib/browser-download";
+import {
+  useDeleteFile,
+  useDownloadUrl,
+  useFileStats,
+  useFiles,
+} from "@/lib/queries";
+import { buildFileTree, initialExpandedPaths } from "@/lib/file-tree";
+import {
+  FILE_LIST_LIMIT,
+  fileListTruncationNotice,
+} from "@/lib/file-list-limit";
+import { ancestorPaths, takePreviewKeyFromUrl } from "@/lib/preview-deep-link";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
 export function FileBrowser() {
-  const { data: files = [], isLoading, isFetching, error, refetch } = useFiles();
+  const {
+    data: files = [],
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useFiles("", FILE_LIST_LIMIT);
+  // Only used to say how much of the bucket this page is *not* showing.
+  const { data: stats } = useFileStats();
   const deleteMutation = useDeleteFile();
+  const downloadMutation = useDownloadUrl();
+  const downloadingKey = downloadMutation.isPending
+    ? (downloadMutation.variables?.key ?? null)
+    : null;
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [previewFile, setPreviewFile] = useState<FileMetadata | null>(null);
@@ -37,24 +61,39 @@ export function FileBrowser() {
 
   const tree = useMemo(() => buildFileTree(files), [files]);
 
-  // Auto-expand top-level folders the first time data arrives. The guard
-  // on `prev.size > 0` makes this idempotent across refetches — once the
-  // user has toggled anything, their expansion state is preserved (this
-  // is a deliberate UX improvement over the pre-TanStack-Query version,
-  // which clobbered expansion state on every refresh).
+  // Auto-expand the first time data arrives, deep enough that actual file rows
+  // are on screen (see `initialExpandedPaths`) — expanding only the top level
+  // could leave the page showing four folder rows and zero files while telling
+  // the user to click one. The guard on `prev.size > 0` makes this idempotent
+  // across refetches — once the user has toggled anything, their expansion
+  // state is preserved (a deliberate UX improvement over the pre-TanStack-Query
+  // version, which clobbered expansion state on every refresh).
   useEffect(() => {
     if (files.length === 0) return;
     // Syncing initial UI state once when async data first arrives is the
     // documented escape hatch for react-hooks/set-state-in-effect.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setExpanded((prev) => {
-      if (prev.size > 0) return prev;
-      const topFolders = tree
-        .filter((n): n is TreeFolder => n.type === "folder")
-        .map((f) => f.path);
-      return new Set(topFolders);
-    });
+    setExpanded((prev) => (prev.size > 0 ? prev : initialExpandedPaths(tree)));
   }, [files.length, tree]);
+
+  // Deep link from the ⌘K palette or a dashboard row (`/files?preview=<key>`):
+  // reveal the file's folders and open its preview, so picking a specific file
+  // lands on that file instead of just navigating to this page.
+  useEffect(() => {
+    if (files.length === 0) return;
+    const key = takePreviewKeyFromUrl();
+    if (!key) return;
+    const target = files.find((f) => f.key === key);
+    if (!target) return;
+
+    /* eslint-disable react-hooks/set-state-in-effect --
+       syncing UI state once from the URL when async data first arrives is the
+       documented escape hatch. */
+    setExpanded((prev) => new Set([...prev, ...ancestorPaths(key)]));
+    setPreviewFile(target);
+    setPreviewOpen(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [files]);
 
   const toggleFolder = useCallback((path: string) => {
     setExpanded((prev) => {
@@ -65,14 +104,30 @@ export function FileBrowser() {
     });
   }, []);
 
-  const handleDownload = async (file: FileMetadata) => {
-    try {
-      const { url } = await getDownloadUrl(file.key);
-      window.open(url, "_blank");
-    } catch (err) {
-      const detail = err instanceof ApiError ? err.message : "Failed to get download URL";
-      toast.error(detail);
-    }
+  // Download had no in-app feedback at all: the presign round trip happened
+  // inside a bare click handler, so a slow call left the screen unchanged for
+  // seconds and — once the click's user activation expired — `window.open` was
+  // silently dropped and nothing happened. Now the click is a mutation (pending
+  // state on the row + a toast), and the navigation is an anchor click that
+  // survives an expired activation.
+  const handleDownload = (file: FileMetadata) => {
+    const toastId = toast.loading(`Preparing download for ${file.filename}...`);
+    downloadMutation.mutate(file, {
+      onSuccess: ({ url }) => {
+        if (startBrowserDownload(url, file.filename)) {
+          toast.success(`Downloading ${file.filename}`, { id: toastId });
+        } else {
+          toast.error(`Couldn't start the download for ${file.filename}`, {
+            id: toastId,
+          });
+        }
+      },
+      onError: (err) => {
+        const detail =
+          err instanceof ApiError ? err.message : "Failed to get download URL";
+        toast.error(detail, { id: toastId });
+      },
+    });
   };
 
   const confirmDelete = () => {
@@ -95,11 +150,18 @@ export function FileBrowser() {
     setPreviewOpen(true);
   };
 
+  const truncationNotice = fileListTruncationNotice(
+    files.length,
+    stats?.total_files,
+    FILE_LIST_LIMIT,
+  );
+
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 space-y-0">
-          <CardTitle className="card-title">All Files</CardTitle>
+          {/* Not "All Files": the endpoint returns the newest 100 objects. */}
+          <CardTitle className="card-title">Recent Files</CardTitle>
           <Button
             variant="outline"
             size="sm"
@@ -117,13 +179,12 @@ export function FileBrowser() {
         </CardHeader>
         <CardContent className="p-3" aria-busy={isLoading || isFetching}>
           {isLoading ? (
-            <div
-              className="space-y-2 px-1 py-1"
-              role="status"
-              aria-live="polite"
-              aria-label="Loading files"
-            >
-              <p className="sr-only">Loading files...</p>
+            <div className="space-y-2 px-1 py-1">
+              {/* Visible language, not `sr-only`: this list needs a full bucket
+                  listing (measured 2.8s-21s), and six pulsing bars with no
+                  words gave a sighted user no way to tell a slow listing from a
+                  hung one. The notice escalates as the wait grows. */}
+              <LoadingNotice className="px-2 pb-1" subject="files" />
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-8 w-full" />
               ))}
@@ -152,6 +213,14 @@ export function FileBrowser() {
             />
           ) : (
             <div className="space-y-0.5 overflow-hidden" aria-label="Files in bucket">
+              {truncationNotice && (
+                <p
+                  className="mb-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground"
+                  role="note"
+                >
+                  {truncationNotice}
+                </p>
+              )}
               {tree.map((node) => (
                 <FileTreeRow
                   key={node.type === "folder" ? node.path : node.data.key}
@@ -162,6 +231,7 @@ export function FileBrowser() {
                   onPreview={handlePreview}
                   onDownload={handleDownload}
                   onDelete={setDeleteTarget}
+                  downloadingKey={downloadingKey}
                 />
               ))}
             </div>
@@ -173,6 +243,15 @@ export function FileBrowser() {
         file={previewFile}
         open={previewOpen}
         onOpenChange={setPreviewOpen}
+        onDownload={handleDownload}
+        // Close the preview first: the delete confirmation is a separate
+        // AlertDialog, and stacking it on the open preview would leave the
+        // deleted file's dialog behind the confirmation.
+        onDelete={(file) => {
+          setPreviewOpen(false);
+          setDeleteTarget(file);
+        }}
+        downloadingKey={downloadingKey}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -192,7 +271,16 @@ export function FileBrowser() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
+              // Radix closes the dialog on action click, so the "Deleting..."
+              // state below was never actually seen: measured, the dialog was
+              // gone at ~239ms while the DELETE only returned at ~554ms, leaving
+              // the row listed and indistinguishable from idle. Holding the
+              // dialog open until the mutation settles makes the pending state
+              // real — it matters more the slower the network is.
+              onClick={(event) => {
+                event.preventDefault();
+                confirmDelete();
+              }}
               disabled={deleteMutation.isPending}
               // Use the destructive variant so the confirm gets white-on-red
               // (AA in both themes); AlertDialogAction merges this over its

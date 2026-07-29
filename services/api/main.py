@@ -19,6 +19,7 @@ from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 
 from app.config import settings  # noqa: E402
 from app.runtime import files, health, metrics, ratelimit, upload  # noqa: E402
+from app.service.files import warm_listing_cache  # noqa: E402
 
 # --- Startup validation ---
 # Required B2 settings are declared with empty-string defaults so that
@@ -70,6 +71,12 @@ async def lifespan(_app: "FastAPI"):
             + ", ".join(placeholders)
             + f". Edit {REPO_ROOT_ENV} with your real B2 credentials and restart."
         )
+
+    # Fire-and-forget: the full-bucket listing that /files and /files/stats both
+    # need takes 8-20s on a large bucket. Scanning it here means the first page
+    # view reads a warm cache instead of watching skeletons.
+    if settings.warm_list_cache_on_startup:
+        warm_listing_cache()
     yield
 
 # --- Structured JSON logging ---

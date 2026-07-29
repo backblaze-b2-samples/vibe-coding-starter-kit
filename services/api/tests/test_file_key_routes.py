@@ -67,8 +67,10 @@ async def test_query_download_route_handles_reserved_key_shapes(
     monkeypatch.setattr(
         files_service,
         "get_presigned_url",
-        lambda requested_key, filename=None: presign_calls.append(requested_key)
-        or f"https://example.test/download/{len(presign_calls)}",
+        lambda requested_key, filename=None, disposition="attachment": (
+            presign_calls.append(requested_key)
+            or f"https://example.test/download/{len(presign_calls)}"
+        ),
     )
 
     response = await client.get("/files-by-key/download", params={"key": key})
@@ -89,8 +91,10 @@ async def test_query_preview_route_handles_reserved_key_shapes(
     monkeypatch.setattr(
         files_service,
         "get_presigned_url",
-        lambda requested_key, filename=None: presign_calls.append(requested_key)
-        or f"https://example.test/preview/{len(presign_calls)}",
+        lambda requested_key, filename=None, disposition="attachment": (
+            presign_calls.append(requested_key)
+            or f"https://example.test/preview/{len(presign_calls)}"
+        ),
     )
 
     response = await client.get("/files-by-key/preview", params={"key": key})
@@ -141,8 +145,9 @@ async def test_query_key_routes_reject_invalid_keys(
     monkeypatch.setattr(
         files_service,
         "get_presigned_url",
-        lambda requested_key, filename=None: repo_calls.append(requested_key)
-        or "https://example.test/file",
+        lambda requested_key, filename=None, disposition="attachment": (
+            repo_calls.append(requested_key) or "https://example.test/file"
+        ),
     )
     monkeypatch.setattr(
         files_service, "delete_file", lambda requested_key: repo_calls.append(requested_key)

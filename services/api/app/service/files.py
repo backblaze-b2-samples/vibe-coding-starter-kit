@@ -13,6 +13,7 @@ from app.repo import (
     get_upload_stats,
     increment_download_count,
     list_files,
+    prewarm_listing,
 )
 from app.service.metadata import extract_metadata
 from app.types import FileMetadata, FileMetadataDetail, UploadStats
@@ -76,6 +77,18 @@ def validate_key(key: str) -> None:
         raise FileKeyError()
 
 
+def warm_listing_cache() -> None:
+    """Warm the shared bucket-listing cache in the background.
+
+    Called once at startup (see `main.lifespan`). Both `/files` and
+    `/files/stats` need a full listing, so warming it here moves the one
+    unavoidable slow scan off whichever page the first user happens to open.
+    Never raises: a warm-up failure just means the first request pays as before.
+    """
+    logger.info("Warming bucket listing cache")
+    prewarm_listing()
+
+
 def get_files(prefix: str = "", limit: int = 100) -> list[FileMetadata]:
     # SECURITY: this lists the whole bucket (or `prefix`) with no per-user
     # filter — see docs/SECURITY.md. A multi-tenant clone must scope this to
@@ -131,23 +144,32 @@ def get_file_detail(key: str) -> FileMetadataDetail:
     )
 
 
-def get_preview_url(key: str) -> str:
-    """Return a presigned URL without recording a download.
-
-    Used by the preview modal for rendering images / PDFs inline — opening
-    a preview is not a user-initiated download and shouldn't inflate the
-    download counter.
-    """
+def _presigned_url_for(key: str, disposition: str) -> str:
+    """Validate `key`, confirm the object exists, and presign it."""
     validate_key(key)
     metadata = get_file_metadata(key)
     if not metadata:
         raise FileNotFoundServiceError()
-    return get_presigned_url(key, filename=metadata.filename)
+    return get_presigned_url(
+        key, filename=metadata.filename, disposition=disposition
+    )
+
+
+def get_preview_url(key: str) -> str:
+    """Return an *inline* presigned URL without recording a download.
+
+    Used by the preview modal for rendering images / PDFs inline, so the URL
+    must ask B2 for `Content-Disposition: inline` — with `attachment` (the
+    download default) a browser downloads the file instead of painting it and
+    the PDF preview pane stays blank. Opening a preview is also not a
+    user-initiated download, so it must not inflate the download counter.
+    """
+    return _presigned_url_for(key, "inline")
 
 
 def get_download_url(key: str) -> str:
-    """Return a presigned URL and record the event as a download."""
-    url = get_preview_url(key)
+    """Return an *attachment* presigned URL and record it as a download."""
+    url = _presigned_url_for(key, "attachment")
     increment_download_count()
     return url
 

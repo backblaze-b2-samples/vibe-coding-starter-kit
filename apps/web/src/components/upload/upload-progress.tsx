@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   ChevronDown,
   FileIcon,
+  FolderOpen,
   Loader2,
   RotateCcw,
   XCircle,
@@ -18,20 +20,14 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { FileMetadataPanel } from "@/components/files/file-metadata-panel";
 import { humanizeBytes } from "@/lib/utils";
-import type {
-  FileMetadataDetail,
-  FileStatus,
-} from "@vibe-coding-starter-kit/shared";
+import {
+  isServerPhase,
+  uploadStatusLabel,
+  type UploadItem,
+} from "@/lib/upload-status";
+import type { FileStatus } from "@vibe-coding-starter-kit/shared";
 
-export interface UploadItem {
-  id: string;
-  file: File;
-  progress: number;
-  status: FileStatus;
-  error?: string;
-  retryable?: boolean;
-  metadata?: FileMetadataDetail | null;
-}
+export type { UploadItem };
 
 interface UploadProgressProps {
   disabled?: boolean;
@@ -62,17 +58,6 @@ function StatusIcon({ status }: { status: FileStatus }) {
   }
 }
 
-function getStatusLabel(item: UploadItem) {
-  switch (item.status) {
-    case "uploading":
-      return `Uploading ${item.progress}%`;
-    case "complete":
-      return "Uploaded";
-    case "error":
-      return item.retryable === false ? "Cannot upload" : "Upload failed";
-  }
-}
-
 function UploadRow({
   item,
   disabled,
@@ -84,6 +69,8 @@ function UploadRow({
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const metadata = item.status === "complete" ? item.metadata : null;
+  const serverPhase = isServerPhase(item);
+  const statusLabel = uploadStatusLabel(item);
 
   return (
     <div
@@ -117,8 +104,8 @@ function UploadRow({
               {humanizeBytes(item.file.size)}
             </span>
             <StatusIcon status={item.status} />
-            <span className="text-xs text-muted-foreground">
-              {getStatusLabel(item)}
+            <span className="text-xs text-muted-foreground" aria-live="polite">
+              {statusLabel}
             </span>
             {item.status === "error" &&
               item.retryable !== false &&
@@ -137,38 +124,69 @@ function UploadRow({
               )}
           </div>
         </div>
-        {item.status === "uploading" && (
-          <Progress
-            aria-label={`Upload progress for ${item.file.name}`}
-            value={item.progress}
-            className="mt-2 h-1 progress-gradient"
-          />
-        )}
-        {metadata && (
+        {item.status === "uploading" &&
+          (serverPhase ? (
+            // Every byte is sent, so a determinate bar can only sit at a full
+            // 100% — measured at 25.5s on a 54MB file, with nothing on screen
+            // changing. That reads as finished-but-stuck. An indeterminate
+            // track sweeps instead: visibly moving, and honest that we have no
+            // percentage for the server-side B2 write + metadata extraction.
+            <div
+              role="progressbar"
+              aria-label={`${statusLabel} — ${item.file.name}`}
+              className="progress-indeterminate mt-2 h-1 w-full rounded-full"
+            />
+          ) : (
+            <Progress
+              aria-label={`Upload progress for ${item.file.name}`}
+              value={item.progress}
+              className="mt-2 h-1 progress-gradient"
+            />
+          ))}
+        {item.status === "complete" && (
           <Collapsible
             open={detailsOpen}
             onOpenChange={setDetailsOpen}
             className="mt-2"
           >
-            <CollapsibleTrigger asChild>
+            <div className="flex flex-wrap items-center gap-1">
+              {metadata && (
+                <CollapsibleTrigger asChild>
+                  <Button
+                    aria-label={`Toggle extracted metadata for ${item.file.name}`}
+                    className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+                    size="sm"
+                    variant="ghost"
+                  >
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform ${
+                        detailsOpen ? "rotate-180" : ""
+                      }`}
+                      aria-hidden="true"
+                    />
+                    {detailsOpen ? "Hide details" : "View details"}
+                  </Button>
+                </CollapsibleTrigger>
+              )}
+              {/* A finished upload used to dead-end here — no way through to the
+                  file it just created. */}
               <Button
-                aria-label={`Toggle extracted metadata for ${item.file.name}`}
-                className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+                asChild
+                className="h-7 gap-1 px-2 text-xs"
                 size="sm"
                 variant="ghost"
               >
-                <ChevronDown
-                  className={`h-3.5 w-3.5 transition-transform ${
-                    detailsOpen ? "rotate-180" : ""
-                  }`}
-                  aria-hidden="true"
-                />
-                {detailsOpen ? "Hide details" : "View details"}
+                <Link href="/files">
+                  <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                  View in Files
+                </Link>
               </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              <FileMetadataPanel metadata={metadata} />
-            </CollapsibleContent>
+            </div>
+            {metadata && (
+              <CollapsibleContent className="pt-2">
+                <FileMetadataPanel metadata={metadata} />
+              </CollapsibleContent>
+            )}
           </Collapsible>
         )}
       </div>

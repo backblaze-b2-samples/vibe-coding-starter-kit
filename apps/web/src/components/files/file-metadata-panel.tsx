@@ -56,6 +56,18 @@ export function FileMetadataPanel({ metadata }: FileMetadataPanelProps) {
         <MetaRow label="MD5" value={metadata.md5} />
         <MetaRow label="SHA-256" value={metadata.sha256} />
 
+        {/* A format extractor that was skipped or failed says so here. Without
+            this the Image / PDF section just vanished, which read as "this file
+            has no dimensions" rather than "we didn't decode it". */}
+        {metadata.metadata_warning && (
+          <p
+            className="rounded-md border border-[var(--attention)]/40 bg-[var(--attention)]/10 px-3 py-2 text-xs text-foreground"
+            role="note"
+          >
+            {metadata.metadata_warning}
+          </p>
+        )}
+
         {/* Image metadata */}
         {metadata.image_width && metadata.image_height && (
           <>

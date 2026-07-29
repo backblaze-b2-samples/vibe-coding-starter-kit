@@ -20,6 +20,9 @@ export interface FileMetadataDetail {
   md5: string;
   sha256: string;
   uploaded_at: string;
+  /** Set when a format-specific extractor was skipped or failed (e.g. an image
+   *  above the decompression-bomb decode limit). Core fields stay exact. */
+  metadata_warning: string | null;
   // Image-specific
   image_width: number | null;
   image_height: number | null;

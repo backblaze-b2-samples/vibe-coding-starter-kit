@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Search } from "lucide-react";
+import { Loader2, Moon, Sun, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -21,6 +22,8 @@ import {
 } from "@/components/ui/tooltip";
 import { CommandPalette } from "./command-palette";
 import { APP_NAME } from "@/lib/app-config";
+import { useUploadQueue } from "@/lib/upload-queue-context";
+import { activeUploadLabel } from "@/lib/upload-status";
 
 // Overrides for routes whose label differs from the derived segment
 // (e.g. "/" -> "Dashboard", "/design" -> "Design System").
@@ -49,6 +52,10 @@ export function Header() {
   const pageTitle = pageTitles[pathname] ?? deriveTitleFromPath(pathname);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
+  // An upload started on /upload keeps running while the user browses, so it
+  // needs a presence indicator that isn't on the upload page itself.
+  const { items } = useUploadQueue();
+  const uploadLabel = activeUploadLabel(items);
 
   // Global keyboard shortcut — cmd/ctrl-K or `/` toggles the palette.
   useEffect(() => {
@@ -109,6 +116,16 @@ export function Header() {
       </button>
 
       <div className="ml-auto flex items-center gap-1">
+        {uploadLabel && (
+          <Link
+            href="/upload"
+            aria-live="polite"
+            className="mr-1 flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-nav-foreground hover:bg-white/15"
+          >
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            {uploadLabel}
+          </Link>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

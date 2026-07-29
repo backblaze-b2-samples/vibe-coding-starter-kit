@@ -5,6 +5,7 @@ from app.repo.b2_client import (
     get_presigned_url,
     get_upload_stats,
     list_files,
+    prewarm_listing,
     upload_file,
 )
 from app.repo.b2_object import get_object_bytes
@@ -20,5 +21,6 @@ __all__ = [
     "get_upload_stats",
     "increment_download_count",
     "list_files",
+    "prewarm_listing",
     "upload_file",
 ]

@@ -113,8 +113,9 @@ pnpm run setup
 ```
 
 This copies `.env.example` to `.env` only when `.env` does not already exist,
-installs workspace dependencies from the lockfile, creates `services/api/.venv`
-if missing, and installs the API requirements. It is safe to rerun and never
+installs workspace dependencies from `pnpm-lock.yaml`, creates
+`services/api/.venv` if missing, and installs the API's committed Python 3.11
+resolution from `services/api/requirements.lock`. It is safe to rerun and never
 overwrites an existing `.env`.
 
 > Use the `pnpm run` form: `setup` (like `doctor`) is a built-in pnpm command
@@ -185,7 +186,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 
 | Command | What it does |
 |---------|-------------|
-| `pnpm run setup` | Idempotently copy `.env.example` to `.env` only if missing, install workspace dependencies, create the backend venv, and install API requirements |
+| `pnpm run setup` | Idempotently copy `.env.example` to `.env` only if missing, install workspace dependencies, create the backend venv, and install the locked API dependencies |
 | `pnpm run doctor` | Preflight environment check (also runs automatically before `pnpm dev`) |
 | `pnpm dev` | Start frontend + backend |
 | `pnpm dev:web` | Frontend only |
@@ -206,8 +207,11 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 | `pnpm test:e2e` | Playwright E2E smoke tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |
 
 Run `pnpm run setup` once before local development, and rerun it after pulling
-dependency changes. It installs from the committed lockfile, so if you add a
-dependency yourself, run `pnpm install` to refresh `pnpm-lock.yaml` first. Run
+dependency changes. It installs workspace dependencies from `pnpm-lock.yaml`
+and API dependencies from `services/api/requirements.lock`. If you add a Node
+dependency yourself, run `pnpm install` to refresh `pnpm-lock.yaml`; for an API
+dependency, follow the reviewed refresh workflow in
+[docs/dev-workflows.md](docs/dev-workflows.md#python-dependency-updates). Run
 `pnpm verify` before opening a PR; it needs
 `services/api/.venv` from setup. Run `pnpm verify:full` when you can start the
 local app stack and browser tests: `.env` must contain real B2 values, local

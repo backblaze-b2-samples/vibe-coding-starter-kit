@@ -74,9 +74,9 @@ Run `pnpm run setup` on a fresh clone. It is idempotent: it copies
 `.env.example` to `.env` only if `.env` does not already exist (first, because it
 is the only step that needs no network), installs workspace dependencies from
 `pnpm-lock.yaml`, creates `services/api/.venv` only when missing, and installs
-`services/api/requirements.txt`. It installs with `--frozen-lockfile`, so run
-`pnpm install` yourself after editing `package.json`. It does not solve Python
-dependency locking; Python requirements remain intentionally unchanged.
+the committed Python 3.11 resolution in `services/api/requirements.lock`. It
+installs Node dependencies with `--frozen-lockfile`, so run `pnpm install`
+yourself after editing `package.json`.
 
 `setup` and `doctor` must always be invoked as `pnpm run setup` / `pnpm run
 doctor`. Both are built-in pnpm commands before pnpm 11 (the version CI pins and
@@ -135,11 +135,11 @@ or request models. The exporter imports `services/api/main.py`, calls
 Both contract commands run `services/api/.venv/bin/python`, so they need
 `pnpm run setup` first.
 
-The comparison is byte-exact, and `services/api/requirements.txt` pins only
-lower bounds — so a FastAPI or Pydantic release that changes schema generation
-makes the check fail with no repo change at all. That is the expected failure
-mode after a dependency bump: re-run `pnpm contract:export`, eyeball the diff,
-and commit it.
+The comparison is byte-exact. The complete Python 3.11 resolution is committed
+in `services/api/requirements.lock`, so routine verification must not fail
+merely because FastAPI or Pydantic published a release. If an intentional
+dependency refresh changes schema generation, refresh and review the lock and
+contract in the same PR as described below.
 
 Run `pnpm contract:check` for a fast API/client drift check. It verifies that
 `docs/api/openapi.json` matches the generated FastAPI contract, then runs the
@@ -158,6 +158,36 @@ Scope: the check covers **routes** (path + verb), not payloads. Response and
 request *shapes* — and the hand-written mirrors of the Pydantic models in
 `packages/shared/src/types.ts` — are still synced by hand and unverified. See
 the tech-debt tracker.
+
+### Python dependency updates
+
+`services/api/requirements.txt` is the human-edited input and
+`services/api/requirements.lock` is the complete exact-version Python 3.11
+resolution used by setup and CI. Do not edit the lock for routine feature work.
+
+The lock is resolved for CPython 3.11 on Linux/macOS and its pins carry no
+environment markers, so Windows is not a supported setup target (for example,
+`uvloop` ships no Windows wheels). If Windows support is ever required,
+regenerate the lock with a marker-preserving tool such as pip-tools'
+`pip-compile` instead of `pip freeze`.
+
+When deliberately adding or updating an API dependency:
+
+1. Edit `services/api/requirements.txt` and use a clean Python 3.11 virtual
+   environment outside the repository (for example, under `/tmp`).
+2. Install `requirements.txt` in that environment, run `python -m pip freeze`,
+   and replace `requirements.lock` with the exact application, test, and quality
+   packages. Omit bootstrap tools such as `pip` and `setuptools`.
+3. Recreate the repository venv with `pnpm run setup`, run
+   `pnpm contract:export`, and review any contract diff. Commit the input, lock,
+   and contract together only when the change is intended.
+4. Run `pnpm contract:check` and `pnpm verify`. If a contract change is
+   unexpected, restore the prior input/lock instead of accepting generated
+   OpenAPI churn.
+
+If a fresh clone fails dependency installation, first confirm that
+`services/api/requirements.lock` is present and rerun `pnpm run setup`; do not
+run an unconstrained install from `requirements.txt` as a recovery shortcut.
 
 `pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, thin
 cross-agent shims, command docs, CI claims, and `.env` ignore coverage

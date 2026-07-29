@@ -18,7 +18,7 @@ const ENV_EXAMPLE = resolve(REPO_ROOT, ".env.example");
 const ENV_FILE = resolve(REPO_ROOT, ".env");
 const VENV_DIR = resolve(API_DIR, ".venv");
 const VENV_PYTHON = resolve(VENV_DIR, "bin/python");
-const REQUIREMENTS = resolve(API_DIR, "requirements.txt");
+const REQUIREMENTS_LOCK = resolve(API_DIR, "requirements.lock");
 
 function fail(message) {
   console.error(`setup: ${message}`);
@@ -98,7 +98,7 @@ function main() {
   ensureEnvFile();
   run("pnpm", ["install", "--frozen-lockfile"], REPO_ROOT);
   ensureVenv(python.bin);
-  run(VENV_PYTHON, ["-m", "pip", "install", "-r", REQUIREMENTS], API_DIR);
+  run(VENV_PYTHON, ["-m", "pip", "install", "-r", REQUIREMENTS_LOCK], API_DIR);
 
   console.log("\nSetup complete. Run `pnpm run doctor` to validate credentials and local server access.");
 }

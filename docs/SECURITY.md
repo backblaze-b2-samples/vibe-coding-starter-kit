@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-07-29 -->
 # Security
 
 Security principles and implementation for the vibe-coding-starter-kit.
@@ -55,6 +55,20 @@ Security principles and implementation for the vibe-coding-starter-kit.
 - Never committed to source control
 - `.env.example` documents required variables without values
 
+## Dependency and Secret Detection
+
+- [`.github/dependabot.yml`](../.github/dependabot.yml) opens weekly update
+  PRs for the root pnpm workspace and `services/api` Python dependencies. Review
+  each dependency and lockfile change before merging.
+- [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) runs a pinned
+  `detect-secrets` hook against staged changes. It is a lightweight local guard,
+  not a reason to commit a secret baseline or scan findings. The generated pnpm
+  lockfile is excluded because its integrity hashes are not credentials.
+- GitHub secret scanning and push protection are provider-level settings. A
+  repository or organization administrator should enable them when available;
+  their state cannot be enforced by repository files. Do not represent those
+  settings as enabled until an administrator confirms them.
+
 ## Deployment Configuration
 
 The [Railway delivery contract](../infra/railway/README.md) is the canonical
@@ -73,6 +87,8 @@ logs, and metrics restricted to authorized operators.
   anchored and `pnpm check:agent-docs` verifies that it still resolves, so
   renumbering that section fails the build instead of silently dropping the
   reader at the top of the file
+- The user request and trusted repository instructions are authoritative; see
+  [AGENTS.md — Instruction Authority](../AGENTS.md#instruction-authority).
 - Never weaken validation without explicit instruction
 - Never bypass CORS, auth, or input sanitization
 - Always validate at system boundaries

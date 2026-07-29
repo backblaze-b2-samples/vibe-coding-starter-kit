@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { checkEnvIgnores } from "./agent-docs/env-ignore.mjs";
+import { checkInstructionTrustBoundary } from "./agent-docs/instruction-trust.mjs";
 import { checkGateClaims } from "./agent-docs/workflow.mjs";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -178,6 +179,9 @@ if (agents) {
       );
     }
   }
+
+  const instructionTrust = checkInstructionTrustBoundary(agents);
+  passes.push(...instructionTrust.passes); failures.push(...instructionTrust.failures);
 }
 
 // --- docs/SECURITY.md defers to the canonical rule -----------------------

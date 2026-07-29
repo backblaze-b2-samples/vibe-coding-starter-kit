@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-07-29 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -189,8 +189,9 @@ If a fresh clone fails dependency installation, first confirm that
 `services/api/requirements.lock` is present and rerun `pnpm run setup`; do not
 run an unconstrained install from `requirements.txt` as a recovery shortcut.
 
-`pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, thin
-cross-agent shims, command docs, CI claims, and `.env` ignore coverage
+`pnpm check:agent-docs` validates the canonical `AGENTS.md` surface, including
+its instruction-trust boundary, thin cross-agent shims, command docs, CI claims,
+and `.env` ignore coverage
 (`scripts/check-agent-docs.mjs`, helpers in `scripts/agent-docs/`). It is
 dependency-free by design — it runs without `pnpm install`, which is why its CI
 job skips the install step. Register every new agent shim there so it can't be

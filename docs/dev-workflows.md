@@ -126,6 +126,27 @@ with a concurrently held `0.0.0.0` bind and would report a free port as busy.
 - Backend lint: `pnpm lint:api`
 - E2E: `pnpm test:e2e` (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first)
 
+### Pre-commit
+
+The tracked [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) is an
+optional local guard for staged changes; CI remains the required enforcement
+path. Install the `pre-commit` command with your preferred isolated Python tool
+(for example, `pipx install pre-commit`), then enable the hooks so they run
+against staged changes on each commit:
+
+```bash
+pre-commit install
+pre-commit run            # check currently staged files
+```
+
+Run `pre-commit validate-config` after editing the configuration. The hooks
+include staged-change secret detection, Ruff checks for API files, and small
+repository hygiene checks. They do not replace `pnpm verify`. A full-tree
+`pre-commit run --all-files` scan is optional: `detect-secrets` ships without a
+committed `.secrets.baseline`, so expect it to surface pre-existing high-entropy
+strings (for example, the example-key patterns in docs) to triage rather than a
+clean pass.
+
 ### API Contract
 
 The checked-in FastAPI contract lives at `docs/api/openapi.json`. Refresh it
@@ -219,14 +240,42 @@ Example/template env files must stay trackable anywhere in the tree;
 `apps/web/.gitignore` overrides the root one for `apps/web/**`, so its negations
 live there too.
 
-`pnpm verify` is the canonical non-live gate for PRs. It is composed of
+### Non-live verification
+
+`pnpm verify` is the canonical credential-free non-live gate for PRs. It is composed of
 `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint, backend tests,
 structural boundary tests), then `pnpm verify:web` (frontend lint, frontend
 unit tests, frontend typecheck + build) — so the agent-doc guard runs first and
 CI can run all three checks as parallel jobs. `package.json` is the single
-source of truth for the literal command chain; when it changes, don't paste the
-new chain into docs — update the plain-language gate list here and in
-`AGENTS.md` §6 (see "Documentation Update" above).
+source of truth for the literal command chain; when it changes, update the
+plain-language list here and in `AGENTS.md` §6 (see "Documentation Update"
+above), not a duplicated shell chain.
+
+One checkout supports one active `pnpm verify`: concurrent Next.js builds
+contend for `apps/web/.next/lock`. For parallel agents, give each run its own
+Git worktree checked out at the commit it needs to verify, then run setup and
+verification inside that worktree:
+
+```bash
+git worktree add <path> <target-commit>   # e.g. HEAD to verify your current branch
+cd <path>
+pnpm run setup
+pnpm verify
+git worktree remove <path>                 # remove the worktree when done
+```
+
+This is also the recovery path for shared-checkout contention. If a terminated
+run leaves `.next/lock`, first confirm no `next build` or `pnpm verify` process
+is active, remove only `apps/web/.next/lock`, then rerun `pnpm verify` (or move
+the work to a separate worktree). Do not delete the whole `.next` directory as
+routine recovery.
+
+On a warm development machine, plan for about 30 seconds for `pnpm verify`.
+The first run after setup or a dependency/cache change can take longer. If an
+unchanged warm checkout takes more than two minutes, rerun `pnpm verify` once;
+if it remains slow, run `pnpm verify:api` and `pnpm verify:web` separately
+(not concurrently in the same checkout) to locate the slow half. Do not switch
+to `pnpm verify:full` as a recovery step: it is a separate live workflow.
 
 `pnpm verify:full` runs `pnpm run doctor` first (it fails fast on a missing venv,
 missing `.env`, or placeholder credentials, before the long suite starts), then
@@ -239,7 +288,9 @@ available:
 - port 3000 is free, or already serving this app
 - Playwright Chromium has been installed
 
-Playwright starts `pnpm dev` from `apps/web/playwright.config.ts` and waits on
+This live E2E behavior is intentionally separate from `pnpm verify`: the
+non-live gate neither starts a server nor allocates a port. Playwright starts
+`pnpm dev` from `apps/web/playwright.config.ts` and waits on
 `http://localhost:3000`. Note that `next dev` falls back to the next free port
 when 3000 is taken, so an unrelated process on 3000 makes `pnpm test:e2e` time
 out waiting on a URL the app never claimed — `pnpm run doctor` warns about this

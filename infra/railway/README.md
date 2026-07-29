@@ -17,7 +17,7 @@ source, root directory, environment variables, domains, or access controls.
 | Service | Root directory | Config as Code path | Build / start | Health check |
 | --- | --- | --- | --- | --- |
 | `web` | `/` | `/infra/railway/web.railway.json` | root pnpm workspace build; `next start` on Railway's `PORT` | `/` |
-| `api` | `/services/api` | `/infra/railway/api.railway.json` | `pip install -r requirements.txt`; Uvicorn on Railway's `PORT` | `/health` |
+| `api` | `/services/api` | `/infra/railway/api.railway.json` | `pip install -r requirements.lock`; Uvicorn on Railway's `PORT` | `/health` |
 
 The web service uses the repository root intentionally: it builds against the
 shared workspace package in `packages/shared`. Do not change its root to
@@ -25,7 +25,9 @@ shared workspace package in `packages/shared`. Do not change its root to
 
 Both versioned configs use Railpack, constrained watch paths, a 100-second
 health-check timeout, and restart-on-failure with ten retries. Railway injects
-`PORT`; do not define it manually. The web health check only confirms that
+`PORT`; do not define it manually. The API build installs the committed
+`services/api/requirements.lock`, so Railway builds from the same pinned Python
+resolution as local setup and CI rather than re-resolving floating versions. The web health check only confirms that
 Next.js serves a response. API `/health` returns HTTP 200 even when B2 is
 degraded, so post-deploy verification must inspect `b2_connected`, not only the
 status code.
@@ -38,7 +40,7 @@ them in a config file, commit, issue, PR, terminal transcript, or screenshot.
 | Service | Variable names | Classification | Notes |
 | --- | --- | --- | --- |
 | API | `B2_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Limit the B2 key to the app bucket and least privilege. |
-| API | `B2_ENDPOINT`, `B2_BUCKET_NAME`, `API_CORS_ORIGINS`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate and size settings | Non-secret service configuration | Keep values in Railway, not source; set exact production CORS origins and `ENABLE_DOCS=false`. |
+| API | `B2_ENDPOINT`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL`, `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate and size settings | Non-secret service configuration | Keep values in Railway, not source; set exact production CORS origins and `ENABLE_DOCS=false`. |
 | Web | `NEXT_PUBLIC_API_URL` | Public build-time configuration | Next.js embeds it in browser output; it must be the deployed API origin and contains no credential. |
 
 The browser needs a public API origin, so both services require a deliberate

@@ -194,3 +194,8 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 ## 12. Secret Handling
 
 - Never print `.env`, credentials, or API keys in chat, logs, reports, commits, or screenshots.
+
+## 13. External Delivery
+
+- Never provision, deploy, migrate, publish, or create an externally reachable preview without the user's explicit approval.
+- For approved Railway work, follow [infra/railway/README.md](infra/railway/README.md); it is the canonical delivery contract for configuration, review, verification, rollback, and cleanup.

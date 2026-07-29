@@ -65,6 +65,65 @@ export function buildFileTree(files: FileMetadata[]): TreeNode[] {
   return root.children;
 }
 
+/** Hard stop for auto-expansion, so a pathological key depth can't loop. */
+export const MAX_AUTO_EXPAND_DEPTH = 8;
+
+function foldersOf(nodes: TreeNode[]): TreeFolder[] {
+  return nodes.filter((n): n is TreeFolder => n.type === "folder");
+}
+
+/** Total files anywhere in the tree, at any depth. */
+function countFiles(nodes: TreeNode[]): number {
+  let total = 0;
+  for (const node of nodes) {
+    if (node.type === "file") total += 1;
+    else total += countFiles(node.children);
+  }
+  return total;
+}
+
+/**
+ * Which folders to expand when the list first arrives, so file rows are
+ * actually on screen.
+ *
+ * Expanding only the top level left `/files` showing four folder rows and zero
+ * files while the page said "Click a file to preview it" — the newest objects
+ * lived two levels deep, so the page looked empty and its own instruction was
+ * unactionable.
+ *
+ * Stopping at the *first* visible file wasn't enough either: one stray
+ * top-level object satisfied the check while the other 99 stayed hidden inside
+ * collapsed folders, so the page still claimed "Showing the 100 most recent"
+ * with a single row on screen. The bar is therefore a MAJORITY of the listed
+ * files being reachable without clicking, not merely one of them.
+ */
+export function initialExpandedPaths(
+  nodes: TreeNode[],
+  maxDepth: number = MAX_AUTO_EXPAND_DEPTH,
+): Set<string> {
+  const expanded = new Set<string>();
+  const totalFiles = countFiles(nodes);
+  let visibleFiles = nodes.filter((n) => n.type === "file").length;
+  let frontier = foldersOf(nodes);
+
+  // Nothing to reveal, or most of it is already on screen.
+  const enoughVisible = () => totalFiles === 0 || visibleFiles * 2 >= totalFiles;
+
+  for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+    // The top level always opens (the documented behaviour); deeper levels open
+    // only while the majority of files are still out of reach.
+    for (const folder of frontier) expanded.add(folder.path);
+
+    const revealed = frontier.flatMap((folder) => folder.children);
+    visibleFiles += revealed.filter((child) => child.type === "file").length;
+    if (enoughVisible()) break;
+
+    frontier = foldersOf(revealed);
+  }
+
+  return expanded;
+}
+
 function sortTree(nodes: TreeNode[]) {
   nodes.sort((a, b) => {
     if (a.type !== b.type) return a.type === "folder" ? -1 : 1;

@@ -26,11 +26,18 @@ _lock = Lock()
 
 
 def _counter_path() -> Path:
-    """Resolve the counter file path relative to the api service root."""
+    """Resolve the counter file path relative to the repo root.
+
+    The repo root — not services/api/ — on purpose: `uvicorn --reload` watches
+    services/api/, so runtime state written there lands inside the reloader's
+    watch tree. Every download then emits "N changes detected" noise (and would
+    become a real API restart the moment someone adds `--reload-include`).
+    Runtime state belongs outside the watched source tree.
+    """
     p = Path(settings.download_count_file)
     if not p.is_absolute():
-        # Anchor at services/api/ (three levels up: repo/ -> app/ -> api/).
-        p = Path(__file__).resolve().parents[2] / p
+        # Anchor at the repo root (repo/ -> app/ -> api/ -> services/ -> root).
+        p = Path(__file__).resolve().parents[4] / p
     return p
 
 

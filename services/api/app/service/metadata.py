@@ -9,6 +9,36 @@ from app.types.formatting import humanize_bytes
 logger = logging.getLogger(__name__)
 
 
+# Pillow refuses to decode images above its decompression-bomb ceiling. That is
+# a deliberate safety control, so we keep it and report the skip instead of
+# returning a detail payload that silently omits the Image section.
+_BOMB_WARNING = (
+    "Image metadata unavailable — this image is larger than the decode limit "
+    "that guards against decompression-bomb attacks, so dimensions and EXIF "
+    "were skipped. Checksums and size are still exact."
+)
+_IMAGE_WARNING = (
+    "Image metadata unavailable — the image could not be decoded. Checksums "
+    "and size are still exact."
+)
+_PDF_WARNING = (
+    "PDF metadata unavailable — the document could not be parsed. Checksums "
+    "and size are still exact."
+)
+
+
+def _image_warning(exc: Exception) -> str:
+    """Pick the message for a failed image decode.
+
+    Matched on the exception class name rather than importing Pillow's
+    ``DecompressionBombError``: the PIL import is deliberately lazy, and it may
+    itself be what failed.
+    """
+    if type(exc).__name__ == "DecompressionBombError":
+        return _BOMB_WARNING
+    return _IMAGE_WARNING
+
+
 def _extract_image_metadata(file_data: bytes) -> dict:
     try:
         from PIL import Image
@@ -33,9 +63,9 @@ def _extract_image_metadata(file_data: bytes) -> dict:
                 exif_data[str(tag)] = str(value)
             result["exif"] = exif_data if exif_data else None
         return result
-    except Exception:
+    except Exception as exc:
         logger.warning("Image metadata extraction failed", exc_info=True)
-        return {}
+        return {"metadata_warning": _image_warning(exc)}
 
 
 def _extract_pdf_metadata(file_data: bytes) -> dict:
@@ -51,7 +81,7 @@ def _extract_pdf_metadata(file_data: bytes) -> dict:
         }
     except Exception:
         logger.warning("PDF metadata extraction failed", exc_info=True)
-        return {}
+        return {"metadata_warning": _PDF_WARNING}
 
 
 def extract_metadata(

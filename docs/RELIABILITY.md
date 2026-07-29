@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-06-25 -->
+<!-- last_verified: 2026-07-28 -->
 # Reliability
 
 Reliability expectations and practices for this project.
@@ -32,7 +32,7 @@ Reliability expectations and practices for this project.
 
 The download counter and the `/metrics` counters are **in-process, per replica**. Consequences to plan for before scaling:
 
-- **Download counter** (`app/repo/counter.py`) persists to a JSON file at `DOWNLOAD_COUNT_FILE` (default `data/download_count.json`). On an ephemeral filesystem (Railway without a mounted volume) it **resets to 0 on every redeploy**. With multiple replicas each keeps its own file/count. For durable, shared counts: mount a persistent volume, or swap the adapter for Redis/DB.
+- **Download counter** (`app/repo/counter.py`) persists to a JSON file at `DOWNLOAD_COUNT_FILE` (default `.data/download_count.json`, resolved from the repo root — deliberately outside `services/api/`, which `uvicorn --reload` watches, so a download never writes into the dev reloader's watch tree). On an ephemeral filesystem (Railway without a mounted volume) it **resets to 0 on every redeploy**. With multiple replicas each keeps its own file/count. For durable, shared counts: mount a persistent volume, or swap the adapter for Redis/DB.
 - **`/metrics` counters** live in process memory and reset on restart. Behind a load balancer, each replica reports only its own slice — scrape with an instance label and aggregate, or push to a shared collector.
 
 ## Rate Limiting
@@ -44,7 +44,9 @@ The download counter and the `/metrics` counters are **in-process, per replica**
 
 - File listing returns empty list (not error) when B2 has no objects
 - Metadata extraction failures don't block upload (return partial metadata)
-- Frontend shows skeleton states while loading, error states on failure
+- Frontend shows skeleton states while loading, error states on failure — and, for the bucket-listing waits that can run for seconds, on-screen copy that escalates instead of silent skeletons (`lib/loading-progress.ts`)
+- A full bucket listing (needed by both `/files` and `/files/stats`) is cached, warmed at startup, and served **stale-while-revalidate**: after the first scan, an expired entry is returned immediately while a background thread refreshes it, so a slow or failing B2 list never turns into a user-visible 8-20s wait. `LIST_CACHE_TTL_SECONDS` (default 300) bounds staleness for changes made outside this app; the app's own uploads and deletes invalidate the cache outright. A failed background refresh keeps serving the previous snapshot and is logged
+- `WARM_LIST_CACHE_ON_STARTUP=false` skips the startup scan (offline dev, or when startup must not touch B2)
 
 ## Deployment
 

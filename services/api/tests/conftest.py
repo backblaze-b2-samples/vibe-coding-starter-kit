@@ -14,10 +14,14 @@ async def client():
 @pytest.fixture(autouse=True)
 def clear_list_cache():
     """Clear the repo's bucket-listing cache before each test so cached
-    listings never leak across tests (keeps the pagination tests hermetic)."""
-    from app.repo import b2_client
+    listings never leak across tests (keeps the pagination tests hermetic).
 
-    b2_client._invalidate_list_cache()
+    Uses `_reset_state()` rather than `invalidate()` so a background
+    stale-while-revalidate refresh from an earlier test can't leave the prefix
+    marked as "refreshing" and suppress the next test's refresh."""
+    from app.repo import list_cache
+
+    list_cache._reset_state()
     yield
 
 

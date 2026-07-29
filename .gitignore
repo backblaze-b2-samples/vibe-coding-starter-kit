@@ -50,7 +50,11 @@ test-results/
 # B2 / AWS
 .aws/
 
-# Local runtime data (download counter, etc.)
+# Local runtime data (download counter, etc.). Deliberately at the repo root and
+# NOT under services/api/ — that directory is what `uvicorn --reload` watches, so
+# runtime writes there make the dev reloader report changes on every download.
+.data/
+# Legacy location, still ignored for clones that already have it.
 services/api/data/
 
 # Local-only working area (machine/user-specific)

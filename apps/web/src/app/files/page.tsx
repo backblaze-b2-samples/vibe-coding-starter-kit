@@ -11,7 +11,8 @@ export default function FilesPage() {
         <div className="min-w-0">
           <h1 className="page-title">Files</h1>
           <p className="mt-1.5 max-w-prose text-sm text-muted-foreground">
-            Browse and manage everything in your bucket.
+            Browse and manage your most recent uploads. Click a file to preview
+            it.
           </p>
         </div>
         <Button asChild size="sm" className="h-8 shrink-0">

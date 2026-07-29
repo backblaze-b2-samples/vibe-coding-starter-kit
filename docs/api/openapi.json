@@ -169,6 +169,17 @@
             "title": "Md5",
             "type": "string"
           },
+          "metadata_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Warning"
+          },
           "mime_type": {
             "title": "Mime Type",
             "type": "string"

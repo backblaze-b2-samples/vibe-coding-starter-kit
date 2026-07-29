@@ -11,6 +11,9 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from app.config import settings
+from app.repo.list_cache import cached_listing
+from app.repo.list_cache import invalidate as _invalidate_list_cache
+from app.repo.list_cache import prewarm as _prewarm_list_cache
 from app.types import FileMetadata
 from app.types.formatting import humanize_bytes
 
@@ -102,76 +105,22 @@ def upload_file(
     )
 
 
-# Short-TTL cache for the full-bucket listing, collapsing the dashboard's
-# repeated/concurrent scans into one. Only the empty prefix is cached (caching
-# client-supplied `?prefix=` values would grow unbounded). Thread-safe: the B2
-# handlers now run in Starlette's threadpool.
-_LIST_CACHE_TTL_SECONDS = 30.0
-_list_cache: dict[str, tuple[float, list[dict]]] = {}
-_list_cache_lock = Lock()  # guards _list_cache and _list_generation
-_list_scan_lock = Lock()  # single-flight: one bucket scan at a time
-_list_generation = 0  # bumped on invalidation to void in-flight scans
-
-
-def _invalidate_list_cache() -> None:
-    """Drop cached listings and void any scan already in flight.
-
-    Called after any mutation (upload/delete). Bumping the generation stops a
-    scan that started *before* the mutation from writing its stale snapshot
-    back into the cache after this clears it.
-    """
-    global _list_generation
-    with _list_cache_lock:
-        _list_cache.clear()
-        _list_generation += 1
-
-
-def _cached_listing(prefix: str) -> list[dict] | None:
-    """Return a fresh cached listing for `prefix`, or None. Caller holds no lock."""
-    with _list_cache_lock:
-        cached = _list_cache.get(prefix)
-        if cached is not None and time.monotonic() - cached[0] < _LIST_CACHE_TTL_SECONDS:
-            return cached[1]
-    return None
-
-
 def _list_all_objects(prefix: str = "") -> list[dict]:
-    """Paginate through every object under `prefix`, with single-flight caching.
+    """Every object under `prefix`, via the shared single-flight listing cache.
 
-    S3 caps each list_objects_v2 response at 1000 keys, so follow the
-    continuation token to collect the full set. The returned list is shared and
-    cached — callers must treat it as read-only (never sort/mutate in place).
-    Raises RuntimeError on S3 failure.
+    The returned list is shared and cached — callers must treat it as read-only
+    (never sort/mutate in place). Raises RuntimeError on S3 failure.
     """
-    # Non-empty prefixes are neither cached nor deduplicated, so routing them
-    # through the single-flight lock would serialize unrelated scans for no
-    # benefit. Scan them directly (bounded by rate limiting).
-    if prefix != "":
-        return _fetch_all_objects(prefix)
+    return cached_listing(prefix, _fetch_all_objects)
 
-    hit = _cached_listing(prefix)
-    if hit is not None:
-        return hit
 
-    # Single-flight: serialize the (empty-prefix) dashboard scans so a
-    # cold/expired/invalidated entry can't trigger a thundering herd of
-    # concurrent full-bucket scans. Waiters re-check the cache and reuse the
-    # winner's result.
-    with _list_scan_lock:
-        with _list_cache_lock:
-            cached = _list_cache.get(prefix)
-            if cached is not None and time.monotonic() - cached[0] < _LIST_CACHE_TTL_SECONDS:
-                return cached[1]
-            generation = _list_generation
+def prewarm_listing() -> None:
+    """Kick off the full-bucket scan in the background (startup warm-up).
 
-        contents = _fetch_all_objects(prefix)  # scan under the single-flight lock
-
-        with _list_cache_lock:
-            # Only store if nothing invalidated the cache mid-scan, else we'd
-            # cache a pre-mutation snapshot.
-            if generation == _list_generation:
-                _list_cache[prefix] = (time.monotonic(), contents)
-        return contents
+    Returns immediately. Without it the first user to open the dashboard or the
+    file browser waits out the cold scan (8-20s on a 16k-object bucket).
+    """
+    _prewarm_list_cache("", _fetch_all_objects)
 
 
 def _fetch_all_objects(prefix: str) -> list[dict]:
@@ -256,20 +205,38 @@ def delete_file(key: str) -> None:
     _invalidate_list_cache()  # deleted object must disappear from listings/stats
 
 
+DISPOSITIONS = ("attachment", "inline")
+
+
 def get_presigned_url(
-    key: str, filename: str | None = None, expires_in: int = 600
+    key: str,
+    filename: str | None = None,
+    expires_in: int = 600,
+    disposition: str = "attachment",
 ) -> str:
-    """Generate a presigned download URL. Raises RuntimeError on failure."""
+    """Generate a presigned GET URL. Raises RuntimeError on S3 failure.
+
+    `disposition` selects the `Content-Disposition` the signed response will
+    carry. "attachment" (the default) makes browsers save the file; "inline"
+    lets them render it in place, which the preview modal needs — an
+    `attachment` response makes an `<iframe>` PDF preview impossible because
+    the browser starts a download instead of painting the document.
+    Raises ValueError for any other value.
+    """
+    if disposition not in DISPOSITIONS:
+        raise ValueError(
+            f"disposition must be one of {DISPOSITIONS}, got {disposition!r}"
+        )
     client = get_s3_client()
     params: dict = {"Bucket": settings.b2_bucket_name, "Key": key}
     if filename:
         # RFC 5987 encoding for non-ASCII filenames
         encoded = quote(filename, safe="")
         params["ResponseContentDisposition"] = (
-            f"attachment; filename=\"{encoded}\"; filename*=UTF-8''{encoded}"
+            f"{disposition}; filename=\"{encoded}\"; filename*=UTF-8''{encoded}"
         )
     else:
-        params["ResponseContentDisposition"] = "attachment"
+        params["ResponseContentDisposition"] = disposition
     try:
         return client.generate_presigned_url(
             "get_object",

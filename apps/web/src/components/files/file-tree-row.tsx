@@ -13,6 +13,7 @@ import {
   Folder,
   FolderOpen,
   ImageIcon,
+  Loader2,
   MoreHorizontal,
   Trash2,
 } from "lucide-react";
@@ -76,6 +77,8 @@ interface FileTreeRowProps {
   onPreview: (file: FileMetadata) => void;
   onDownload: (file: FileMetadata) => void;
   onDelete: (file: FileMetadata) => void;
+  /** Key currently waiting on a presigned download URL, if any. */
+  downloadingKey?: string | null;
 }
 
 export function FileTreeRow({
@@ -86,6 +89,7 @@ export function FileTreeRow({
   onPreview,
   onDownload,
   onDelete,
+  downloadingKey = null,
 }: FileTreeRowProps) {
   if (node.type === "folder") {
     const isOpen = expanded.has(node.path);
@@ -140,6 +144,7 @@ export function FileTreeRow({
               onPreview={onPreview}
               onDownload={onDownload}
               onDelete={onDelete}
+              downloadingKey={downloadingKey}
             />
           ))}
       </>
@@ -147,57 +152,82 @@ export function FileTreeRow({
   }
 
   const file = node.data;
+  const isDownloading = downloadingKey === file.key;
 
   return (
     <div
-      className="tree-row group flex w-full min-w-0 items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-accent/60 focus-within:bg-accent/60"
+      className="tree-row group flex w-full min-w-0 items-center gap-1 rounded-md pr-2 text-sm transition-colors hover:bg-accent/60 focus-within:bg-accent/60"
       style={{ paddingInlineStart: `${treeIndent(depth, 32)}px` }}
     >
-      <FileTypeIcon
-        contentType={file.content_type}
-        className="h-4 w-4 shrink-0 text-muted-foreground"
-      />
-      <span className="min-w-0 flex-1 truncate" title={file.key}>
-        {node.name}
-      </span>
-      <span className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
-        <span className="hidden font-mono text-xs tabular-nums text-muted-foreground sm:inline">
-          {file.size_human}
+      {/* The row itself opens the preview — clicking a file is the obvious
+          first-time gesture, and it used to be inert. The actions menu stays a
+          sibling (not a descendant) so we never nest interactive elements. */}
+      <button
+        type="button"
+        onClick={() => onPreview(file)}
+        aria-label={`Preview ${file.filename}`}
+        title={file.key}
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-2.5 pr-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/45"
+      >
+        <FileTypeIcon
+          contentType={file.content_type}
+          className="h-4 w-4 shrink-0 text-muted-foreground"
+        />
+        <span className="min-w-0 flex-1 truncate">{node.name}</span>
+        <span className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
+          <span className="hidden font-mono text-xs tabular-nums text-muted-foreground sm:inline">
+            {file.size_human}
+          </span>
+          <span className="hidden text-xs text-muted-foreground md:inline">
+            {formatDate(file.uploaded_at)}
+          </span>
         </span>
-        <span className="hidden text-xs text-muted-foreground md:inline">
-          {formatDate(file.uploaded_at)}
-        </span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="touch-target h-8 w-8 shrink-0 opacity-100 transition-opacity sm:h-7 sm:w-7 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 data-[state=open]:opacity-100"
-              aria-label={`Open actions for ${file.filename}`}
-              title={`Actions for ${file.filename}`}
-            >
-              <MoreHorizontal aria-hidden="true" className="h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onPreview(file)}>
-              <Eye className="mr-2 h-4 w-4" />
-              Preview
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDownload(file)}>
+      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            // Always visible: hover-only reveal hid Preview / Download /
+            // Delete from keyboard, touch, and first-time desktop users.
+            //
+            // It also has to LOOK like a control. As a ghost button it rendered
+            // as a bare low-contrast `···` glyph (muted-foreground) roughly
+            // 1100px from the filename it acts on, so it read as decoration
+            // while the eye scanned left-aligned names. Now it carries a border
+            // and full-contrast foreground at rest; hover/focus only deepens it.
+            className="touch-target h-8 w-8 shrink-0 border-border bg-background text-foreground hover:border-ring/60 hover:bg-accent hover:text-accent-foreground data-[state=open]:border-ring data-[state=open]:bg-accent sm:h-7 sm:w-7"
+            aria-label={`Open actions for ${file.filename}`}
+            title={`Actions for ${file.filename}`}
+          >
+            <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onPreview(file)}>
+            <Eye className="mr-2 h-4 w-4" />
+            Preview
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isDownloading}
+            onClick={() => onDownload(file)}
+          >
+            {isDownloading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
               <Download className="mr-2 h-4 w-4" />
-              Download
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(file)}
-              className="text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </span>
+            )}
+            {isDownloading ? "Preparing download…" : "Download"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onDelete(file)}
+            className="text-destructive"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { previewHref } from "@/lib/preview-deep-link";
 import { useFiles } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 
@@ -91,7 +92,18 @@ export function RecentUploadsTable() {
               {files.map((file) => (
                 <TableRow key={file.key} className="table-row-hover">
                   <TableCell className="font-medium">
-                    <div className="truncate">{file.filename}</div>
+                    {/* `/files` teaches "Click a file to preview it", so the
+                        same gesture here was a reasonable first try — and did
+                        nothing at all (inert text: no role, no tabindex, no
+                        handler). A link to the file's preview makes the row
+                        answer that gesture and reads as interactive. */}
+                    <Link
+                      href={previewHref(file.key)}
+                      className="block truncate rounded-sm underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      title={`Preview ${file.filename}`}
+                    >
+                      {file.filename}
+                    </Link>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground tabular-nums whitespace-nowrap">
                     {file.size_human}

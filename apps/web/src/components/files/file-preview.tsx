@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Download, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileMetadataPanel } from "@/components/files/file-metadata-panel";
+import { PreviewMedia } from "@/components/files/file-preview-media";
 import { useFileDetail, usePreviewUrl } from "@/lib/queries";
 import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
 
@@ -24,6 +24,13 @@ interface FilePreviewProps {
   file: FileMetadata | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Download the previewed file. The dialog is the advertised default path
+   *  ("Click a file to preview it"), so it must offer every file action. */
+  onDownload: (file: FileMetadata) => void;
+  /** Delete the previewed file. The owner runs the confirmation step. */
+  onDelete: (file: FileMetadata) => void;
+  /** Key currently waiting on a presigned download URL, if any. */
+  downloadingKey?: string | null;
 }
 
 function PreviewMetaRow({
@@ -63,7 +70,14 @@ function formatPreviewDate(value: string) {
   }).format(date);
 }
 
-export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
+export function FilePreview({
+  file,
+  open,
+  onOpenChange,
+  onDownload,
+  onDelete,
+  downloadingKey = null,
+}: FilePreviewProps) {
   // Fetch a presigned preview URL only while the dialog is open. Falls
   // back to the file's stored URL if the API call fails (e.g. the
   // `/preview` endpoint is unreachable but we still have a static URL).
@@ -96,6 +110,7 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
 
   const isImage = file.content_type.startsWith("image/");
   const isPdf = file.content_type === "application/pdf";
+  const isDownloading = downloadingKey === file.key;
   const previewError =
     isError && error instanceof Error
       ? error.message
@@ -121,25 +136,13 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
                 <p className="sr-only">Loading file preview...</p>
                 <Skeleton className="h-[min(55svh,400px)] min-h-[220px] w-full" />
               </div>
-            ) : isImage && previewUrl ? (
-              <div className="relative h-[min(55svh,400px)] min-h-[220px] w-full">
-                {/* `unoptimized` because presigned URLs carry their own
-                    short-lived expiry and we don't want Next's image
-                    optimizer caching them past that window. */}
-                <Image
-                  src={previewUrl}
-                  alt={file.filename}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  className="object-contain rounded"
-                  unoptimized
-                />
-              </div>
-            ) : isPdf && previewUrl ? (
-              <iframe
-                src={previewUrl}
-                className="h-[min(55svh,400px)] min-h-[220px] w-full rounded"
-                title={`Preview of ${file.filename}`}
+            ) : (isImage || isPdf) && previewUrl ? (
+              // Keyed on the URL so switching files resets the media state.
+              <PreviewMedia
+                key={previewUrl}
+                url={previewUrl}
+                filename={file.filename}
+                isImage={isImage}
               />
             ) : (
               <div className="max-w-sm p-8 text-center text-muted-foreground">
@@ -161,6 +164,33 @@ export function FilePreview({ file, open, onOpenChange }: FilePreviewProps) {
             />
             <PreviewMetaRow label="Key" value={file.key} mono />
           </div>
+        </div>
+        {/* Every action the file has, on the path the page advertises. The
+            dialog used to offer only "Detailed metadata" and a close button, so
+            following "Click a file to preview it" reached a dead end and the
+            user had to close it and hunt the per-row actions menu instead. */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
+          <Button
+            disabled={isDownloading}
+            onClick={() => onDownload(file)}
+            size="sm"
+          >
+            {isDownloading ? (
+              <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download aria-hidden="true" className="h-3.5 w-3.5" />
+            )}
+            {isDownloading ? "Preparing…" : "Download"}
+          </Button>
+          <Button
+            className="text-destructive hover:text-destructive"
+            onClick={() => onDelete(file)}
+            size="sm"
+            variant="outline"
+          >
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+            Delete
+          </Button>
         </div>
         {/* Detailed metadata spans the full dialog width rather than the
             right half-column, so long checksums / EXIF / PDF rows have room

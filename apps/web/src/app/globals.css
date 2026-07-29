@@ -255,6 +255,34 @@
   0%, 100% { opacity: 0.4; }
   50%      { opacity: 0.8; }
 }
+@keyframes indeterminate-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(300%); }
+}
+
+/*
+ * Indeterminate progress track, for a wait whose duration we genuinely don't
+ * know. A determinate bar sitting at a full 100% for 25s (the server-side B2
+ * write + metadata extraction) reads as finished-but-stuck; a stripe that
+ * visibly travels says "still working" without inventing a percentage.
+ */
+.progress-indeterminate {
+  position: relative;
+  overflow: hidden;
+  background-color: color-mix(in oklab, var(--primary) 20%, transparent);
+}
+.progress-indeterminate::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inline-size: 33%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: indeterminate-sweep 1.1s var(--ease-productive) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-indeterminate::after { animation-duration: 3s; }
+}
 
 .animate-fade-in-up { animation: fade-in-up 0.2s var(--ease-productive) both; }
 .animate-fade-in    { animation: fade-in 0.15s var(--ease-productive) both; }

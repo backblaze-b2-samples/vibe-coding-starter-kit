@@ -32,6 +32,19 @@ class Settings(BaseSettings):
     # other data? Set to e.g. "uploads/" to restrict all key ops to app uploads.
     allowed_key_prefix: str = ""
 
+    # Full-bucket listing cache (repo/list_cache.py). Both /files and
+    # /files/stats need every object, and paginating a 16k-object bucket takes
+    # ~8-20s, so one scan is shared. Entries older than the TTL are still
+    # served *immediately* while a background thread refreshes them
+    # (stale-while-revalidate), so only the very first scan can make a user
+    # wait. Uploads and deletes invalidate the cache outright, so the app's own
+    # writes are never served stale — only bucket changes made elsewhere can lag
+    # by up to this TTL.
+    list_cache_ttl_seconds: float = 300.0
+    # Scan the bucket once at startup so the first page view doesn't pay for the
+    # cold scan. Set false for offline dev or when startup must not touch B2.
+    warm_list_cache_on_startup: bool = True
+
     # Rate limiting (per client IP, per 60s window). In-process per replica —
     # documented in docs/RELIABILITY.md; horizontal scaling needs a shared
     # store (e.g. Redis). Writes/downloads get the tighter cap.
@@ -40,9 +53,17 @@ class Settings(BaseSettings):
     # that a normal browsing/upload session doesn't trip it.
     rate_limit_write_per_minute: int = 60
 
-    # Small durable counters (downloads, etc). Point at a persistent
-    # volume in production if you care about surviving restarts.
-    download_count_file: str = "data/download_count.json"
+    # Small durable counters (downloads, etc). Relative paths resolve against
+    # the repo root (see repo/counter.py). Point at a persistent volume in
+    # production if you care about surviving restarts.
+    #
+    # It must stay OUTSIDE services/api/: that is the directory `uvicorn
+    # --reload` watches in dev, so a counter file there means every download
+    # writes into the reloader's watch tree. Today uvicorn only restarts for
+    # `*.py`, so the writes surface as misleading "N changes detected" log noise
+    # on every download — but a single added `--reload-include` would turn a
+    # normal user action into an API restart that drops in-flight requests.
+    download_count_file: str = ".data/download_count.json"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

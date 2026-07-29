@@ -23,6 +23,11 @@ class FileMetadataDetail(BaseModel):
     md5: str
     sha256: str
     uploaded_at: datetime
+    # Set when a format-specific extractor was skipped or failed (e.g. an
+    # image above Pillow's decompression-bomb limit). The core fields above are
+    # always present, so the UI shows this instead of silently dropping the
+    # Image / PDF section.
+    metadata_warning: str | None = None
     # Image-specific
     image_width: int | None = None
     image_height: int | None = None

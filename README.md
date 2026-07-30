@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-29 -->
+<!-- last_verified: 2026-07-30 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -228,6 +228,20 @@ workflow](docs/dev-workflows.md#non-live-verification). That page also covers
 normal timing, slow-run recovery, and installing the optional local pre-commit
 hooks.
 
+## Deploying to Vercel
+
+Vercel supports this starter as two Projects from the same monorepo: the Next.js
+web app rooted at `apps/web` and the FastAPI app rooted at `services/api`. The
+API uses Vercel Functions, so its request and response payload limit is 4.5 MB;
+set `MAX_FILE_SIZE=4000000` for that environment. Larger uploads require a
+direct-to-B2 presigned-upload flow rather than proxying file bytes through a
+Function.
+
+The complete human-operated setup, variable classification, security controls,
+preview/production process, verification, and rollback guidance is in the
+[Vercel delivery contract](infra/vercel/README.md). It does not authorize or
+perform a deployment.
+
 ## Documentation Map
 
 | Doc | Purpose |
@@ -240,6 +254,7 @@ hooks.
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows and testing |
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
+| [infra/vercel/README.md](infra/vercel/README.md) | Vercel deployment contract |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
 
 ## Contributing

@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-29 -->
+<!-- last_verified: 2026-07-30 -->
 # Security
 
 Security principles and implementation for the vibe-coding-starter-kit.
@@ -71,8 +71,9 @@ Security principles and implementation for the vibe-coding-starter-kit.
 
 ## Deployment Configuration
 
-The [Railway delivery contract](../infra/railway/README.md) is the canonical
-location for production variable classification and environment access rules.
+The [Railway](../infra/railway/README.md) and
+[Vercel](../infra/vercel/README.md) delivery contracts are the canonical
+locations for production variable classification and environment access rules.
 In particular, `B2_KEY_ID` and `B2_APPLICATION_KEY` are secrets; the web
 service's `NEXT_PUBLIC_API_URL` is intentionally public build-time
 configuration and must never contain a credential. Keep production variables,

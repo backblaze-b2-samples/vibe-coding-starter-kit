@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-07-30 -->
 # Reliability
 
 Reliability expectations and practices for this project.
@@ -32,7 +32,7 @@ Reliability expectations and practices for this project.
 
 The download counter and the `/metrics` counters are **in-process, per replica**. Consequences to plan for before scaling:
 
-- **Download counter** (`app/repo/counter.py`) persists to a JSON file at `DOWNLOAD_COUNT_FILE` (default `.data/download_count.json`, resolved from the repo root — deliberately outside `services/api/`, which `uvicorn --reload` watches, so a download never writes into the dev reloader's watch tree). On an ephemeral filesystem (Railway without a mounted volume) it **resets to 0 on every redeploy**. With multiple replicas each keeps its own file/count. For durable, shared counts: mount a persistent volume, or swap the adapter for Redis/DB.
+- **Download counter** (`app/repo/counter.py`) persists to a JSON file at `DOWNLOAD_COUNT_FILE` (default `.data/download_count.json`, resolved from the repo root — deliberately outside `services/api/`, which `uvicorn --reload` watches, so a download never writes into the dev reloader's watch tree). On an ephemeral filesystem (Railway without a mounted volume or Vercel Functions) it **resets to 0 on every redeploy**. With multiple replicas or Function instances each keeps its own file/count. For durable, shared counts: mount a persistent volume or swap the adapter for Redis/DB.
 - **`/metrics` counters** live in process memory and reset on restart. Behind a load balancer, each replica reports only its own slice — scrape with an instance label and aggregate, or push to a shared collector.
 
 ## Rate Limiting
@@ -50,12 +50,15 @@ The download counter and the `/metrics` counters are **in-process, per replica**
 
 ## Deployment
 
-- The API Railway contract checks `/health`; it confirms process readiness, but
-  the response is still HTTP 200 when B2 is degraded. Promotion therefore also
+- The API contracts check `/health`; it confirms process readiness, but the
+  response is still HTTP 200 when B2 is degraded. Promotion therefore also
   requires `b2_connected: true` and an affected-flow smoke test.
-- The web contract checks `/`, and both service configs use restart-on-failure
-  with bounded retries. See [infra/railway/README.md](../infra/railway/README.md)
-  for the versioned service configuration, approval, rollback, and cleanup
-  procedure.
-- Environment-specific configuration uses Railway variables; no environment
+- Railway uses a persistent service model; Vercel runs the API as a Function.
+  On Vercel, set `WARM_LIST_CACHE_ON_STARTUP=false` to avoid a cold-start bucket
+  scan, and keep `MAX_FILE_SIZE=4000000`: Vercel rejects request bodies over
+  4.5 MB before FastAPI can validate them.
+- See [infra/railway/README.md](../infra/railway/README.md) or
+  [infra/vercel/README.md](../infra/vercel/README.md) for the selected
+  platform's versioned configuration, approval, rollback, and cleanup procedure.
+- Environment-specific configuration uses platform variables; no environment
   values are committed to the repository.

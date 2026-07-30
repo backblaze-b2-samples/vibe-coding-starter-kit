@@ -115,6 +115,7 @@ pnpm verify:api        # backend half of verify (lint, tests, structure)
 pnpm verify:web        # frontend half of verify (lint, unit tests, typecheck + build)
 pnpm verify:full       # doctor + verify + Playwright E2E (requires browser + live local app prerequisites)
 pnpm lint              # frontend lint (eslint)
+pnpm typecheck         # frontend TypeScript check without producing a build
 pnpm build             # frontend type check + build
 pnpm test:web          # frontend unit tests (vitest)
 pnpm lint:api          # backend lint (ruff)

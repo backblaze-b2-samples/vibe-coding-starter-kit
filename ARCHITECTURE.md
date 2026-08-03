@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-07-30 -->
 # Architecture
 
 ## Components
@@ -73,7 +73,13 @@ services/api/
   repository root because it consumes `packages/shared`; `api` builds from
   `services/api`. The versioned per-service configs and the human-approved
   staging/production contract live in [infra/railway/README.md](infra/railway/README.md).
-  External provisioning and deployment remain explicit user-approved actions.
+- **Vercel** — two Projects from the same repository: `web` has root
+  `apps/web`, and `api` has root `services/api`. The API is a FastAPI Function
+  discovered through `services/api/index.py`; it is suitable only for uploads
+  below Vercel's 4.5 MB Function payload ceiling. The delivery contract lives
+  in [infra/vercel/README.md](infra/vercel/README.md).
+
+External provisioning and deployment remain explicit user-approved actions.
 
 ## Data Stores
 

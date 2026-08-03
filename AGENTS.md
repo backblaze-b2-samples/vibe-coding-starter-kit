@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-29 -->
+<!-- last_verified: 2026-07-30 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -17,6 +17,7 @@ packages/shared/   Shared TypeScript types
 docs/              System of record (features, workflows, security, reliability)
 docs/exec-plans/   Execution plans and tech debt tracker
 infra/railway/     Deployment config
+infra/vercel/      Vercel deployment contract
 ```
 
 ## 2. Building on This Starter Kit
@@ -87,6 +88,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 | Frontend `API_CLIENT_ROUTES` and the OpenAPI artifact agree in both directions | `apps/web/src/lib/api-contract.test.ts` (also `pnpm contract:check`) |
 | `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
+| If the README ships a Vercel deploy button, it covers both the `apps/web` and `services/api` Projects and is backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |
 
 `pnpm check:agent-docs` is CI-blocking (job `verify-agent-docs`) and the first
 gate inside `pnpm verify`. It asserts the *set* of verify gates, not a literal
@@ -211,4 +213,7 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 ## 13. External Delivery
 
 - Never provision, deploy, migrate, publish, or create an externally reachable preview without the user's explicit approval.
-- For approved Railway work, follow [infra/railway/README.md](infra/railway/README.md); it is the canonical delivery contract for configuration, review, verification, rollback, and cleanup.
+- For approved Railway or Vercel work, follow the selected platform's delivery
+  contract — [infra/railway/README.md](infra/railway/README.md) or
+  [infra/vercel/README.md](infra/vercel/README.md) — for configuration, review,
+  verification, rollback, and cleanup.

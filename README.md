@@ -1,7 +1,9 @@
-<!-- last_verified: 2026-07-30 -->
+<!-- last_verified: 2026-08-04 -->
 # Vibe Coding Starter Kit
 
-Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
+Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a well-engineered foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
+
+Explore the [Vibe Coding Starter Kit project page](https://backblazelabs.com/projects/vibe-coding-starter-kit/), the official [Backblaze B2 AI integrations and sample applications](https://www.backblaze.com/cloud-storage/b2-ai-integrations), and the checked-in [local OpenAPI contract](docs/api/openapi.json).
 
 **What you get out of the box:**
 - Full-stack dashboard UI (Next.js 16 + React 19 + Tailwind v4 + shadcn/ui)
@@ -9,6 +11,35 @@ Stop wiring boilerplate and start building. This open-source starter kit gives v
 - File browser with preview, download, and delete
 - FastAPI backend with strict layered architecture and structural tests
 - Agent-optimized docs — your AI coding agent can read the repo and start contributing immediately
+
+## When to use
+
+Use this repository as a template or sample implementation when you want to
+clone or fork a working file-management dashboard, connect it to your own B2
+bucket, and then rebrand and extend it for your application. It provides
+production-minded engineering controls—including strict architecture,
+contract checks, tests, linting, and deployment runbooks—so you can begin with
+a dependable scaffold instead of a blank prototype.
+
+## When not to use
+
+Do not choose this repository expecting a complete hosted SaaS product or a
+drop-in production service. It does not provide managed hosting, user accounts,
+authentication, tenant isolation, billing, or on-call operations. Before using
+an adapted application in production, you own its product-specific security,
+operations, capacity, compliance, and support decisions.
+
+## Maintenance and support
+
+Backblaze maintains this open-source template/sample to help developers get
+started with B2. Production use is possible with caution and requires your own
+validation. Report repository defects and feature requests through
+[GitHub Issues](https://github.com/backblaze-b2-samples/vibe-coding-starter-kit/issues);
+for B2 account, billing, service, or API help, use
+[Backblaze Support](https://www.backblaze.com/help). This template/sample is
+not covered by the Backblaze service level agreement, and no SLA is provided
+for the repository software; any B2 service or support commitments are governed
+separately by the applicable Backblaze terms and support plan.
 
 ## What it looks like
 
@@ -166,7 +197,7 @@ Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AG
 - Inline error handling — fetch failures surface *what's wrong* (API offline, 401, 5xx) and offer a Retry, instead of silently rendering empty state.
 - Single-source config — one `.env` at the repo root powers both API and web app, validated at startup so misconfig fails fast with a readable message.
 - Centralized data layer — every fetch goes through TanStack Query hooks in `apps/web/src/lib/queries.ts`; cache invalidation is one call after a mutation.
-- Checked API contract — `docs/api/openapi.json` plus `pnpm contract:check` catch FastAPI/client route drift.
+- Checked local API contract — [`docs/api/openapi.json`](docs/api/openapi.json) plus `pnpm contract:check` catch FastAPI/client route drift; it describes the template API you run, not a hosted public endpoint.
 - Structural tests — verify layering rules, import boundaries, SDK containment, file size limits
 - Structured JSON logging — every request traced with `request_id` and timing
 - `/health` endpoint — B2 connectivity check
@@ -272,6 +303,7 @@ performs one for you.
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows and testing |
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
+| [docs/api/openapi.json](docs/api/openapi.json) | Checked contract for the template's local FastAPI API |
 | [infra/vercel/README.md](infra/vercel/README.md) | Vercel deployment contract |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
 

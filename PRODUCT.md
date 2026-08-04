@@ -14,12 +14,22 @@ scaffolding, and rebrand + rewrite the dashboard for their own use case.
 
 ## Product Purpose
 
-A production-ready full-stack starter kit (Next.js 16 + React 19 + Tailwind v4 +
+An engineering-grade full-stack starter kit (Next.js 16 + React 19 + Tailwind v4 +
 shadcn/ui frontend, FastAPI backend) with Backblaze B2 cloud storage integrated out of
 the box. It ships a dashboard, drag-and-drop upload, and a file browser so builders
 start from a working app, not a blank page. Success = a builder can clone it, run it,
 rebrand it via one config file, and trust every screen enough to build on top without
 first fixing it.
+
+## Maturity and Support Boundary
+
+This is a maintained open-source template/sample, not a complete hosted SaaS product.
+It is built with production-minded controls and can be adapted for production use with
+caution, but adopters own product-specific validation, security, deployment, and
+operations. Repository defects and feature requests go through the public GitHub issue
+tracker; B2 account, billing, service, and API questions go through Backblaze Support.
+The template/sample itself is not covered by the Backblaze service level agreement,
+and no SLA is provided for the repository software.
 
 ## Brand Personality
 
@@ -37,13 +47,13 @@ not through a strong opinionated identity of its own.
 - **Over-branded / loud.** No heavy brand-color drenching, decorative motion, or flashy
   effects. It is scaffolding to be rebranded, not a hero page.
 - **Toy / prototype feel.** No missing states, inconsistent components, or placeholder
-  polish. Must read as production-grade.
+  polish. Must read as polished, dependable scaffolding.
 - **Enterprise-drab.** No Bootstrap-era gray boxes or dense-but-lifeless admin-panel
   look. Considered, like modern dev tools (Linear, GitHub Primer, Stripe).
 
 ## Design Principles
 
-- **Practice what you preach.** The kit itself must model the production quality it
+- **Practice what you preach.** The kit itself must model the engineering quality it
   asks agents to produce. Slop here propagates into every project built on it.
 - **Neutral foundation, easy to rebrand.** Identity lives in tokens (`globals.css`) and
   one config file. Screens are built from the shared UI kit so a rebrand is a token

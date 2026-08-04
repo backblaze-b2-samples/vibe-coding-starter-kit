@@ -110,10 +110,18 @@ logger = logging.getLogger("api")
 
 # --- App setup ---
 
+API_TITLE = "Vibe Coding Starter Kit API"
+API_DESCRIPTION = (
+    "Local API for the Vibe Coding Starter Kit template, providing file upload "
+    "and management backed by Backblaze B2. This contract documents the "
+    "template's local API, not a hosted public endpoint."
+)
+API_VERSION = "0.1.0"
+
 app = FastAPI(
-    title="OSS Starter Kit API",
-    description="File upload and management API backed by Backblaze B2",
-    version="0.1.0",
+    title=API_TITLE,
+    description=API_DESCRIPTION,
+    version=API_VERSION,
     lifespan=lifespan,
     # Interactive docs are toggleable so production can hide the API surface.
     docs_url="/docs" if settings.enable_docs else None,

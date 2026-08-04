@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-29 -->
+<!-- last_verified: 2026-07-30 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a production-ready foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -228,6 +228,38 @@ workflow](docs/dev-workflows.md#non-live-verification). That page also covers
 normal timing, slow-run recovery, and installing the optional local pre-commit
 hooks.
 
+## Deploying to Vercel
+
+This starter runs on Vercel as **two Projects from the same monorepo** — the
+FastAPI API rooted at `services/api` and the Next.js web app rooted at
+`apps/web`. Deploy them in order and wire the two origins together:
+
+| Step | Project | One-click deploy |
+|------|---------|------------------|
+| 1 | **API** (`services/api`) | [![Deploy the API to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&root-directory=services%2Fapi&project-name=vcsk-api&env=B2_KEY_ID,B2_APPLICATION_KEY,B2_ENDPOINT,B2_BUCKET_NAME,MAX_FILE_SIZE&envDescription=B2%20credentials%2C%20bucket%2C%20and%20the%204MB%20Vercel%20upload%20cap&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md) |
+| 2 | **Web** (`apps/web`) | [![Deploy the web app to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&root-directory=apps%2Fweb&project-name=vcsk-web&env=NEXT_PUBLIC_API_URL&envDescription=Origin%20of%20the%20deployed%20API%20Project%20from%20step%201&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md) |
+
+1. **Deploy the API.** Set the B2 credentials and bucket, and
+   `MAX_FILE_SIZE=4000000` — Vercel Functions cap each request/response payload
+   at 4.5 MB, so the starter's 100 MB default must come down. Copy the API URL
+   Vercel gives you.
+2. **Deploy the web app.** Set `NEXT_PUBLIC_API_URL` to that API URL; Next.js
+   inlines it at build time. Copy the web URL.
+3. **Let the browser reach the API.** In the API Project, set
+   `API_CORS_ORIGINS` to the exact web URL and redeploy — otherwise the browser
+   blocks every call by CORS.
+
+For uploads larger than 4.5 MB, switch to a direct-to-B2 presigned-upload flow
+instead of proxying file bytes through a Function.
+
+The buttons clone the repo into your account as a quick preview. For the durable
+setup (fork once, import it twice as two Projects), the full variable
+classification, security controls, preview/production process, `/health`
+verification, and rollback, follow the [Vercel delivery contract](infra/vercel/README.md).
+The API is unauthenticated and bucket-wide, so use a dedicated B2 bucket/prefix
+and key for any preview. Deploying is a human-approved action — nothing here
+performs one for you.
+
 ## Documentation Map
 
 | Doc | Purpose |
@@ -240,6 +272,7 @@ hooks.
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows and testing |
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
+| [infra/vercel/README.md](infra/vercel/README.md) | Vercel deployment contract |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
 
 ## Contributing

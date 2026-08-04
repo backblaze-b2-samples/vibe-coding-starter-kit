@@ -251,6 +251,26 @@ source of truth for the literal command chain; when it changes, update the
 plain-language list here and in `AGENTS.md` §6 (see "Documentation Update"
 above), not a duplicated shell chain.
 
+The commands are deliberately composable: use the smaller commands while
+iterating, `pnpm verify` as the usual PR gate, and `pnpm verify:full` only when
+the live local prerequisites are available.
+
+```text
+pnpm verify:full
+├─ pnpm run doctor
+├─ pnpm verify
+│  ├─ pnpm check:agent-docs
+│  ├─ pnpm verify:api
+│  │  ├─ pnpm lint:api
+│  │  ├─ pnpm test:api
+│  │  └─ pnpm check:structure
+│  └─ pnpm verify:web
+│     ├─ pnpm lint
+│     ├─ pnpm test:web
+│     └─ pnpm build
+└─ pnpm test:e2e
+```
+
 One checkout supports one active `pnpm verify`: concurrent Next.js builds
 contend for `apps/web/.next/lock`. For parallel agents, give each run its own
 Git worktree checked out at the commit it needs to verify, then run setup and

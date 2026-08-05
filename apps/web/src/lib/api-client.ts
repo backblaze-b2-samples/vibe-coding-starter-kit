@@ -6,7 +6,14 @@ import type {
   UploadStats,
 } from "@vibe-coding-starter-kit/shared";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Single-origin deploys (Vercel `services`: one project serving web + API) put
+// the API under /api on the same origin, so no NEXT_PUBLIC_API_URL is needed —
+// a production build with it unset defaults to the relative "/api". An explicit
+// NEXT_PUBLIC_API_URL still wins (two-project / separate-origin deploys). Local
+// dev (NODE_ENV !== "production") falls back to the dev API port.
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:8000");
 
 type ApiClientRoute = {
   method: "delete" | "get" | "post";

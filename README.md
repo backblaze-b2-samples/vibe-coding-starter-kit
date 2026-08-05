@@ -230,35 +230,32 @@ hooks.
 
 ## Deploying to Vercel
 
-This starter runs on Vercel as **two Projects from the same monorepo** — the
-FastAPI API rooted at `services/api` and the Next.js web app rooted at
-`apps/web`. Deploy them in order and wire the two origins together:
+This starter deploys to Vercel as **one project** using Vercel
+[Services](https://vercel.com/docs/services): the Next.js web app and the
+FastAPI API build from the same repo and share a single origin — the web app at
+`/` and the API under `/api`. One click, one project, **no CORS and no wiring
+two URLs together**.
 
-| Step | Project | One-click deploy |
-|------|---------|------------------|
-| 1 | **API** (`services/api`) | [![Deploy the API to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&root-directory=services%2Fapi&project-name=vcsk-api&env=B2_KEY_ID,B2_APPLICATION_KEY,B2_ENDPOINT,B2_BUCKET_NAME,MAX_FILE_SIZE&envDescription=B2%20credentials%2C%20bucket%2C%20and%20the%204MB%20Vercel%20upload%20cap&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md) |
-| 2 | **Web** (`apps/web`) | [![Deploy the web app to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&root-directory=apps%2Fweb&project-name=vcsk-web&env=NEXT_PUBLIC_API_URL&envDescription=Origin%20of%20the%20deployed%20API%20Project%20from%20step%201&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md) |
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&project-name=vcsk&env=B2_KEY_ID,B2_APPLICATION_KEY,B2_ENDPOINT,B2_BUCKET_NAME,MAX_FILE_SIZE&envDescription=B2%20credentials%2C%20bucket%2C%20and%20the%204MB%20Vercel%20upload%20cap&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md)
 
-1. **Deploy the API.** Set the B2 credentials and bucket, and
-   `MAX_FILE_SIZE=4000000` — Vercel Functions cap each request/response payload
-   at 4.5 MB, so the starter's 100 MB default must come down. Copy the API URL
-   Vercel gives you.
-2. **Deploy the web app.** Set `NEXT_PUBLIC_API_URL` to that API URL; Next.js
-   inlines it at build time. Copy the web URL.
-3. **Let the browser reach the API.** In the API Project, set
-   `API_CORS_ORIGINS` to the exact web URL and redeploy — otherwise the browser
-   blocks every call by CORS.
+Set the B2 credentials and bucket, and `MAX_FILE_SIZE=4000000` — Vercel
+Functions cap each request/response payload at 4.5 MB, so the starter's 100 MB
+default must come down. The web app reaches the API at the same-origin `/api`
+automatically, so **no `NEXT_PUBLIC_API_URL` is needed**; the repo-root
+`vercel.json` declares the `web` and `api` services and routes `/api/*` to
+FastAPI (which serves its native `/health`, `/files`, … paths — the Vercel-only
+`services/api/index.py` strips the `/api` prefix).
 
 For uploads larger than 4.5 MB, switch to a direct-to-B2 presigned-upload flow
 instead of proxying file bytes through a Function.
 
-The buttons clone the repo into your account as a quick preview. For the durable
-setup (fork once, import it twice as two Projects), the full variable
-classification, security controls, preview/production process, `/health`
-verification, and rollback, follow the [Vercel delivery contract](infra/vercel/README.md).
-The API is unauthenticated and bucket-wide, so use a dedicated B2 bucket/prefix
-and key for any preview. Deploying is a human-approved action — nothing here
-performs one for you.
+The button clones the repo into your account as a quick preview. For the full
+variable classification, the two-separate-Projects alternative, security
+controls, preview/production process, `/health` verification, and rollback,
+follow the [Vercel delivery contract](infra/vercel/README.md). The API is
+unauthenticated and bucket-wide, so use a dedicated B2 bucket/prefix and key for
+any preview. Deploying is a human-approved action — nothing here performs one
+for you.
 
 ## Documentation Map
 

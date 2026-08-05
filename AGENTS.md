@@ -88,7 +88,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 | Frontend `API_CLIENT_ROUTES` and the OpenAPI artifact agree in both directions | `apps/web/src/lib/api-contract.test.ts` (also `pnpm contract:check`) |
 | `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
-| If the README ships a Vercel deploy button, it covers both the `apps/web` and `services/api` Projects and is backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |
+| If the README ships a Vercel deploy button, it deploys the whole app — a root `vercel.json` declaring `web` + `api` services (one project), or buttons covering both Projects — backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |
 
 `pnpm check:agent-docs` is CI-blocking (job `verify-agent-docs`) and the first
 gate inside `pnpm verify`. It asserts the *set* of verify gates, not a literal

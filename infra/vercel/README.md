@@ -35,15 +35,6 @@ The `web` service installs the pnpm workspace from the repo root
 service installs the committed `requirements.lock` and pins Vercel's Python
 runtime through `services/api/.python-version`.
 
-> **Requires Vercel Services.** Services runs multiple apps in one project. It
-> works on the **Hobby (free)** plan and paid plans — verified end-to-end on a
-> Hobby account on 2026-08-05 (web served at `/`, API reachable at
-> `/api/health`, no manual feature activation needed). Vercel's docs still mark
-> Services as "permissions required," so a given account may not have it. If an
-> account cannot create a Services project, use the
-> [two-Projects alternative](#alternative-two-separate-projects) below. Revisit
-> this note if Vercel changes Services availability.
-
 ## Variables and Public Exposure
 
 Set values in the Vercel Project and environment. Never put values in

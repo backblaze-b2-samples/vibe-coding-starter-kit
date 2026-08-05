@@ -238,12 +238,6 @@ two URLs together**.
 
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&project-name=vcsk&env=B2_KEY_ID,B2_APPLICATION_KEY,B2_ENDPOINT,B2_BUCKET_NAME,MAX_FILE_SIZE&envDescription=B2%20credentials%2C%20bucket%2C%20and%20the%204MB%20Vercel%20upload%20cap&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md)
 
-> **Requires Vercel Services.** Services is a Vercel feature that runs multiple
-> apps in one project. It works on the **Hobby (free)** plan and paid plans
-> (verified on Hobby, 2026-08-05). If your account can't create a Services
-> project, use the two-separate-Projects path in the
-> [delivery contract](infra/vercel/README.md) instead.
-
 Set the B2 credentials and bucket, and `MAX_FILE_SIZE=4000000` — Vercel
 Functions cap each request/response payload at 4.5 MB, so the starter's 100 MB
 default must come down. The web app reaches the API at the same-origin `/api`

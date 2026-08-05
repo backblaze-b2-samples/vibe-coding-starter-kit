@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-30 -->
+<!-- last_verified: 2026-08-04 -->
 # Vercel Delivery Contract
 
 This is the canonical runbook for deploying this repository to Vercel. It
@@ -14,13 +14,18 @@ separate origins avoids coupling the Next.js build to the Python runtime.
 
 | Project | Root directory | Framework | Versioned configuration | Health check |
 | --- | --- | --- | --- | --- |
-| `web` | `apps/web` | Next.js | Next.js auto-detection | `/` |
+| `web` | `apps/web` | Next.js | `apps/web/vercel.json` (installs the pnpm workspace from the repo root) | `/` |
 | `api` | `services/api` | FastAPI | `services/api/vercel.json`, `services/api/.python-version`, and `services/api/index.py` | `/health` |
 
-The web Project consumes `packages/shared` outside its root directory. During
-import, keep **Include files outside the Root Directory** enabled (it is the
-default for current Vercel monorepo projects). Leave Vercel's build and output
-settings at their detected defaults.
+The web Project depends on `packages/shared`, a pnpm workspace package outside
+its root directory. With the root directory at `apps/web`, Vercel's default
+`pnpm install` runs there and cannot resolve the workspace, failing the build
+with `ERR_PNPM_WORKSPACE_PKG_NOT_FOUND`. `apps/web/vercel.json` fixes this by
+overriding the install command to run from the monorepo root
+(`cd ../.. && pnpm install`), where the workspace resolves; Next.js build and
+output detection stay at their defaults. Keep **Include files outside the Root
+Directory** enabled (the default) so the root workspace files are present in the
+build.
 
 Vercel discovers FastAPI applications from a root `index.py` exporting an
 `app` instance. The API wrapper imports the existing `main.app`, so Vercel,

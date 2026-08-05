@@ -227,11 +227,13 @@ if (envIgnores.skip) {
   }
 }
 
-// --- Vercel deploy buttons: a complete two-Project contract or none ------
+// --- Vercel deploy button: a whole-app contract or none ------------------
 // A deploy button is optional (a fork may drop it). But IF the README ships a
-// Vercel button, it must cover both Projects — web AND API — and be backed by
-// the versioned delivery contract, so a one-click path can never silently
-// regress to a partial, misleading deploy of only one service.
+// Vercel button, it must deploy the WHOLE app — never a partial slice — and be
+// backed by the versioned delivery contract. Two shapes are valid: a single
+// project whose root vercel.json declares both the `web` and `api` services
+// (Vercel Services, one origin), or two buttons that each carry a
+// root-directory covering one Project (the separate-origins alternative).
 
 if (readme && /vercel\.com\/new\/clone/.test(readme)) {
   check(
@@ -240,16 +242,34 @@ if (readme && /vercel\.com\/new\/clone/.test(readme)) {
     "README ships a Vercel deploy button but the delivery contract infra/vercel/README.md is missing",
   );
 
+  let servicesCoverWebAndApi = false;
+  const rootVercelJson = existsSync(repoPath("vercel.json"))
+    ? readFileSync(repoPath("vercel.json"), "utf8")
+    : "";
+  try {
+    const services = JSON.parse(rootVercelJson).services ?? {};
+    servicesCoverWebAndApi = Boolean(services.web && services.api);
+  } catch {
+    servicesCoverWebAndApi = false;
+  }
+
   const rootDirs = [...readme.matchAll(/root-directory=([^&\s)]+)/g)].map((match) =>
     decodeURIComponent(match[1]),
   );
 
-  for (const rootDir of ["apps/web", "services/api"]) {
-    check(
-      rootDirs.includes(rootDir),
-      `Vercel button covers the ${rootDir} Project`,
-      `expected a deploy button with root-directory=${rootDir}, actual root dirs: ${JSON.stringify(rootDirs)}`,
+  if (servicesCoverWebAndApi) {
+    passes.push(
+      "Vercel single-project button is backed by a root vercel.json declaring web + api services",
     );
+  } else {
+    // No services vercel.json → must be the two-Project button model instead.
+    for (const rootDir of ["apps/web", "services/api"]) {
+      check(
+        rootDirs.includes(rootDir),
+        `Vercel button covers the ${rootDir} Project`,
+        `expected a root vercel.json declaring web+api services, or a deploy button with root-directory=${rootDir}; actual root dirs: ${JSON.stringify(rootDirs)}`,
+      );
+    }
   }
 }
 

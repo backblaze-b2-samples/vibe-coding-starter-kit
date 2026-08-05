@@ -73,11 +73,15 @@ services/api/
   repository root because it consumes `packages/shared`; `api` builds from
   `services/api`. The versioned per-service configs and the human-approved
   staging/production contract live in [infra/railway/README.md](infra/railway/README.md).
-- **Vercel** — two Projects from the same repository: `web` has root
-  `apps/web`, and `api` has root `services/api`. The API is a FastAPI Function
-  discovered through `services/api/index.py`; it is suitable only for uploads
-  below Vercel's 4.5 MB Function payload ceiling. The delivery contract lives
-  in [infra/vercel/README.md](infra/vercel/README.md).
+- **Vercel** — one project using [Vercel Services](https://vercel.com/docs/services):
+  the `web` (Next.js) and `api` (FastAPI) services build from the same repo and
+  share one origin — the web app at `/`, the API under `/api`. The repo-root
+  `vercel.json` declares both services and routes `/api/*` to the API service;
+  the Vercel-only `services/api/index.py` strips the `/api` prefix so FastAPI
+  keeps its native paths (`/health`, `/files`, …). It is suitable only for
+  uploads below Vercel's 4.5 MB Function payload ceiling. A
+  two-separate-Projects alternative and the full delivery contract live in
+  [infra/vercel/README.md](infra/vercel/README.md).
 
 External provisioning and deployment remain explicit user-approved actions.
 

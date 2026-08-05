@@ -19,9 +19,16 @@ on:
 permissions:
   contents: read
 
+# Skip CI on Dependabot's PRs: dependency bumps are reviewed manually, and
+# GitHub has no actor filter at the `on:` level, so each job guards on the
+# actor instead. The jobs report "skipped", not a failure. If any of these
+# become required status checks in branch protection, drop this guard (a
+# required check that is skipped blocks the merge) or add a Dependabot
+# auto-merge workflow.
 jobs:
   verify-agent-docs:
     name: Verify agent docs (pnpm check:agent-docs)
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +51,7 @@ jobs:
 
   verify-api:
     name: Verify API (pnpm verify:api)
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,6 +89,7 @@ jobs:
 
   verify-web:
     name: Verify web (pnpm verify:web)
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -4,13 +4,15 @@
     "web": {
       "root": "apps/web",
       "framework": "nextjs",
-      "installCommand": "cd ../.. && pnpm install"
+      "installCommand": "cd ../.. && pnpm install",
+      "ignoreCommand": "case \"$VERCEL_GIT_COMMIT_REF\" in dependabot/*) exit 0 ;; *) exit 1 ;; esac"
     },
     "api": {
       "root": "services/api",
       "framework": "fastapi",
       "entrypoint": "index:app",
-      "installCommand": "pip install --no-cache-dir -r requirements.lock"
+      "installCommand": "pip install --no-cache-dir -r requirements.lock",
+      "ignoreCommand": "case \"$VERCEL_GIT_COMMIT_REF\" in dependabot/*) exit 0 ;; *) exit 1 ;; esac"
     }
   },
   "rewrites": [

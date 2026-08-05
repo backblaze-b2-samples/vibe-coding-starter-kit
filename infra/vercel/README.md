@@ -35,6 +35,19 @@ The `web` service installs the pnpm workspace from the repo root
 service installs the committed `requirements.lock` and pins Vercel's Python
 runtime through `services/api/.python-version`.
 
+## Dependabot Preview Builds Are Skipped
+
+Each service declares an `ignoreCommand` (Vercel's [Ignored Build
+Step](https://vercel.com/docs/project-configuration/vercel-json#ignorecommand))
+that cancels the build when the branch matches `dependabot/*`, so Dependabot's
+per-dependency PRs never spend Vercel build minutes. The command exits `0`
+(skip) for those branches and `1` (build) for everything else, so normal PRs —
+including a grouped/aggregated dependency PR opened on any non-`dependabot/*`
+branch — still get a Preview. In Services mode `ignoreCommand` is a per-service
+field, so it lives inside both `web` and `api`; in the two-Project alternative
+it sits at the top level of each Project's `vercel.json`. GitHub Actions CI is
+skipped for the same PRs via an actor guard in `.github/workflows/ci.yml`.
+
 ## Variables and Public Exposure
 
 Set values in the Vercel Project and environment. Never put values in

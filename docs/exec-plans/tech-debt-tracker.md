@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-29 -->
+<!-- last_verified: 2026-08-04 -->
 # Tech Debt Tracker
 
 Known tech debt items. Agents update this when they discover or create tech debt.
@@ -37,7 +37,6 @@ Low-severity polish, left for a follow-up; none blocks the core flow.
 - `/upload` result card — "View in Files" is a bare `/files` navigation with no highlight or scroll-to, so in a deep or busy tree the user hunts for the just-uploaded file again. `previewHref()` now exists, so this is a one-line change
 - `/upload` error row — a 113,798,180-byte file is rejected as "exceeds 100MB limit (108.5 MB)"; the cap is actually 100 MiB, so the label and the humanized size use different units than the check
 - `/files` preview + upload metadata panel — an EXIF `Software` value can carry trailing NUL padding straight into the rendered DOM (invisible on screen, but unsanitised)
-- All screens — the app names itself "OSS Starter Kit" in the sidebar, header and breadcrumb while `README.md` titles the product "Vibe Coding Starter Kit", so the shipped name and the docs disagree
 - `/settings` Danger Zone — the "Empty this bucket" card copy makes an unconditional destructive claim with no on-card qualifier (the confirm dialog does note it is a demo)
 - `/files` preview dialog — while the presigned URL is pending, the loading label is screen-reader-only and never escalates, so past ~5s a sighted user sees only an unlabelled shimmer (the dashboard, by contrast, escalates its wait copy)
 - `/upload` File Details — the success toast can overlap the Dimensions row and hide its value while the panel is open

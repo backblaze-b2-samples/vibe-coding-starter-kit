@@ -28,3 +28,17 @@ def test_checked_in_openapi_contract_is_current():
     assert CONTRACT_PATH.read_text(encoding="utf-8") == expected, (
         f"{CONTRACT_PATH} is stale. {STALE_HINT}"
     )
+
+
+def test_openapi_metadata_uses_canonical_local_api_identity():
+    schema = app.openapi()
+
+    assert schema["info"] == {
+        "title": "Vibe Coding Starter Kit API",
+        "description": (
+            "Local API for the Vibe Coding Starter Kit template, providing file "
+            "upload and management backed by Backblaze B2. This contract "
+            "documents the template's local API, not a hosted public endpoint."
+        ),
+        "version": "0.1.0",
+    }

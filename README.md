@@ -12,35 +12,6 @@ Explore the [Vibe Coding Starter Kit project page](https://backblazelabs.com/pro
 - FastAPI backend with strict layered architecture and structural tests
 - Agent-optimized docs — your AI coding agent can read the repo and start contributing immediately
 
-## When to use
-
-Use this repository as a template or sample implementation when you want to
-clone or fork a working file-management dashboard, connect it to your own B2
-bucket, and then rebrand and extend it for your application. It provides
-production-minded engineering controls—including strict architecture,
-contract checks, tests, linting, and deployment runbooks—so you can begin with
-a dependable scaffold instead of a blank prototype.
-
-## When not to use
-
-Do not choose this repository expecting a complete hosted SaaS product or a
-drop-in production service. It does not provide managed hosting, user accounts,
-authentication, tenant isolation, billing, or on-call operations. Before using
-an adapted application in production, you own its product-specific security,
-operations, capacity, compliance, and support decisions.
-
-## Maintenance and support
-
-Backblaze maintains this open-source template/sample to help developers get
-started with B2. Production use is possible with caution and requires your own
-validation. Report repository defects and feature requests through
-[GitHub Issues](https://github.com/backblaze-b2-samples/vibe-coding-starter-kit/issues);
-for B2 account, billing, service, or API help, use
-[Backblaze Support](https://www.backblaze.com/help). This template/sample is
-not covered by the Backblaze service level agreement, and no SLA is provided
-for the repository software; any B2 service or support commitments are governed
-separately by the applicable Backblaze terms and support plan.
-
 ## What it looks like
 
 **Dashboard** — stats, upload activity, and recent uploads at a glance:
@@ -50,48 +21,6 @@ separately by the applicable Backblaze terms and support plan.
 **File browser** — tree view with preview, download, and delete:
 
 ![File browser view showing a tree of files with hover actions](docs/images/b2-starterkit-fileview2.png)
-
-## Agent-First Architecture
-
-This repo is optimized for coding agents. Use the template, point your agent at it, and start building.
-
-The structure follows the principle that **repository knowledge is the system of record**. Anything an agent can't access in-context doesn't exist — so everything it needs to reason about the codebase is versioned, co-located, and discoverable from the repo itself.
-
-### How it works
-
-**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** Its bounded, agent-sized entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, GEMINI.md, Copilot instructions, etc.) are thin pointers back to AGENTS.md.
-
-**Architecture is enforced mechanically, not by convention.** Layering rules, import boundaries, file size limits, and SDK containment are verified by structural tests and lints that run on every change. When rules are enforceable by code, agents follow them reliably.
-
-**The knowledge base is structured for progressive disclosure:**
-
-```
-AGENTS.md              Single source of truth — layout, invariants, commands, conventions
-ARCHITECTURE.md        System layout, layering rules, data flows
-docs/
-  features/            Feature docs (inputs, outputs, flows, edge cases)
-  app-workflows.md     User journeys
-  dev-workflows.md     Engineering workflows and testing
-  SECURITY.md          Security principles
-  RELIABILITY.md       Reliability expectations
-  exec-plans/          Execution plans and tech debt tracker
-```
-
-### Key design decisions
-
-| Principle | Implementation |
-|-----------|---------------|
-| Give agents a single source of truth | AGENTS.md — bounded layout, invariants, commands, conventions |
-| Enforce invariants mechanically | Structural tests + ruff + ESLint verify boundaries |
-| DRY documentation | Each fact lives in one place; no redundant files to drift |
-| Strict layered architecture | `types -> config -> repo -> service -> runtime`, enforced by tests |
-| Prefer boring, composable libraries | stdlib logging over frameworks, Pydantic over ad-hoc validation |
-| Contain external SDKs | `boto3` only in `repo/` layer — verified by structural test |
-| Keep files agent-sized | 300-line limit per file, enforced by test |
-| Docs updated with code | Same-PR requirement prevents documentation rot |
-| Structured observability | JSON logging, `/metrics` endpoint, request tracing |
-
-This approach draws from [OpenAI's experience building with Codex](https://openai.com/index/harness-engineering/): agents work best in environments with strict boundaries, predictable structure, and progressive context disclosure.
 
 ## Quick Start
 
@@ -176,6 +105,23 @@ That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file 
 
 `pnpm dev` runs the preflight check first — it catches the common setup gotchas (wrong Node/Python version, missing venv, missing or placeholder `.env`, ports already taken) and tells you exactly how to fix each one. Run it standalone any time with `pnpm run doctor`.
 
+## When to use
+
+Use this repository as a template or sample implementation when you want to
+clone or fork a working file-management dashboard, connect it to your own B2
+bucket, and then rebrand and extend it for your application. It provides
+production-minded engineering controls—including strict architecture,
+contract checks, tests, linting, and deployment runbooks—so you can begin with
+a dependable scaffold instead of a blank prototype.
+
+## When not to use
+
+Do not choose this repository expecting a complete hosted SaaS product or a
+drop-in production service. It does not provide managed hosting, user accounts,
+authentication, tenant isolation, billing, or on-call operations. Before using
+an adapted application in production, you own its product-specific security,
+operations, capacity, compliance, and support decisions.
+
 ## Building Your App
 
 When you adapt this kit for a new app, keep the shared scaffolding and only swap out what's app-specific:
@@ -186,6 +132,48 @@ When you adapt this kit for a new app, keep the shared scaffolding and only swap
 - **Rebrand** by editing a single file: `apps/web/src/lib/app-config.ts` holds the app name and description (`APP_NAME`, `APP_DESCRIPTION`). Changing them there updates the page title, sidebar, and breadcrumb everywhere — no other files to touch.
 
 Full contract and rationale: [AGENTS.md §2 — Building on This Starter Kit](AGENTS.md#2-building-on-this-starter-kit).
+
+## Agent-First Architecture
+
+This repo is optimized for coding agents. Use the template, point your agent at it, and start building.
+
+The structure follows the principle that **repository knowledge is the system of record**. Anything an agent can't access in-context doesn't exist — so everything it needs to reason about the codebase is versioned, co-located, and discoverable from the repo itself.
+
+### How it works
+
+**[AGENTS.md](AGENTS.md) is the single source of truth for all coding agents.** Its bounded, agent-sized entry point gives agents the repository layout, architectural invariants, commands, conventions, and pointers to deeper docs. Agent-specific files (CLAUDE.md, GEMINI.md, Copilot instructions, etc.) are thin pointers back to AGENTS.md.
+
+**Architecture is enforced mechanically, not by convention.** Layering rules, import boundaries, file size limits, and SDK containment are verified by structural tests and lints that run on every change. When rules are enforceable by code, agents follow them reliably.
+
+**The knowledge base is structured for progressive disclosure:**
+
+```
+AGENTS.md              Single source of truth — layout, invariants, commands, conventions
+ARCHITECTURE.md        System layout, layering rules, data flows
+docs/
+  features/            Feature docs (inputs, outputs, flows, edge cases)
+  app-workflows.md     User journeys
+  dev-workflows.md     Engineering workflows and testing
+  SECURITY.md          Security principles
+  RELIABILITY.md       Reliability expectations
+  exec-plans/          Execution plans and tech debt tracker
+```
+
+### Key design decisions
+
+| Principle | Implementation |
+|-----------|---------------|
+| Give agents a single source of truth | AGENTS.md — bounded layout, invariants, commands, conventions |
+| Enforce invariants mechanically | Structural tests + ruff + ESLint verify boundaries |
+| DRY documentation | Each fact lives in one place; no redundant files to drift |
+| Strict layered architecture | `types -> config -> repo -> service -> runtime`, enforced by tests |
+| Prefer boring, composable libraries | stdlib logging over frameworks, Pydantic over ad-hoc validation |
+| Contain external SDKs | `boto3` only in `repo/` layer — verified by structural test |
+| Keep files agent-sized | 300-line limit per file, enforced by test |
+| Docs updated with code | Same-PR requirement prevents documentation rot |
+| Structured observability | JSON logging, `/metrics` endpoint, request tracing |
+
+This approach draws from [OpenAI's experience building with Codex](https://openai.com/index/harness-engineering/): agents work best in environments with strict boundaries, predictable structure, and progressive context disclosure.
 
 ## Core Features
 
@@ -306,6 +294,53 @@ performs one for you.
 | [docs/api/openapi.json](docs/api/openapi.json) | Checked contract for the template's local FastAPI API |
 | [infra/vercel/README.md](infra/vercel/README.md) | Vercel deployment contract |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
+
+## FAQ
+
+**What is the Vibe Coding Starter Kit?**
+An open-source, full-stack template (Next.js 16 + FastAPI) with a pre-built dashboard UI, drag-and-drop file upload, and file browser, with [Backblaze B2](https://www.backblaze.com/cloud-storage) cloud storage already integrated. You clone it, connect it to your own B2 bucket, then rebrand and extend it for your app.
+
+**Is it free?**
+Yes. The code is MIT-licensed (see [License](#license)), and Backblaze B2 offers a free account to get started.
+
+**Can I use it in production?**
+It's a template/sample Backblaze maintains to help developers get started with B2. Production use is possible with caution and requires your own validation — you own the product-specific security, operations, capacity, compliance, and support decisions for anything you adapt, and the repository software carries no SLA. See [When not to use](#when-not-to-use) and [Maintenance and support](#maintenance-and-support).
+
+**Does it include authentication, user accounts, or multi-tenant isolation?**
+No. It does not provide managed hosting, user accounts, authentication, tenant isolation, billing, or on-call operations. Add whatever your application requires on top of the scaffold.
+
+**Do I have to use Backblaze B2?**
+It integrates Backblaze B2 through the S3-compatible API, and B2 is the storage the kit is built around. You supply your own B2 bucket and application key during setup.
+
+**Is it really built for AI coding agents?**
+Yes. [AGENTS.md](AGENTS.md) is the single source of truth for coding agents, architectural boundaries are enforced mechanically by structural tests and lints (not by convention), and the docs use progressive disclosure — so an agent can read the repo and start contributing immediately.
+
+**What's the tech stack?**
+Frontend: TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query. Backend: Python 3.11+, FastAPI, boto3, Pydantic v2. Storage: Backblaze B2 (S3-compatible). See [Tech Stack](#tech-stack).
+
+**How do I rebrand it for my own app?**
+Edit a single file — `apps/web/src/lib/app-config.ts` (`APP_NAME`, `APP_DESCRIPTION`) — and the page title, sidebar, and breadcrumb update everywhere. See [Building Your App](#building-your-app).
+
+**How do I deploy it?**
+It runs on Vercel as two Projects (API + web) from the same monorepo; a Railway path is also documented. Deploying is always a human-approved action — see [Deploying to Vercel](#deploying-to-vercel).
+
+**Does it work on Windows?**
+Local scripts are supported on macOS, Linux, and WSL2. Native Windows is not supported yet — use WSL2 on Windows.
+
+**Where do I get help or report bugs?**
+Report repository defects and feature requests through [GitHub Issues](https://github.com/backblaze-b2-samples/vibe-coding-starter-kit/issues). For B2 account, billing, service, or API help, use [Backblaze Support](https://www.backblaze.com/help).
+
+## Maintenance and support
+
+Backblaze maintains this open-source template/sample to help developers get
+started with B2. Production use is possible with caution and requires your own
+validation. Report repository defects and feature requests through
+[GitHub Issues](https://github.com/backblaze-b2-samples/vibe-coding-starter-kit/issues);
+for B2 account, billing, service, or API help, use
+[Backblaze Support](https://www.backblaze.com/help). This template/sample is
+not covered by the Backblaze service level agreement, and no SLA is provided
+for the repository software; any B2 service or support commitments are governed
+separately by the applicable Backblaze terms and support plan.
 
 ## Contributing
 

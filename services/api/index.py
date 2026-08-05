@@ -31,14 +31,34 @@ def _strip_prefix(scope: dict) -> dict:
 
     stripped = dict(scope)
     stripped["path"] = path[len(_PREFIX) :] or "/"
+    # Tell the app it is mounted under /api so FastAPI prepends the prefix to the
+    # URLs it *generates* — trailing-slash 307 redirects and the Swagger/ReDoc
+    # `openapi_url` — which would otherwise point at the bare origin and miss the
+    # `/api` rewrite (a 404 routed to the web service). Routing still matches on
+    # the stripped `path` above; this is exactly how `uvicorn --root-path /api`
+    # presents a proxied mount.
+    stripped["root_path"] = _PREFIX
     raw = scope.get("raw_path")
-    if isinstance(raw, (bytes, bytearray)) and raw.startswith(_PREFIX.encode()):
+    prefix_bytes = _PREFIX.encode()
+    if isinstance(raw, (bytes, bytearray)) and (
+        raw == prefix_bytes or raw.startswith(prefix_bytes + b"/")
+    ):
         stripped["raw_path"] = raw[len(_PREFIX) :] or b"/"
     return stripped
 
 
 async def app(scope, receive, send):
-    """ASGI wrapper: strip ``/api`` for HTTP/WebSocket, pass lifespan through."""
+    """ASGI wrapper: strip ``/api`` from inbound HTTP/WebSocket paths and
+    delegate to ``main.app``. Lifespan (and any other scope type) passes through
+    untouched, so startup validation and the cache warm still run.
+
+    Known minor limitation: Starlette's automatic trailing-slash 307 emits an
+    *absolute*, same-origin ``Location`` without the ``/api`` prefix, so a
+    hand-typed ``/api/foo/`` bounces to the web service. The app's own client
+    always uses canonical, no-trailing-slash paths, so real traffic never hits
+    it; ``root_path`` (set in ``_strip_prefix``) already fixes the case that
+    matters — the Swagger/ReDoc ``openapi_url``.
+    """
     if scope["type"] in ("http", "websocket"):
         scope = _strip_prefix(scope)
     await _app(scope, receive, send)

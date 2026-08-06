@@ -20,4 +20,20 @@ export const ACCEPTED_FILE_TYPES: Record<string, string[]> = {
   "video/mp4": [".mp4"],
   "audio/mpeg": [".mp3", ".mpeg"],
   "audio/wav": [".wav"],
+  "text/markdown": [".md", ".markdown"],
+  "application/yaml": [".yaml", ".yml"],
+  "application/x-yaml": [".yaml", ".yml"],
+  "application/x-ndjson": [".jsonl", ".ndjson"],
+  "text/tab-separated-values": [".tsv"],
+  "application/xml": [".xml"],
+  "text/xml": [".xml"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    ".docx",
+  ],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+    ".pptx",
+  ],
+  "video/quicktime": [".mov"],
+  "video/webm": [".webm"],
 };

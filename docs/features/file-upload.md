@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-08-06 -->
 # Feature: File Upload
 
 ## Purpose
@@ -33,6 +33,17 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 ## Outputs
 - `FileUploadResponse`: key, filename, size, content_type, uploaded_at, url, metadata
 - Side effects: file stored in B2 bucket under `uploads/{sanitized_filename}`
+
+## Supported File Types
+The allow-list is the `ALLOWED_TYPES` / `MIME_EXTENSION_MAP` in `services/api/app/service/upload.py` (source of truth), mirrored client-side in `apps/web/src/lib/upload-file-types.ts`; a vitest drift guard (`upload-file-types.test.ts`) fails if the two sets diverge. Current categories:
+- **Images**: JPEG, PNG, GIF, WebP (`image/svg+xml` deliberately excluded — stored-XSS risk)
+- **Documents**: PDF; Office OOXML — `.docx`, `.xlsx`, `.pptx`
+- **Text / data**: plain text (`.txt`/`.text`/`.log`), Markdown (`.md`/`.markdown`), CSV, TSV, JSON, NDJSON/JSON Lines (`.jsonl`/`.ndjson`), YAML (`.yaml`/`.yml`), XML
+- **Archives**: ZIP
+- **Video**: MP4, QuickTime (`.mov`), WebM
+- **Audio**: MP3, WAV
+
+**Browser-MIME caveat**: the server gates on the browser-declared `Content-Type`. Some OSes/browsers send `application/octet-stream` (or an empty type) for less-common extensions such as `.jsonl`, `.tsv`, or `.yaml`, which are not on the allow-list and are rejected with 415. Adding an extension→MIME fallback for `octet-stream` uploads is tracked as a follow-up and intentionally out of scope here.
 
 ## Flow
 - User drops or selects files in dropzone

@@ -18,6 +18,18 @@ const BACKEND_ALLOWED_TYPES = [
   "video/mp4",
   "audio/mpeg",
   "audio/wav",
+  "text/markdown",
+  "application/yaml",
+  "application/x-yaml",
+  "application/x-ndjson",
+  "text/tab-separated-values",
+  "application/xml",
+  "text/xml",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "video/quicktime",
+  "video/webm",
 ];
 
 describe("ACCEPTED_FILE_TYPES", () => {

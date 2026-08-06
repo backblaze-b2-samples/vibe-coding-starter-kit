@@ -56,6 +56,31 @@ def test_sanitize_filename_truncates_long_names(raw):
         ("noext", "image/jpeg", True),  # no extension → not enforced
         ("x.exe", "image/jpeg", False),
         ("x.pdf", "application/octet-stream", False),  # type not in map
+        # Added file types (markdown, configs, datasets, office docs, video).
+        ("notes.md", "text/markdown", True),
+        ("notes.markdown", "text/markdown", True),
+        ("config.yaml", "application/yaml", True),
+        ("config.yml", "application/x-yaml", True),
+        ("data.jsonl", "application/x-ndjson", True),
+        ("data.ndjson", "application/x-ndjson", True),
+        ("table.tsv", "text/tab-separated-values", True),
+        ("feed.xml", "application/xml", True),
+        ("feed.xml", "text/xml", True),
+        (
+            "report.docx",
+            "application/vnd.openxmlformats-officedocument."
+            "wordprocessingml.document",
+            True,
+        ),
+        (
+            "sheet.xlsx",
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet",
+            True,
+        ),
+        ("clip.mov", "video/quicktime", True),
+        ("clip.webm", "video/webm", True),
+        ("clip.mp4", "video/quicktime", False),  # extension/type mismatch
     ],
 )
 def test_validate_extension_matches_type(filename, content_type, expected):
@@ -126,6 +151,70 @@ def test_rejects_content_signature_mismatch():
 def test_rejects_empty_file():
     with pytest.raises(UploadError):
         process_upload(b"", "a.txt", "text/plain", content_length=0)
+
+
+# --- newly allowed file types pass the full validation gauntlet -------------
+
+_OOXML = b"PK\x03\x04" + b"\x00" * 8  # OOXML files are ZIP containers
+
+
+@pytest.mark.parametrize(
+    ("data", "filename", "content_type"),
+    [
+        (b"# Title\n\nbody", "notes.md", "text/markdown"),
+        (b"key: value\n", "config.yaml", "application/yaml"),
+        (b"key: value\n", "config.yml", "application/x-yaml"),
+        (b'{"a":1}\n{"a":2}\n', "data.jsonl", "application/x-ndjson"),
+        (b"a\tb\tc\n1\t2\t3\n", "table.tsv", "text/tab-separated-values"),
+        (b"<root><item/></root>", "feed.xml", "application/xml"),
+        (b"<root><item/></root>", "feed.xml", "text/xml"),
+        (
+            _OOXML,
+            "report.docx",
+            "application/vnd.openxmlformats-officedocument."
+            "wordprocessingml.document",
+        ),
+        (
+            _OOXML,
+            "sheet.xlsx",
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet",
+        ),
+        (
+            _OOXML,
+            "deck.pptx",
+            "application/vnd.openxmlformats-officedocument."
+            "presentationml.presentation",
+        ),
+        (b"\x00" * 16, "clip.mov", "video/quicktime"),
+        (b"\x1aE\xdf\xa3" + b"\x00" * 8, "clip.webm", "video/webm"),
+    ],
+)
+def test_accepts_new_filetypes(monkeypatch, data, filename, content_type):
+    """Each newly allowed type clears allow-list, extension, and signature checks."""
+    monkeypatch.setattr(
+        upload_service,
+        "upload_file",
+        lambda file_data, key, content_type: FileUploadResponse(
+            key=key,
+            filename=filename,
+            size_bytes=len(file_data),
+            size_human=f"{len(file_data)} B",
+            content_type=content_type,
+            uploaded_at="2026-02-14T00:00:00Z",
+            url=None,
+            metadata=None,
+        ),
+    )
+    monkeypatch.setattr(
+        upload_service,
+        "extract_metadata",
+        lambda file_data, filename, content_type, uploaded_at=None: None,
+    )
+
+    result = process_upload(data, filename, content_type, content_length=len(data))
+    assert result.content_type == content_type
+    assert result.key == f"uploads/{filename}"
 
 
 # --- uploads_total metric increments ----------------------------------------

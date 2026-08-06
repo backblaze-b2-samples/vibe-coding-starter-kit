@@ -22,7 +22,27 @@ ALLOWED_TYPES = {
     "video/mp4",
     "audio/mpeg",
     "audio/wav",
+    # Text / data formats common in the sample apps built on this kit
+    # (markdown docs, configs, datasets, tabular/structured exports).
+    "text/markdown",
+    "application/yaml",
+    "application/x-yaml",
+    "application/x-ndjson",
+    "text/tab-separated-values",
+    "application/xml",
+    "text/xml",
+    # Office documents (OOXML) for document-ingestion / RAG samples.
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    # Additional video containers (mp4 already above).
+    "video/quicktime",
+    "video/webm",
 }
+
+_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+_PPTX = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
 MIME_EXTENSION_MAP: dict[str, set[str]] = {
     "image/jpeg": {"jpg", "jpeg", "jfif"},
@@ -37,6 +57,18 @@ MIME_EXTENSION_MAP: dict[str, set[str]] = {
     "video/mp4": {"mp4"},
     "audio/mpeg": {"mp3", "mpeg"},
     "audio/wav": {"wav"},
+    "text/markdown": {"md", "markdown"},
+    "application/yaml": {"yaml", "yml"},
+    "application/x-yaml": {"yaml", "yml"},
+    "application/x-ndjson": {"jsonl", "ndjson"},
+    "text/tab-separated-values": {"tsv"},
+    "application/xml": {"xml"},
+    "text/xml": {"xml"},
+    _DOCX: {"docx"},
+    _XLSX: {"xlsx"},
+    _PPTX: {"pptx"},
+    "video/quicktime": {"mov"},
+    "video/webm": {"webm"},
 }
 
 # Magic-byte signatures for the binary types we accept. The client-declared

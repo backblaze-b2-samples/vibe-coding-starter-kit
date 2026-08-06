@@ -89,6 +89,9 @@ When this repo is used as the foundation for a new app, the following pieces are
 | `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
 | If the README ships a Vercel deploy button, it deploys the whole app — a root `vercel.json` declaring `web` + `api` services (one project), or buttons covering both Projects — backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |
+| FastAPI `API_TITLE`/description (and the OpenAPI artifact) derive from the frontend `APP_NAME` — one display name, not a copy that drifts on rebrand | `pnpm check:agent-docs` (`scripts/agent-docs/branding.mjs`) |
+| The display name is not hardcoded in frontend source outside `app-config.ts` (components import `APP_NAME`) | `pnpm check:agent-docs` |
+| One B2 attribution token across `user_agent_extra` (custom user agent) and `utm_content` (Backblaze links) | `pnpm check:agent-docs` |
 
 `pnpm check:agent-docs` is CI-blocking (job `verify-agent-docs`) and the first
 gate inside `pnpm verify`. It asserts the *set* of verify gates, not a literal

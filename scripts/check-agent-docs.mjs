@@ -10,6 +10,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { checkBranding } from "./agent-docs/branding.mjs";
 import { checkEnvIgnores } from "./agent-docs/env-ignore.mjs";
 import { checkInstructionTrustBoundary } from "./agent-docs/instruction-trust.mjs";
 import { headings, sectionBody } from "./agent-docs/markdown.mjs";
@@ -272,6 +273,16 @@ if (readme && /vercel\.com\/new\/clone/.test(readme)) {
     }
   }
 }
+
+// --- branding / identity alignment ---------------------------------------
+// The starter is cloned and rebranded; these assert every identity surface
+// derives from one display name (app-config.ts) and one B2 attribution token,
+// so a rebrand cannot leave a surface behind. See ./agent-docs/branding.mjs.
+
+const branding = checkBranding(REPO_ROOT);
+passes.push(...branding.passes);
+failures.push(...branding.failures);
+skips.push(...branding.skips);
 
 // --- report --------------------------------------------------------------
 

@@ -21,6 +21,7 @@
     "lint:api": "cd services/api && .venv/bin/ruff check .",
     "test:web": "pnpm --filter @vibe-coding-starter-kit/web test",
     "test:api": "cd services/api && .venv/bin/python -m pytest",
+    "test:live:b2": "cd services/api && .venv/bin/python -m pytest live_tests/test_b2_connectivity.py -m live",
     "check:structure": "cd services/api && .venv/bin/python -m pytest tests/test_structure.py -v",
     "test:e2e": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test"
   },

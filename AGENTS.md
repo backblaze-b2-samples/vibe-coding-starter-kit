@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-30 -->
+<!-- last_verified: 2026-08-06 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -125,6 +125,7 @@ pnpm build             # frontend type check + build
 pnpm test:web          # frontend unit tests (vitest)
 pnpm lint:api          # backend lint (ruff)
 pnpm test:api          # backend tests (pytest)
+pnpm test:live:b2      # opt-in real B2 connectivity test (requires explicit flag)
 pnpm check:structure   # structural boundary tests
 pnpm test:e2e          # Playwright e2e tests
 ```

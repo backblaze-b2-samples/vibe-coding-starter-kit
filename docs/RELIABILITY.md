@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-30 -->
+<!-- last_verified: 2026-08-06 -->
 # Reliability
 
 Reliability expectations and practices for this project.
@@ -7,6 +7,10 @@ Reliability expectations and practices for this project.
 
 - `GET /health` verifies B2 connectivity and returns `healthy` or `degraded`
 - Health endpoint is always available, even when B2 is down
+- The B2 client bounds connection attempts to 5 seconds, socket reads to 30
+  seconds, and standard retries to 3 total attempts. Normal tests mock this
+  boundary and deny network access; real connectivity is opt-in through
+  `RUN_LIVE_B2_TESTS=1 pnpm test:live:b2`.
 
 ## Error Handling
 

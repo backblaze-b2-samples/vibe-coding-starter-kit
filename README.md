@@ -255,18 +255,17 @@ FastAPI API build from the same repo and share a single origin — the web app a
 `/` and the API under `/api`. One click, one project, **no CORS and no wiring
 two URLs together**.
 
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&project-name=vcsk&env=B2_KEY_ID,B2_APPLICATION_KEY,B2_ENDPOINT,B2_BUCKET_NAME,MAX_FILE_SIZE&envDescription=B2%20credentials%2C%20bucket%2C%20and%20the%204MB%20Vercel%20upload%20cap&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md)
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&project-name=vcsk&env=B2_KEY_ID,B2_APPLICATION_KEY,B2_ENDPOINT,B2_BUCKET_NAME&envDescription=B2%20credentials%20and%20bucket&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md)
 
-Set the B2 credentials and bucket, and `MAX_FILE_SIZE=4000000` — Vercel
-Functions cap each request/response payload at 4.5 MB, so the starter's 100 MB
-default must come down. The web app reaches the API at the same-origin `/api`
-automatically, so **no `NEXT_PUBLIC_API_URL` is needed**; the repo-root
-`vercel.json` declares the `web` and `api` services and routes `/api/*` to
-FastAPI (which serves its native `/health`, `/files`, … paths — the Vercel-only
-`services/api/index.py` strips the `/api` prefix).
-
-For uploads larger than 4.5 MB, switch to a direct-to-B2 presigned-upload flow
-instead of proxying file bytes through a Function.
+Set the B2 credentials and bucket. Uploads go **directly from the browser to
+B2** (presigned PUT), so Vercel's 4.5 MB Function payload limit doesn't apply
+and the starter's 100 MB default stays — one caveat: the bucket must allow your
+deploy origin in its CORS (see the
+[Vercel delivery contract](infra/vercel/README.md)). The web app reaches the API
+at the same-origin `/api` automatically, so **no `NEXT_PUBLIC_API_URL` is
+needed**; the repo-root `vercel.json` declares the `web` and `api` services and
+routes `/api/*` to FastAPI (which serves its native `/health`, `/files`, … paths
+— the Vercel-only `services/api/index.py` strips the `/api` prefix).
 
 The button clones the repo into your account as a quick preview. For the full
 variable classification, the two-separate-Projects alternative, security

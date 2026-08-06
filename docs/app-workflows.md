@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-08-06 -->
 # App Workflows
 
 User journeys inside the application.
@@ -8,7 +8,7 @@ User journeys inside the application.
 - User navigates to `/upload`
 - Drops or selects files in the dropzone
 - Client validates file size (max 100MB) and type
-- A determinate progress bar tracks the bytes leaving the browser; once they are all sent the row switches to "Storing in B2..." with an *indeterminate* sweeping bar for the server-side phase (put_object + checksums + metadata). That phase has no percentage to report — measured at 25s on a 54MB file — and a bar parked at a full 100% read as finished-but-stuck
+- Files upload **directly from the browser to B2** (a presigned PUT). A determinate progress bar tracks the bytes leaving the browser; once they are all sent the row switches to "Verifying upload..." with an *indeterminate* sweeping bar while the API HEADs and magic-byte-sniffs the stored object. That phase has no percentage to report, and a bar parked at a full 100% read as finished-but-stuck
 - On success: toast notification, green checkmark, and a "View in Files" link through to the browser
 - On failure: red status icon with error message
 - User can clear completed uploads

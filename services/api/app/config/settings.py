@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     # Upload limits
     max_file_size: int = 100 * 1024 * 1024  # 100MB
+    # TTL for the presigned PUT the browser uploads directly to B2 with. Long
+    # enough for a big file on a slow link, short enough that a leaked URL is a
+    # narrow, single-key, single-size window.
+    presign_upload_expiry_seconds: int = 900  # 15 minutes
 
     # Optional confinement for key-addressed reads/deletes. Empty by default so
     # the by-key routes accept any key shape (they deliberately support nested

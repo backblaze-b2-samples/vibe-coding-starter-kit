@@ -48,6 +48,17 @@ export interface FileUploadResponse {
   metadata: FileMetadataDetail | null;
 }
 
+/** A short-lived presigned PUT the browser uploads a file directly to B2 with.
+ *  `headers` are signed into the URL, so the browser must send them verbatim. */
+export interface PresignUploadResponse {
+  key: string;
+  url: string;
+  method: string;
+  content_type: string;
+  headers: Record<string, string>;
+  expires_in: number;
+}
+
 export interface DailyUploadCount {
   date: string;
   uploads: number;

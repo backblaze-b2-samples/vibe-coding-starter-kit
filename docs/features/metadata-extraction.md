@@ -1,16 +1,16 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-08-06 -->
 # Feature: Metadata Extraction
 
 ## Purpose
-Extract rich metadata from uploaded files and surface it both at upload time and for already-stored objects.
+Extract rich metadata (checksums, image/PDF fields) from stored objects, on demand. Since uploads go directly to B2, this no longer runs at upload — it is computed only when the Files browser asks for it.
 
 ## Used By
-- API: `POST /upload` (called after B2 upload) — returns the full `FileMetadataDetail` in the upload response
-- API: `GET /files-by-key/detail?key=…` — recomputes `FileMetadataDetail` on demand for an already-stored object
-- UI: the Upload page renders it via `FileMetadataPanel`, behind a per-file "View details" disclosure on each completed upload (`apps/web/src/components/upload/upload-progress.tsx`)
+- API: `POST /upload/verify` — the direct-to-B2 upload no longer streams bytes through the API, so extraction no longer runs at upload and the verify response returns `metadata: null`
+- API: `GET /files-by-key/detail?key=…` — the **only** path that returns a full `FileMetadataDetail`; recomputes it on demand for an already-stored object
 - UI: the Files browser preview dialog renders it via `FileMetadataPanel`, behind a "Detailed metadata" disclosure that fetches lazily on expand (`apps/web/src/components/files/file-preview.tsx`)
+- UI: the Upload page's completed rows no longer show inline extraction — the direct-to-B2 upload never streams bytes through the API, so the verify response carries `metadata: null` and `upload-progress.tsx` only offers "View in Files"
 
-> Note: extraction is **not** persisted. At upload it runs from the in-memory bytes and is returned inline. For an already-stored object the `/files-by-key/detail` endpoint re-downloads the object and re-runs extraction on demand — so the checksums/EXIF/PDF fields cost a full object download and are size-guarded (objects above `max_file_size` are refused with 413). The cheap `GET /files-by-key/metadata` (a `head_object`) still returns only the core fields (key, size, type, uploaded-at). Persisting metadata at upload to avoid the re-download is tracked in the tech-debt tracker.
+> Note: extraction is **not** persisted, and (since uploads go directly to B2) it no longer runs at upload at all — the verify response returns `metadata: null`. It is computed only on demand: the `/files-by-key/detail` endpoint re-downloads the object and re-runs extraction — so the checksums/EXIF/PDF fields cost a full object download and are size-guarded (objects above `max_file_size` are refused with 413). The cheap `GET /files-by-key/metadata` (a `head_object`) still returns only the core fields (key, size, type, uploaded-at). Persisting metadata to avoid the re-download is tracked in the tech-debt tracker.
 
 ## Core Functions
 - `services/api/app/service/metadata.py` — `extract_metadata()`, `_extract_image_metadata()`, `_extract_pdf_metadata()`, `_image_warning()`
@@ -35,16 +35,14 @@ Extract rich metadata from uploaded files and surface it both at upload time and
 - Audio/Video (optional): duration_seconds, codec, bitrate — **reserved in the model but not yet extracted**; `extract_metadata()` only populates image and PDF fields today, so these are always null
 
 ## Flow
-- Upload route receives file and stores in B2
-- `extract_metadata()` called with file bytes, filename, content type
-- Computes MD5 and SHA-256 hashes
+- Extraction runs **on demand**, not at upload — the direct-to-B2 upload never streams bytes through the API
+- `get_file_detail()` heads the object (rejecting >`max_file_size`), downloads it via `get_object_bytes()`, and calls `extract_metadata()` with the object's real `head_object` LastModified time
+- `extract_metadata()` computes MD5 and SHA-256 hashes
 - If image: opens with Pillow, extracts dimensions and EXIF data. A failure sets `metadata_warning` instead of returning nothing — a `DecompressionBombError` (image above Pillow's decode ceiling) gets a message naming that limit, anything else a generic decode message
 - If PDF: opens with PyPDF2, extracts page count, author, title; a parse failure sets `metadata_warning`
 - The decompression-bomb ceiling is a deliberate safety control and stays in place: oversized images are reported, never decoded
-- Returns `FileMetadataDetail` model in the `metadata` field of the upload response
-- `uploaded_at` is passed in explicitly (the fresh upload time, or a stored object's `head_object` LastModified) so the panel shows the true upload time rather than the recompute wall-clock time; it defaults to now only when omitted
-- Upload page stores that payload on the completed queue item and renders it in `FileMetadataPanel` under a collapsible "View details" toggle
-- For a stored object: `get_file_detail()` heads the object (rejecting >`max_file_size`), downloads it via `get_object_bytes()`, and re-runs `extract_metadata()` with the object's real upload time; the Files preview dialog fetches this lazily when the user expands "Detailed metadata"
+- `uploaded_at` is passed in explicitly (the stored object's LastModified) so the panel shows the true upload time rather than the recompute wall-clock time; it defaults to now only when omitted
+- Returns `FileMetadataDetail`; the Files preview dialog fetches it lazily when the user expands "Detailed metadata"
 
 ## Edge Cases
 - Corrupt image → image fields stay null and `metadata_warning` says the image couldn't be decoded (the warning is also logged)
@@ -55,8 +53,7 @@ Extract rich metadata from uploaded files and surface it both at upload time and
 - Large file → hashing may be slow (computed in-memory)
 
 ## UX States
-- Collapsed (default): completed uploads show a "View details" toggle; the Files preview dialog shows a "Detailed metadata" toggle
-- Expanded (upload): `FileMetadataPanel` renders checksums, plus image/PDF fields when present (data already in hand)
+- Collapsed (default): the Files preview dialog shows a "Detailed metadata" toggle (completed upload rows no longer carry inline metadata — the verify response has `metadata: null` — so they only offer "View in Files")
 - Expanded (preview): lazily fetches `/files-by-key/detail` — shows a skeleton while loading, an inline error if the recompute/download fails, then `FileMetadataPanel`
 - Non-image/non-PDF file: only common fields shown (hashes, size, extension) — no image/PDF/media sections
 - Skipped extraction: `FileMetadataPanel` renders `metadata_warning` as an inline note under Checksums, so "no Image section" is never unexplained

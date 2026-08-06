@@ -24,7 +24,7 @@ service. Because they share an origin there is **no CORS and no
 `NEXT_PUBLIC_API_URL`** — the web client calls the relative `/api`, and a
 production build defaults `API_BASE` to `/api` when the variable is unset.
 
-FastAPI keeps its native paths (`/health`, `/files`, `/upload`, …). The
+FastAPI keeps its native paths (`/health`, `/files`, `/upload/presign`, …). The
 Vercel-only entrypoint `services/api/index.py` is a thin ASGI wrapper that
 strips the `/api` prefix before delegating to `main.app`, so local dev, tests,
 and the checked-in OpenAPI contract are unchanged — the prefix exists only in
@@ -65,7 +65,7 @@ Set values in the Vercel Project and environment. Never put values in
 | --- | --- | --- |
 | `B2_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Restrict the B2 key to the intended bucket and least privilege. |
 | `B2_ENDPOINT`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate settings | Non-secret configuration | Set `ENABLE_DOCS=false` in production. |
-| `MAX_FILE_SIZE=4000000` | Required Vercel configuration | Leave headroom below Vercel's 4.5 MB Function payload ceiling for multipart overhead. |
+| `MAX_FILE_SIZE` | Optional configuration | Uploads go directly to B2 (presigned PUT), so Vercel's 4.5 MB Function limit no longer applies — leave at the 100 MB default or set your own cap. |
 | `WARM_LIST_CACHE_ON_STARTUP=false` | Recommended Vercel configuration | Avoid an expensive full B2 scan on each cold start. |
 | `DOWNLOAD_COUNT_FILE=/tmp/download_count.json` | Optional ephemeral configuration | Lets a warm Function instance write the counter, but it is not durable or shared. |
 
@@ -80,15 +80,25 @@ test or preview environments.
 
 ## Platform Limits and Fit
 
-FastAPI runs as one Vercel Function and Vercel Functions have a 4.5 MB maximum
-request or response payload. The API's normal 100 MB local upload default is
-therefore incompatible with Vercel. `MAX_FILE_SIZE=4000000` is mandatory for
-this topology; uploads above the platform limit are rejected by Vercel before
-FastAPI can return its own validation response.
+FastAPI runs as one Vercel Function, and Vercel Functions cap each
+request/response payload at ~4.5 MB. **Uploads avoid this entirely**: the
+browser uploads file bytes directly to B2 via a presigned PUT (see
+[File Upload](../../docs/features/file-upload.md)), so the bytes never traverse
+the Function. `MAX_FILE_SIZE` can stay at the 100 MB default. No other endpoint
+returns a client payload near the limit — downloads are app-minted presigned
+GETs and metadata is computed server-side.
 
-For uploads larger than this, redesign the flow to have the API issue a
-short-lived B2 presigned upload and have the browser upload directly to B2. Do
-not raise `MAX_FILE_SIZE` and assume Vercel will stream larger multipart bodies.
+Because the browser PUTs directly to B2, **the bucket's CORS must allow your
+deploy origin** (method `PUT` + the `content-type` header). After you know your
+URL, run once:
+
+```bash
+python services/api/scripts/setup_b2_cors.py --origin https://your-app.vercel.app --apply
+```
+
+The helper merges the origin into the bucket's CORS, preserving any existing
+rules (dry-run by default; add `--apply` to write). You can also set the rule
+manually via the B2 console or `aws s3api put-bucket-cors`.
 
 Function instances are short-lived and can scale independently. Listing caches,
 rate limits, metrics, and the download counter are per instance; the filesystem
@@ -105,13 +115,15 @@ repo-root `vercel.json` and creates one Services project:
 
 | `root-directory` | Pre-filled `env` |
 | --- | --- |
-| _(none — repo root)_ | `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_ENDPOINT`, `B2_BUCKET_NAME`, `MAX_FILE_SIZE` |
+| _(none — repo root)_ | `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_ENDPOINT`, `B2_BUCKET_NAME` |
 
 The button deliberately does not pre-set the `ENABLE_DOCS=false` and
 `WARM_LIST_CACHE_ON_STARTUP=false` production values; set those in the Project
-afterward per the table above. A button is a convenience, not an authorization:
-creating the Project, its environment variables, and any deployment remains a
-human-approved action.
+afterward per the table above. You must also add your deploy origin to the
+bucket's CORS (see [Platform Limits and Fit](#platform-limits-and-fit)) before
+uploads work. A button is a convenience, not an authorization: creating the
+Project, its environment variables, and any deployment remains a human-approved
+action.
 
 ## Alternative: two separate Projects
 

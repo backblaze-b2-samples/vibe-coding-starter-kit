@@ -55,8 +55,10 @@ The download counter and the `/metrics` counters are **in-process, per replica**
   requires `b2_connected: true` and an affected-flow smoke test.
 - Railway uses a persistent service model; Vercel runs the API as a Function.
   On Vercel, set `WARM_LIST_CACHE_ON_STARTUP=false` to avoid a cold-start bucket
-  scan, and keep `MAX_FILE_SIZE=4000000`: Vercel rejects request bodies over
-  4.5 MB before FastAPI can validate them.
+  scan. Uploads go directly from the browser to B2 (presigned PUT), so they no
+  longer pass through the Function and Vercel's 4.5 MB payload ceiling does not
+  apply — `MAX_FILE_SIZE` can stay at the 100 MB default. The bucket must allow
+  the deploy origin in its CORS (see infra/vercel/README.md).
 - See [infra/railway/README.md](../infra/railway/README.md) or
   [infra/vercel/README.md](../infra/vercel/README.md) for the selected
   platform's versioned configuration, approval, rollback, and cleanup procedure.

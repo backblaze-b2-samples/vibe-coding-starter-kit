@@ -126,11 +126,11 @@ function UploadRow({
         </div>
         {item.status === "uploading" &&
           (serverPhase ? (
-            // Every byte is sent, so a determinate bar can only sit at a full
-            // 100% — measured at 25.5s on a 54MB file, with nothing on screen
-            // changing. That reads as finished-but-stuck. An indeterminate
-            // track sweeps instead: visibly moving, and honest that we have no
-            // percentage for the server-side B2 write + metadata extraction.
+            // Every byte is sent to B2, so a determinate bar can only sit at a
+            // full 100% while the API HEADs + magic-byte-sniffs the stored
+            // object ("Verifying upload..."). That reads as finished-but-stuck,
+            // so an indeterminate track sweeps instead: visibly moving, and
+            // honest that the verify step reports no percentage.
             <div
               role="progressbar"
               aria-label={`${statusLabel} — ${item.file.name}`}

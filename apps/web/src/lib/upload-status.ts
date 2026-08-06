@@ -15,15 +15,15 @@ export interface UploadItem {
 }
 
 /**
- * Shown once the browser has sent every byte but the API hasn't answered.
+ * Shown once the browser has sent every byte to B2 but the API's verify step
+ * hasn't answered yet.
  *
- * The determinate bar only tracks the browser -> API leg. On a 51.6 MB file
- * that leg finished in 0.4s and the remaining 7s — B2 put_object plus checksum
- * and metadata extraction — sat behind a full bar reading "Uploading 100%",
- * i.e. 89% of the wall time looked finished-but-stuck. Naming the phase makes
- * the wait legible.
+ * The determinate bar only tracks the browser -> B2 upload leg. Once that hits
+ * 100%, the API still has to HEAD the object and sniff its leading bytes; a
+ * full bar reading "Uploading 100%" during that wait looks finished-but-stuck.
+ * Naming the phase makes the wait legible.
  */
-export const SERVER_PHASE_LABEL = "Storing in B2...";
+export const SERVER_PHASE_LABEL = "Verifying upload...";
 
 /** True while the upload is in its unnamed server-side phase. */
 export function isServerPhase(item: Pick<UploadItem, "progress" | "status">) {

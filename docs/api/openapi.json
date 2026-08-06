@@ -1,20 +1,6 @@
 {
   "components": {
     "schemas": {
-      "Body_upload_upload_post": {
-        "properties": {
-          "file": {
-            "contentMediaType": "application/octet-stream",
-            "title": "File",
-            "type": "string"
-          }
-        },
-        "required": [
-          "file"
-        ],
-        "title": "Body_upload_upload_post",
-        "type": "object"
-      },
       "DailyUploadCount": {
         "properties": {
           "date": {
@@ -321,6 +307,72 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "PresignUploadRequest": {
+        "description": "What the browser declares before uploading directly to B2.",
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "filename",
+          "content_type",
+          "size_bytes"
+        ],
+        "title": "PresignUploadRequest",
+        "type": "object"
+      },
+      "PresignUploadResponse": {
+        "description": "A short-lived presigned PUT the browser uploads to, plus the exact\nheaders it must send. `Content-Length` and `content-type` are signed into\nthe URL, so B2 rejects a body of any other size or type.",
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Headers",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "url",
+          "method",
+          "content_type",
+          "headers",
+          "expires_in"
+        ],
+        "title": "PresignUploadResponse",
+        "type": "object"
+      },
       "UploadStats": {
         "properties": {
           "total_downloads": {
@@ -392,6 +444,20 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VerifyUploadRequest": {
+        "description": "Sent after the direct PUT so the API can inspect the stored object.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "VerifyUploadRequest",
         "type": "object"
       }
     }
@@ -933,14 +999,57 @@
         ]
       }
     },
-    "/upload": {
+    "/upload/presign": {
       "post": {
-        "operationId": "upload_upload_post",
+        "description": "Validate a declared upload and hand back a presigned PUT.\n\nThe browser uploads the bytes straight to B2 with the returned URL, so they\nnever traverse this Function \u2014 that is what lifts Vercel's ~4.5 MB payload\nceiling. Size and content-type are signed into the URL (see the service).",
+        "operationId": "presign_upload_upload_presign_post",
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_upload_post"
+                "$ref": "#/components/schemas/PresignUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Presign Upload",
+        "tags": [
+          "upload"
+        ]
+      }
+    },
+    "/upload/verify": {
+      "post": {
+        "description": "Confirm an object just uploaded directly to B2 is valid and visible.",
+        "operationId": "verify_upload_route_upload_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyUploadRequest"
               }
             }
           },
@@ -968,7 +1077,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Upload",
+        "summary": "Verify Upload Route",
         "tags": [
           "upload"
         ]

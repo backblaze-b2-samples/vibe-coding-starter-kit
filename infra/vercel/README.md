@@ -37,16 +37,24 @@ runtime through `services/api/.python-version`.
 
 ## Dependabot Preview Builds Are Skipped
 
-Each service declares an `ignoreCommand` (Vercel's [Ignored Build
-Step](https://vercel.com/docs/project-configuration/vercel-json#ignorecommand))
-that cancels the build when the branch matches `dependabot/*`, so Dependabot's
-per-dependency PRs never spend Vercel build minutes. The command exits `0`
-(skip) for those branches and `1` (build) for everything else, so normal PRs —
-including a grouped/aggregated dependency PR opened on any non-`dependabot/*`
-branch — still get a Preview. In Services mode `ignoreCommand` is a per-service
-field, so it lives inside both `web` and `api`; in the two-Project alternative
-it sits at the top level of each Project's `vercel.json`. GitHub Actions CI is
-skipped for the same PRs via an actor guard in `.github/workflows/ci.yml`.
+Every `vercel.json` sets
+[`git.deploymentEnabled`](https://vercel.com/docs/project-configuration/git-configuration#git.deploymentenabled)
+to `{ "dependabot/**": false }`, so a push to any Dependabot branch never
+triggers a deployment — Vercel skips it before cloning, spending zero build
+minutes. The pattern uses [minimatch](https://github.com/isaacs/minimatch)
+globstar (`**`) on purpose: real Dependabot branches are multi-segment
+(`dependabot/npm_and_yarn/...`, `dependabot/pip/...`) and a single `*` would not
+cross the `/`. Any other branch defaults to `true`, so normal PRs — including a
+grouped/aggregated dependency PR opened on a non-`dependabot/` branch — still get
+a Preview.
+
+`git` is a top-level project key (not a per-service build field), so it lives at
+the top level of the root Services `vercel.json` and of each `vercel.json` in the
+two-Project alternative. A per-service `ignoreCommand` was tried first and does
+**not** work in Services mode — Vercel accepts the field but runs the build
+anyway — which is why the deployment gate is `git.deploymentEnabled` instead.
+GitHub Actions CI is skipped for the same PRs via an actor guard in
+`.github/workflows/ci.yml`.
 
 ## Variables and Public Exposure
 

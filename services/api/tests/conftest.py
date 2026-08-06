@@ -8,9 +8,20 @@ from main import app
 
 @pytest.fixture(autouse=True)
 def deny_external_network(monkeypatch):
-    """Normal API tests are hermetic; live service checks live outside tests/."""
+    """Normal API tests are hermetic; live service checks live outside tests/.
 
-    def blocked_connect(*_args, **_kwargs):
+    Only *external* connections are rejected. Loopback stays open so in-process
+    localhost servers and platform event-loop self-pipes (e.g. asyncio's
+    socketpair emulation on Windows) keep working — the goal is to block real
+    B2/external traffic, not all sockets."""
+
+    real_connect = socket.socket.connect
+    loopback_hosts = {"127.0.0.1", "::1", "localhost", ""}
+
+    def blocked_connect(self, address, *args, **kwargs):
+        host = address[0] if isinstance(address, (tuple, list)) else address
+        if host in loopback_hosts:
+            return real_connect(self, address, *args, **kwargs)
         raise AssertionError(
             "External network access is forbidden in normal API tests; mock the repo boundary"
         )

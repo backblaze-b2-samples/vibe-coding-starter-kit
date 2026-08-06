@@ -95,12 +95,10 @@ def test_traversal_keys_are_rejected():
 
 @pytest.mark.asyncio
 async def test_upload_empty_file_returns_400(client):
-    """Uploading an empty file returns 400 with explanation."""
-    from io import BytesIO
-
+    """Presigning an empty upload returns 400 with explanation."""
     response = await client.post(
-        "/upload",
-        files={"file": ("empty.txt", BytesIO(b""), "text/plain")},
+        "/upload/presign",
+        json={"filename": "empty.txt", "content_type": "text/plain", "size_bytes": 0},
     )
     assert response.status_code == 400
     assert "empty" in response.json()["detail"].lower()

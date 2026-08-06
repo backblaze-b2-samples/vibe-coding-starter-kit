@@ -120,9 +120,10 @@ def get_file(key: str) -> FileMetadata:
 def get_file_detail(key: str) -> FileMetadataDetail:
     """Recompute rich metadata (checksums, image/PDF fields) for a stored object.
 
-    Extraction runs at upload time and is not persisted, so the Files browser
-    would otherwise only ever see the core object fields. This downloads the
-    object on demand and re-runs the same `extract_metadata()` used at upload.
+    Extraction is not persisted and (since uploads go directly to B2) no longer
+    runs at upload, so the Files browser would otherwise only ever see the core
+    object fields. This downloads the object on demand and runs
+    `extract_metadata()`.
 
     It buffers the whole object in memory, so we `head` first to reject objects
     above `max_file_size` before downloading. Raises FileKeyError (invalid key),

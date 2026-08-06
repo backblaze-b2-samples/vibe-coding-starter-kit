@@ -3,6 +3,7 @@ import type {
   FileMetadata,
   FileMetadataDetail,
   FileUploadResponse,
+  PresignUploadResponse,
   UploadStats,
 } from "@vibe-coding-starter-kit/shared";
 
@@ -34,7 +35,12 @@ export const API_CLIENT_ROUTES = {
   legacyFilePreview: { method: "get", path: "/files/{key}/preview" },
   legacyFileMetadata: { method: "get", path: "/files/{key}" },
   legacyFileDelete: { method: "delete", path: "/files/{key}" },
-  upload: { method: "post", path: "/upload" },
+  // Uploads go direct to B2: the API validates + signs a PUT (presign), the
+  // browser uploads the bytes straight to B2, then the API inspects the stored
+  // object (verify). Bytes never traverse the API, so Vercel's ~4.5 MB Function
+  // payload ceiling no longer caps upload size.
+  uploadPresign: { method: "post", path: "/upload/presign" },
+  uploadVerify: { method: "post", path: "/upload/verify" },
 } as const satisfies Record<string, ApiClientRoute>;
 
 /** Typed API error with HTTP status code for caller-side branching. */
@@ -238,14 +244,56 @@ export async function deleteFile(key: string) {
   );
 }
 
-export function uploadFile(
+/**
+ * Upload a file directly to B2 in three steps: presign (the API validates the
+ * declared file and signs a short-lived PUT), a direct browser→B2 PUT, then
+ * verify (the API inspects the stored object). The bytes never pass through the
+ * API, which is what removes Vercel's ~4.5 MB Function payload ceiling.
+ *
+ * The `(file, onProgress) => FileUploadResponse` signature is unchanged, so the
+ * upload queue and progress UI don't care that the transport changed. Progress
+ * tracks the browser→B2 leg; when it reaches 100% the queue enters its
+ * server-side phase (see `upload-status`) while `verify` runs.
+ */
+export async function uploadFile(
   file: File,
   onProgress?: (percent: number) => void
 ): Promise<FileUploadResponse> {
+  const presign = await apiFetch<PresignUploadResponse>(
+    API_CLIENT_ROUTES.uploadPresign.path,
+    {
+      method: API_CLIENT_ROUTES.uploadPresign.method.toUpperCase(),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: file.name,
+        content_type: file.type,
+        size_bytes: file.size,
+      }),
+    }
+  );
+
+  await putFileToStorage(presign, file, onProgress);
+
+  return apiFetch<FileUploadResponse>(API_CLIENT_ROUTES.uploadVerify.path, {
+    method: API_CLIENT_ROUTES.uploadVerify.method.toUpperCase(),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: presign.key }),
+  });
+}
+
+/**
+ * PUT the raw file bytes to the presigned B2 URL. XHR (not fetch) because only
+ * XHR exposes upload progress. The signed URL binds the exact size and
+ * content-type, so `presign.headers` must be sent verbatim — B2 answers a
+ * mismatch with 403.
+ */
+function putFileToStorage(
+  presign: PresignUploadResponse,
+  file: File,
+  onProgress?: (percent: number) => void
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    const formData = new FormData();
-    formData.append("file", file);
 
     xhr.upload.addEventListener("progress", (e) => {
       if (e.lengthComputable && onProgress) {
@@ -255,14 +303,13 @@ export function uploadFile(
 
     xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(JSON.parse(xhr.responseText));
+        resolve();
       } else {
-        try {
-          const body = JSON.parse(xhr.responseText);
-          reject(new ApiError(body.detail || `Upload failed: ${xhr.status}`, xhr.status));
-        } catch {
-          reject(new ApiError(`Upload failed: ${xhr.status}`, xhr.status));
-        }
+        // B2 errors are XML, not JSON — surface a stable message rather than
+        // the raw body (a 403 here means the signed size/type was violated).
+        reject(
+          new ApiError(`Upload to storage failed (${xhr.status})`, xhr.status)
+        );
       }
     });
 
@@ -271,10 +318,10 @@ export function uploadFile(
       reject(new ApiError("Upload aborted", 0)),
     );
 
-    xhr.open(
-      API_CLIENT_ROUTES.upload.method.toUpperCase(),
-      `${API_BASE}${API_CLIENT_ROUTES.upload.path}`
-    );
-    xhr.send(formData);
+    xhr.open(presign.method.toUpperCase(), presign.url);
+    for (const [name, value] of Object.entries(presign.headers)) {
+      xhr.setRequestHeader(name, value);
+    }
+    xhr.send(file);
   });
 }

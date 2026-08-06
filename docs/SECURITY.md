@@ -7,21 +7,25 @@ Security principles and implementation for the vibe-coding-starter-kit.
 
 - **Frontend -> API**: CORS-restricted to configured origins, scoped to `GET/POST/DELETE/OPTIONS`. `allow_credentials` is `False` (no cookie/session auth today); enable it only alongside real auth and a tightened origin allowlist.
 - **API -> B2**: Authenticated via `B2_KEY_ID` + `B2_APPLICATION_KEY`, signature v4
-- **Client -> B2**: Presigned URLs for download (10-min expiry, `Content-Disposition: attachment`)
+- **Client -> B2**: Presigned URLs for download (10-min expiry, `Content-Disposition: attachment`) and for direct upload (short-lived PUT with the size and content-type signed in, so B2 rejects a mismatched body)
 
 ## Authentication & Multi-Tenancy
 
-- **No auth by design.** The file API (`/files`, `/files-by-key`, `/upload`) is unauthenticated and bucket-wide — any client can list, download, and delete every object. Acceptable for a single-tenant demo; the rate limiter guards the open endpoints.
+- **No auth by design.** The file API (`/files`, `/files-by-key`, `/upload/presign`, `/upload/verify`) is unauthenticated and bucket-wide — any client can list, download, delete, and (via presign) upload objects. Acceptable for a single-tenant demo; the rate limiter guards the open endpoints.
 - **Adding auth to a clone does not close this automatically.** A login screen alone leaves an open, cross-user file API. You must both (1) require auth on every file route and (2) scope listings and reads to the caller's own prefixes — skipping either lets one signed-in user read and delete another's files. See the co-located notes in `runtime/files.py` and `service/files.py`.
 
 ## Upload Validation
 
-- Filename sanitization: path traversal, null bytes, unsafe chars stripped
-- MIME/extension consistency check against allowlist
-- Chunked streaming with size enforcement (100MB default)
-- Content-type allowlist (images, PDFs, text, archives, audio/video). **SVG is excluded** — it can embed `<script>` that executes when served from a public bucket URL (stored XSS). Re-add only with server-side sanitization.
-- **Magic-byte signature check**: for binary types, the leading bytes must match the declared content type, so a script payload can't masquerade as `image/png`. Text-like types (plain/CSV/JSON) have no signature and skip this check.
-- Empty file rejection
+Uploads go directly from the browser to B2, so the API validates at two points:
+`/upload/presign` (before any bytes) and `/upload/verify` (after the PUT).
+
+- Filename sanitization: path traversal, null bytes, unsafe chars stripped; the API mints the object key (`uploads/{sanitised}`), so the client never chooses it
+- MIME/extension consistency check against the allowlist (at presign)
+- Size enforcement: the declared size is signed into the presigned PUT as `Content-Length`, so B2 rejects a body of any other size with `403`; the API refuses to presign a size above the 100MB default
+- Content-type allowlist (images, PDFs, text, archives, audio/video), also signed into the PUT. **SVG is excluded** — it can embed `<script>` that executes when served from a public bucket URL (stored XSS). Re-add only with server-side sanitization.
+- **Magic-byte signature check** (at verify): a `Range` GET fetches the leading bytes and confirms they match the declared type, so a script payload can't masquerade as `image/png`; a mismatch deletes the object. Text-like types (plain/CSV/JSON) have no signature and skip this check.
+- Empty file rejection (at presign)
+- The `/upload/presign` endpoint hands out short-lived, single-key, size- and type-bound B2 write URLs. Like the rest of the API it is unauthenticated, and it is guarded by the write rate limiter.
 
 ## Rate Limiting
 

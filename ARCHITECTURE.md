@@ -78,10 +78,12 @@ services/api/
   share one origin — the web app at `/`, the API under `/api`. The repo-root
   `vercel.json` declares both services and routes `/api/*` to the API service;
   the Vercel-only `services/api/index.py` strips the `/api` prefix so FastAPI
-  keeps its native paths (`/health`, `/files`, …). It is suitable only for
-  uploads below Vercel's 4.5 MB Function payload ceiling. A
-  two-separate-Projects alternative and the full delivery contract live in
-  [infra/vercel/README.md](infra/vercel/README.md).
+  keeps its native paths (`/health`, `/files`, …). Uploads go directly from the
+  browser to B2 via a presigned PUT (see
+  [File Upload](docs/features/file-upload.md)), so they bypass the Function's
+  4.5 MB payload ceiling entirely — the bucket must allow the deploy origin in
+  its CORS. A two-separate-Projects alternative and the full delivery contract
+  live in [infra/vercel/README.md](infra/vercel/README.md).
 
 External provisioning and deployment remain explicit user-approved actions.
 
@@ -106,7 +108,7 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 
 ## Data Flows
 
-- **Upload**: Browser -> `POST /upload` (multipart) -> API validates -> service orchestrates -> repo writes to B2 -> metadata extracted -> response
+- **Upload**: Browser -> `POST /upload/presign` (API validates the declared file + signs a PUT) -> Browser PUTs bytes **directly to B2** -> `POST /upload/verify` (API HEADs + Range-sniffs the stored object) -> response
 - **List**: Browser -> `GET /files` -> service calls repo -> returns file list
 - **Download**: Browser -> `GET /files/{key}/download` -> service validates key -> repo generates presigned URL -> browser downloads
 - **Delete**: Browser -> `DELETE /files/{key}` -> service validates key -> repo deletes from B2

@@ -153,7 +153,8 @@ recovery workflows. `pnpm verify` needs `services/api/.venv` to exist (run
 `pnpm run setup`); without
 it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`, and
 `pnpm contract:export` / `pnpm contract:check` fail the same way on
-`.venv/bin/python`. The API's complete Python 3.11 resolution is committed in
+`.venv/bin/python`. Setup rejects an older or broken existing venv with a
+recovery instruction. The API's complete Python 3.12 resolution is committed in
 `services/api/requirements.lock`; setup and CI install it. Update it only with
 the reviewed workflow in [docs/dev-workflows.md](docs/dev-workflows.md#python-dependency-updates).
 

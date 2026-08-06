@@ -24,7 +24,7 @@ Explore the [Vibe Coding Starter Kit project page](https://backblazelabs.com/pro
 
 ## Quick Start
 
-You need: Node.js >= 20, pnpm >= 9, Python >= 3.11, and a free **[Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)**.
+You need: Node.js >= 20, pnpm >= 9, Python >= 3.12, and a free **[Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)**.
 
 ### Supported local environments
 
@@ -74,9 +74,10 @@ pnpm run setup
 
 This copies `.env.example` to `.env` only when `.env` does not already exist,
 installs workspace dependencies from `pnpm-lock.yaml`, creates
-`services/api/.venv` if missing, and installs the API's committed Python 3.11
-resolution from `services/api/requirements.lock`. It is safe to rerun and never
-overwrites an existing `.env`.
+`services/api/.venv` if missing, validates that an existing venv uses Python
+3.12+, and installs the API's committed Python 3.12 resolution from
+`services/api/requirements.lock`. It is safe to rerun and never overwrites an
+existing `.env`.
 
 > Use the `pnpm run` form: `setup` (like `doctor`) is a built-in pnpm command
 > before pnpm 11, so bare `pnpm setup` would run pnpm's own command instead of
@@ -197,7 +198,7 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 
 - TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, Recharts
 - TanStack Query — caching, dedup, retry, stale-while-revalidate for every fetch
-- Python 3.11+, FastAPI, boto3, Pydantic v2, Pillow, PyPDF2
+- Python 3.12+, FastAPI, boto3, Pydantic v2, Pillow, PyPDF2
 - Backblaze B2 (S3-compatible object storage)
 - pnpm workspaces (monorepo)
 
@@ -313,7 +314,7 @@ It integrates Backblaze B2 through the S3-compatible API, and B2 is the storage 
 Yes. [AGENTS.md](AGENTS.md) is the single source of truth for coding agents, architectural boundaries are enforced mechanically by structural tests and lints (not by convention), and the docs use progressive disclosure — so an agent can read the repo and start contributing immediately.
 
 **What's the tech stack?**
-Frontend: TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query. Backend: Python 3.11+, FastAPI, boto3, Pydantic v2. Storage: Backblaze B2 (S3-compatible). See [Tech Stack](#tech-stack).
+Frontend: TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query. Backend: Python 3.12+, FastAPI, boto3, Pydantic v2. Storage: Backblaze B2 (S3-compatible). See [Tech Stack](#tech-stack).
 
 **How do I rebrand it for my own app?**
 Edit a single file — `apps/web/src/lib/app-config.ts` (`APP_NAME`, `APP_DESCRIPTION`) — and the page title, sidebar, and breadcrumb update everywhere. See [Building Your App](#building-your-app).

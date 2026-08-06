@@ -3,17 +3,16 @@ import { spawnSync } from "node:child_process";
 
 import { parseSemver } from "./semver.mjs";
 
-export const REQUIRED_PYTHON_MINOR = 11;
+export const REQUIRED_PYTHON_MINOR = 12;
 
-// python3 first (canonical on macOS/Linux), then the versioned names Homebrew
-// installs, then the bare python shim (pyenv). The first candidate that meets
-// the minimum wins — otherwise macOS reports a false failure on the system 3.9
-// that `python3` points at, even with a newer Homebrew Python on PATH.
+// Prefer the tested baseline, then common newer interpreters and the bare
+// python shim (pyenv). This keeps setup deterministic when 3.12 is installed
+// without blocking a newer compatible interpreter.
 const PYTHON_CANDIDATES = [
-  "python3",
-  "python3.13",
   "python3.12",
-  "python3.11",
+  "python3",
+  "python3.14",
+  "python3.13",
   "python",
 ];
 
@@ -24,7 +23,7 @@ const PYTHON_CANDIDATES = [
  * to stderr and exits non-zero; treating that noise as a version made the caller
  * report "<noise> is too old" instead of "Python is not on PATH".
  */
-function readVersion(bin) {
+export function readPythonVersion(bin) {
   const result = spawnSync(bin, ["--version"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
@@ -40,16 +39,20 @@ function readVersion(bin) {
   return { bin, text, version };
 }
 
+export function isSupportedPython(version) {
+  return version.major === 3 && version.minor >= REQUIRED_PYTHON_MINOR;
+}
+
 export function findPython() {
   const found = [];
 
   for (const bin of PYTHON_CANDIDATES) {
-    const candidate = readVersion(bin);
+    const candidate = readPythonVersion(bin);
     if (!candidate) continue;
     found.push(candidate);
 
     const { version } = candidate;
-    if (version.major >= 3 && version.minor >= REQUIRED_PYTHON_MINOR) {
+    if (isSupportedPython(version)) {
       return { python: candidate, found };
     }
   }

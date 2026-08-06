@@ -73,10 +73,11 @@ and `services/api/.venv/bin/*` paths; use WSL2 on Windows.
 Run `pnpm run setup` on a fresh clone. It is idempotent: it copies
 `.env.example` to `.env` only if `.env` does not already exist (first, because it
 is the only step that needs no network), installs workspace dependencies from
-`pnpm-lock.yaml`, creates `services/api/.venv` only when missing, and installs
-the committed Python 3.11 resolution in `services/api/requirements.lock`. It
-installs Node dependencies with `--frozen-lockfile`, so run `pnpm install`
-yourself after editing `package.json`.
+`pnpm-lock.yaml`, creates `services/api/.venv` only when missing, validates an
+existing venv uses Python 3.12+, and installs the committed Python 3.12
+resolution in `services/api/requirements.lock`. It installs Node dependencies
+with `--frozen-lockfile`, so run `pnpm install` yourself after editing
+`package.json`.
 
 `setup` and `doctor` must always be invoked as `pnpm run setup` / `pnpm run
 doctor`. Both are built-in pnpm commands before pnpm 11 (the version CI pins and
@@ -156,7 +157,7 @@ or request models. The exporter imports `services/api/main.py`, calls
 Both contract commands run `services/api/.venv/bin/python`, so they need
 `pnpm run setup` first.
 
-The comparison is byte-exact. The complete Python 3.11 resolution is committed
+The comparison is byte-exact. The complete Python 3.12 resolution is committed
 in `services/api/requirements.lock`, so routine verification must not fail
 merely because FastAPI or Pydantic published a release. If an intentional
 dependency refresh changes schema generation, refresh and review the lock and
@@ -183,10 +184,10 @@ the tech-debt tracker.
 ### Python dependency updates
 
 `services/api/requirements.txt` is the human-edited input and
-`services/api/requirements.lock` is the complete exact-version Python 3.11
+`services/api/requirements.lock` is the complete exact-version Python 3.12
 resolution used by setup and CI. Do not edit the lock for routine feature work.
 
-The lock is resolved for CPython 3.11 on Linux/macOS and its pins carry no
+The lock is resolved for CPython 3.12 on Linux/macOS and its pins carry no
 environment markers, so Windows is not a supported setup target (for example,
 `uvloop` ships no Windows wheels). If Windows support is ever required,
 regenerate the lock with a marker-preserving tool such as pip-tools'
@@ -194,7 +195,7 @@ regenerate the lock with a marker-preserving tool such as pip-tools'
 
 When deliberately adding or updating an API dependency:
 
-1. Edit `services/api/requirements.txt` and use a clean Python 3.11 virtual
+1. Edit `services/api/requirements.txt` and use a clean Python 3.12 virtual
    environment outside the repository (for example, under `/tmp`).
 2. Install `requirements.txt` in that environment, run `python -m pip freeze`,
    and replace `requirements.lock` with the exact application, test, and quality

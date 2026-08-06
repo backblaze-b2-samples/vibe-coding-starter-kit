@@ -1,13 +1,13 @@
-# Complete Python 3.11 resolution for the API runtime, tests, and quality tools.
+# Complete Python 3.12 resolution for the API runtime, tests, and quality tools.
 #
-# Platform: resolved for CPython 3.11 on Linux/macOS (what setup and CI use).
+# Platform: resolved for CPython 3.12 on Linux/macOS (what setup and CI use).
 # Pins are exact and carry no environment markers, so Windows is unsupported
 # here (e.g. uvloop ships no Windows wheels). If Windows support is ever needed,
 # regenerate with a marker-preserving tool (pip-tools' pip-compile) rather than
 # pip freeze.
 #
 # Keep requirements.txt as the human-edited input. Refresh this file only from
-# a clean Python 3.11 virtual environment as documented in
+# a clean Python 3.12 virtual environment as documented in
 # docs/dev-workflows.md, then review the lock and OpenAPI contract together.
 annotated-doc==0.0.5
 annotated-types==0.8.0

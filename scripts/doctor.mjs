@@ -16,11 +16,17 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { BIND_DENIED_FIX, formatBindDiagnostic, probeBind } from "./local-bind.mjs";
-import { findPython, REQUIRED_PYTHON_MINOR } from "./python-runtime.mjs";
+import {
+  findPython,
+  isSupportedPython,
+  readPythonVersion,
+  REQUIRED_PYTHON_MINOR,
+} from "./python-runtime.mjs";
 import { parseSemver } from "./semver.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENV_FILE = resolve(REPO_ROOT, ".env");
+const VENV_PYTHON = resolve(REPO_ROOT, "services/api/.venv/bin/python");
 const VENV_UVICORN = resolve(REPO_ROOT, "services/api/.venv/bin/uvicorn");
 
 // Required minimum versions. Bump as upstream support shifts.
@@ -125,6 +131,22 @@ function checkVenv() {
     fail(
       "Backend virtualenv not set up (services/api/.venv/bin/uvicorn missing)",
       "Run: `pnpm run setup`",
+    );
+    return;
+  }
+
+  const existing = readPythonVersion(VENV_PYTHON);
+  if (!existing) {
+    fail(
+      "Backend virtualenv Python is missing or not executable",
+      "Move services/api/.venv aside, then run: `pnpm run setup`",
+    );
+    return;
+  }
+  if (!isSupportedPython(existing.version)) {
+    fail(
+      `Backend virtualenv uses ${existing.text} (need >= 3.${REQUIRED_PYTHON_MINOR})`,
+      "Move services/api/.venv aside, then run: `pnpm run setup`",
     );
   }
 }

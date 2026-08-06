@@ -406,10 +406,18 @@ deleteMutation.mutate(file.key, {
 `useDeleteFile()` already calls `queryClient.invalidateQueries({ queryKey: qk.all })`
 on success — every consumer of `useFiles` / `useFileStats` re-fetches lazily.
 
-**Add a new endpoint** — three places to touch:
-1. `services/api/app/runtime/<router>.py` — FastAPI route
-2. `apps/web/src/lib/api-client.ts` — typed fetch wrapper
-3. `apps/web/src/lib/queries.ts` — `useQuery` / `useMutation` hook + entry in `qk`
+**Add or change an endpoint** — follow the matching column:
+
+| Required surface | Frontend-consumed | Backend-only |
+| --- | --- | --- |
+| `services/api/app/runtime/<router>.py` FastAPI route | Yes | Yes |
+| `apps/web/src/lib/api-client.ts` wrapper + `API_CLIENT_ROUTES` | Yes | No |
+| `apps/web/src/lib/queries.ts` hook + `qk` entry | Yes | No |
+| `docs/api/openapi.json` via `pnpm contract:export` | Yes | Yes |
+| `SERVER_ONLY_OPERATIONS` in `apps/web/src/lib/api-contract.test.ts` | No | Yes |
+| Relevant `docs/features/<feature>.md` behavior | Yes | Yes |
+
+Run `pnpm contract:check` after the export, then finish with `pnpm verify`.
 
 Defaults (in `apps/web/src/lib/query-client.tsx`):
 - `staleTime: 30s` — file lists / stats don't change second-to-second

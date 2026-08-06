@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-29 -->
+<!-- last_verified: 2026-08-06 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -251,6 +251,12 @@ source of truth for the literal command chain; when it changes, update the
 plain-language list here and in `AGENTS.md` §6 (see "Documentation Update"
 above), not a duplicated shell chain.
 
+Normal API tests deny socket connections and mock the B2 boundary in `/health`,
+so a populated developer `.env` cannot turn this gate into a live service test.
+To intentionally validate real connectivity with approved non-production
+credentials, run `RUN_LIVE_B2_TESTS=1 pnpm test:live:b2`. Without that explicit
+flag the live test skips, and it is never part of `pnpm verify` or CI.
+
 The commands are deliberately composable: use the smaller commands while
 iterating, `pnpm verify` as the usual PR gate, and `pnpm verify:full` only when
 the live local prerequisites are available.
@@ -333,8 +339,9 @@ when `pnpm test:e2e` runs.
   on every PR and push to `main`. Same gates as running `pnpm verify` locally,
   but they report independently, so a frontend failure never hides a backend
   failure.
-- No secrets required — backend tests mock the B2 repo layer and `/health`
-  tolerates a degraded connection. `pnpm verify:full` and E2E are not in CI
+- No secrets required — backend tests deny socket access and mock the B2 repo
+  layer, including explicit healthy/degraded `/health` cases. `pnpm verify:full`
+  and E2E are not in CI
   because they need a running app, browser install, and live B2 credentials.
 - The workflow declares `permissions: contents: read` at the top level, so
   `GITHUB_TOKEN` is read-only for every job. Keep it that way; if a new job

@@ -4,8 +4,8 @@ name: CI
 # docs/dev-workflows.md. `pnpm verify` = `pnpm check:agent-docs &&
 # pnpm verify:api && pnpm verify:web`; CI runs those three checks as parallel
 # jobs so the suite stays fast and a frontend failure never hides a backend
-# failure. No secrets required: backend tests mock the B2 repo layer and
-# /health tolerates a degraded connection.
+# failure. No secrets required: backend tests deny socket access and mock the
+# B2 repo layer, including both /health states.
 
 on:
   push:

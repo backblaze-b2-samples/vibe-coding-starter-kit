@@ -1,7 +1,21 @@
+import socket
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from main import app
+
+
+@pytest.fixture(autouse=True)
+def deny_external_network(monkeypatch):
+    """Normal API tests are hermetic; live service checks live outside tests/."""
+
+    def blocked_connect(*_args, **_kwargs):
+        raise AssertionError(
+            "External network access is forbidden in normal API tests; mock the repo boundary"
+        )
+
+    monkeypatch.setattr(socket.socket, "connect", blocked_connect)
 
 
 @pytest.fixture
@@ -43,6 +57,8 @@ def reset_shared_module_state():
     from app.repo import b2_client
     from app.runtime import metrics
 
+    cached_get_s3_client = b2_client.get_s3_client
+    cached_get_s3_client.cache_clear()
     b2_client._health_cache = None
     with metrics._lock:
         metrics._request_count.clear()
@@ -50,6 +66,7 @@ def reset_shared_module_state():
         metrics._upload_count = 0
         metrics._upload_errors = 0
     yield
+    cached_get_s3_client.cache_clear()
 
 
 @pytest.fixture(autouse=True)

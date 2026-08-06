@@ -28,3 +28,4 @@ quote-style = "double"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = ["live: opt-in tests that can contact a real external service"]

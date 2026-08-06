@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-30 -->
+<!-- last_verified: 2026-08-06 -->
 # Architecture
 
 ## Components
@@ -41,7 +41,7 @@ runtime/   FastAPI routes — calls service, never repo directly
 2. No backward imports (e.g., service must not import from runtime)
 3. `boto3` only allowed in `repo/` layer
 4. All boundary data uses Pydantic models (no raw dicts across layers)
-5. Each file stays under 300 lines
+5. Authored Python files under `services/api/app/` stay under 300 lines
 
 ### Directory Structure
 

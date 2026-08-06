@@ -10,7 +10,12 @@ import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { findPython, REQUIRED_PYTHON_MINOR } from "./python-runtime.mjs";
+import {
+  findPython,
+  isSupportedPython,
+  readPythonVersion,
+  REQUIRED_PYTHON_MINOR,
+} from "./python-runtime.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const API_DIR = resolve(REPO_ROOT, "services/api");
@@ -64,10 +69,23 @@ function ensureEnvFile() {
   console.log("OK copied .env.example to .env; fill in your B2 credentials next");
 }
 
-function ensureVenv(pythonBin) {
+function resolveVenvPython() {
   if (existsSync(VENV_PYTHON)) {
-    console.log("OK backend virtualenv already exists");
-    return;
+    const existing = readPythonVersion(VENV_PYTHON);
+    if (!existing) {
+      fail(
+        "services/api/.venv/bin/python is not executable. " +
+          "Move the broken virtualenv aside, then rerun `pnpm run setup`.",
+      );
+    }
+    if (!isSupportedPython(existing.version)) {
+      fail(
+        `services/api/.venv uses ${existing.text}; Python 3.${REQUIRED_PYTHON_MINOR}+ is required. ` +
+          "Move the virtualenv aside, then rerun `pnpm run setup`.",
+      );
+    }
+    console.log(`OK backend virtualenv already exists (${existing.text})`);
+    return null;
   }
 
   if (existsSync(VENV_DIR)) {
@@ -77,12 +95,6 @@ function ensureVenv(pythonBin) {
     );
   }
 
-  run(pythonBin, ["-m", "venv", ".venv"], API_DIR);
-}
-
-function main() {
-  ensureSupportedPlatform();
-
   const { python, found } = findPython();
   if (!python) {
     const seen = found.length > 0 ? ` Found: ${found.map((item) => item.text).join(", ")}.` : "";
@@ -91,13 +103,24 @@ function main() {
         "Install it with Homebrew, pyenv, or your OS package manager, then rerun `pnpm run setup`.",
     );
   }
+  return python.bin;
+}
+
+function ensureVenv(pythonBin) {
+  if (existsSync(VENV_PYTHON)) return;
+  run(pythonBin, ["-m", "venv", ".venv"], API_DIR);
+}
+
+function main() {
+  ensureSupportedPlatform();
+  const pythonBin = resolveVenvPython();
 
   // .env first: it is the only step that needs no network, so a sandbox that
   // blocks package downloads still leaves a usable .env to fill in instead of
   // exiting before it is created.
   ensureEnvFile();
   run("pnpm", ["install", "--frozen-lockfile"], REPO_ROOT);
-  ensureVenv(python.bin);
+  ensureVenv(pythonBin);
   run(VENV_PYTHON, ["-m", "pip", "install", "-r", REQUIREMENTS_LOCK], API_DIR);
 
   console.log("\nSetup complete. Run `pnpm run doctor` to validate credentials and local server access.");

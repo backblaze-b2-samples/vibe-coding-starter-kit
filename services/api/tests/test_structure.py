@@ -82,8 +82,8 @@ def test_boto3_only_in_repo():
     assert violations == [], "boto3 boundary violations:\n" + "\n".join(violations)
 
 
-def test_file_size_limits():
-    """Verify no Python file exceeds 300 lines."""
+def test_api_app_python_file_size_limit():
+    """Verify authored Python under services/api/app stays within 300 lines."""
     violations = []
     for pyfile in _get_python_files(APP_ROOT):
         line_count = len(pyfile.read_text().splitlines())

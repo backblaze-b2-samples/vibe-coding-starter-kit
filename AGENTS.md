@@ -59,7 +59,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 - **DRY** — do not duplicate logic, types, or constants. Extract shared code only when used in 2+ places.
 - Structured JSON logging only — no `print()` statements
 - No raw SDK calls outside `repo/` layer
-- Files stay under 300 lines
+- Authored Python files under `services/api/app/` stay under 300 lines
 - Tests added or updated for every behavior change
 - Docs updated in same PR as code changes
 - Lint clean before merge
@@ -72,7 +72,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 |------|-------------|
 | No backward imports | `tests/test_structure.py::test_no_backward_imports` |
 | No boto3 outside repo/ | `tests/test_structure.py::test_boto3_only_in_repo` |
-| File size < 300 lines | `tests/test_structure.py::test_file_size_limits` |
+| Backend app Python file size < 300 lines | `tests/test_structure.py::test_api_app_python_file_size_limit` |
 | All layers exist | `tests/test_structure.py::test_all_layers_exist` |
 | No bare print() | `ruff` rule T20 |
 | Import ordering | `ruff` rule I001 |

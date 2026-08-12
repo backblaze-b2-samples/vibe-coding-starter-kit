@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-08-05 -->
+<!-- last_verified: 2026-08-12 -->
 # Vercel Delivery Contract
 
 This is the canonical runbook for deploying this repository to Vercel. It
@@ -116,6 +116,18 @@ repo-root `vercel.json` and creates one Services project:
 | `root-directory` | Pre-filled `env` |
 | --- | --- |
 | _(none — repo root)_ | `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_ENDPOINT`, `B2_BUCKET_NAME` |
+
+Alongside `repository-url` and the `env` list, the button carries the
+presentation parameters Vercel's clone flow renders in its preview card:
+`project-name` and `repository-name` (both `vibe-coding-starter-kit`, so the
+cloned repo and the Vercel Project get a readable default name), plus
+`demo-title`, `demo-description`, and `demo-image` — the last pointing at the
+dashboard screenshot in `docs/images/`. There is no `demo-url`: this repository
+hosts no public demo deployment, and the API is unauthenticated and bucket-wide
+(see [Variables and Public Exposure](#variables-and-public-exposure)), so a
+casually exposed demo origin is a liability rather than a feature. Any future
+demo needs its own throwaway bucket/prefix, a no-delete key, and lifecycle
+cleanup before a `demo-url` is added.
 
 The button deliberately does not pre-set the `ENABLE_DOCS=false` and
 `WARM_LIST_CACHE_ON_STARTUP=false` production values; set those in the Project

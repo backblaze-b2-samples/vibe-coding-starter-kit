@@ -22,23 +22,11 @@ Explore the [Vibe Coding Starter Kit project page](https://backblazelabs.com/pro
 
 ![File browser view showing a tree of files with hover actions](docs/images/b2-starterkit-fileview2.png)
 
+> **Deploy your own in one click** → [Deploy to Vercel](#deploying-to-vercel). One project, one origin, no CORS to wire up.
+
 ## Quick Start
 
 You need: Node.js >= 20, pnpm >= 9, Python >= 3.12, and a free **[Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)**.
-
-### Supported local environments
-
-Local scripts are supported on macOS, Linux, and WSL2. Native Windows is not
-supported yet because the dev scripts use POSIX shell syntax and
-`services/api/.venv/bin/*` paths; use WSL2 on Windows.
-
-Cloud or sandboxed coding-agent environments also need permission for dependency
-downloads during `pnpm run setup`. Running the app or Playwright E2E requires
-localhost server binding for the web server on port 3000 and the API on
-8000-8009, plus permission to launch the Playwright Chromium browser. If a
-sandbox denies binding, `pnpm run doctor` and `scripts/pick-port.mjs` report
-`EPERM`/`EACCES` as a permissions issue instead of a busy port. A host without
-IPv6 (many containers) is not treated as a failure — the IPv4 probe decides.
 
 ### Start a new project
 
@@ -106,6 +94,15 @@ That's it. Frontend at `localhost:3000`, API at `localhost:8000`. Upload a file 
 
 `pnpm dev` runs the preflight check first — it catches the common setup gotchas (wrong Node/Python version, missing venv, missing or placeholder `.env`, ports already taken) and tells you exactly how to fix each one. Run it standalone any time with `pnpm run doctor`.
 
+### Supported local environments
+
+Local scripts run on macOS, Linux, and WSL2 — native Windows isn't supported
+yet (the dev scripts use POSIX shell syntax), so use WSL2 on Windows. Cloud or
+sandboxed agent environments also need permission to install dependencies and to
+bind localhost ports; see
+[docs/dev-workflows.md](docs/dev-workflows.md) for the sandbox, port-fallback,
+and IPv6 behavior.
+
 ## When to use
 
 Use this repository as a template or sample implementation when you want to
@@ -122,6 +119,14 @@ drop-in production service. It does not provide managed hosting, user accounts,
 authentication, tenant isolation, billing, or on-call operations. Before using
 an adapted application in production, you own its product-specific security,
 operations, capacity, compliance, and support decisions.
+
+## Why Backblaze B2?
+
+[Backblaze B2](https://www.backblaze.com/cloud-storage) is the object storage this kit is built around — a deliberate default, not just a demo backend:
+
+- **S3-compatible API.** B2 speaks the S3 API, so the `boto3` calls, SDKs, and tooling you already use for AWS S3 work unchanged — you just point them at B2's endpoint. This kit uses the S3-compatible API throughout (isolated in `services/api/app/repo/`), so nothing is locked to a proprietary client.
+- **Built for data-heavy apps.** B2 storage runs at a fraction of hyperscaler pricing with generous free egress to many CDN and compute partners — what you want when an AI app accumulates uploads, datasets, model artifacts, and generated media.
+- **Free to start.** A [free B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start) is enough to run everything in this repo.
 
 ## Building Your App
 
@@ -204,78 +209,46 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 
 ## Commands
 
+The commands you reach for day to day:
+
 | Command | What it does |
 |---------|-------------|
-| `pnpm run setup` | Idempotently copy `.env.example` to `.env` only if missing, install workspace dependencies, create the backend venv, and install the locked API dependencies |
-| `pnpm run doctor` | Preflight environment check (also runs automatically before `pnpm dev`) |
-| `pnpm dev` | Start frontend + backend |
-| `pnpm dev:web` | Frontend only |
-| `pnpm dev:api` | Backend only |
-| `pnpm contract:export` | Export deterministic FastAPI OpenAPI JSON to `docs/api/openapi.json` |
-| `pnpm contract:check` | Verify the checked-in OpenAPI artifact and frontend API client route registry |
-| `pnpm check:agent-docs` | Validate agent shims, command docs, CI claims, and `.env` ignore coverage |
-| `pnpm verify` | Credential-free canonical non-live pre-PR suite — runs `check:agent-docs`, `verify:api`, then `verify:web` |
-| `pnpm verify:api` | Backend half: API lint, API tests, structure tests |
-| `pnpm verify:web` | Frontend half: web lint, web unit tests, web typecheck + build |
-| `pnpm verify:full` | `pnpm run doctor`, then `pnpm verify`, then Playwright E2E; requires populated `.env`, local server/browser permission, port 3000 free, and Chromium installed |
-| `pnpm build` | Build frontend |
-| `pnpm lint` | Lint frontend |
-| `pnpm lint:api` | Lint backend (ruff) |
-| `pnpm test:web` | Run frontend unit tests (vitest) |
-| `pnpm test:api` | Run backend tests |
-| `pnpm test:live:b2` | Opt-in real B2 connectivity test; requires `RUN_LIVE_B2_TESTS=1` and non-production credentials |
-| `pnpm check:structure` | Verify layering rules |
-| `pnpm test:e2e` | Playwright E2E smoke tests (run `pnpm --filter @vibe-coding-starter-kit/web exec playwright install chromium` once first) |
+| `pnpm run setup` | One-time cold start: copy `.env.example` → `.env` (only if missing), install workspace deps, create the backend venv, install locked API deps |
+| `pnpm dev` | Start frontend + backend (runs the `pnpm run doctor` preflight first) |
+| `pnpm verify` | Credential-free pre-PR suite — runs `check:agent-docs`, `verify:api`, then `verify:web` |
+| `pnpm verify:full` | `pnpm verify` plus Playwright E2E; needs a live local stack, real `.env`, free port 3000, and Chromium |
+| `pnpm contract:export` / `pnpm contract:check` | Export / verify the FastAPI OpenAPI contract in `docs/api/openapi.json` |
 
-Run `pnpm run setup` once before local development, and rerun it after pulling
-dependency changes. It installs workspace dependencies from `pnpm-lock.yaml`
-and API dependencies from `services/api/requirements.lock`. If you add a Node
-dependency yourself, run `pnpm install` to refresh `pnpm-lock.yaml`; for an API
-dependency, follow the reviewed refresh workflow in
-[docs/dev-workflows.md](docs/dev-workflows.md#python-dependency-updates). Run
-`pnpm verify` before opening a PR; it needs
-`services/api/.venv` from setup. Run `pnpm verify:full` when you can start the
-local app stack and browser tests: `.env` must contain real B2 values, local
-server binding must be permitted, Playwright's Chromium browser must be
-installed, and port 3000 must be free (or already serving this app). Playwright
-waits on `http://localhost:3000`,
-but `next dev` falls back to the next free port when 3000 is taken — so an
-unrelated process on 3000 makes the E2E run time out. The API starts at
-`localhost:8000` or the next free port chosen by `scripts/dev.sh`.
+`pnpm verify` is the gate to run before opening a PR. It needs
+`services/api/.venv` from `pnpm run setup`, but no B2 credentials or browser, and
+it breaks down into `pnpm verify:api` (backend lint, tests, structure),
+`pnpm verify:web` (frontend lint, unit tests, typecheck + build), and
+`pnpm check:agent-docs` (agent-doc drift).
 
-`pnpm verify` needs neither B2 credentials nor a browser. For parallel agents,
-use one Git worktree per verification run as documented in [the verification
-workflow](docs/dev-workflows.md#non-live-verification). That page also covers
-normal timing, slow-run recovery, and installing the optional local pre-commit
-hooks.
+For the full command reference (`dev:web`, `dev:api`, `lint`, `test:*`,
+`check:structure`, `test:e2e`, live B2 tests), plus worktree/parallel-run notes,
+port-fallback behavior, and slow-run recovery, see
+[docs/dev-workflows.md](docs/dev-workflows.md).
 
 ## Deploying to Vercel
 
-This starter deploys to Vercel as **one project** using Vercel
-[Services](https://vercel.com/docs/services): the Next.js web app and the
-FastAPI API build from the same repo and share a single origin — the web app at
-`/` and the API under `/api`. One click, one project, **no CORS and no wiring
-two URLs together**.
+Deploys as **one Vercel project** — the Next.js web app and FastAPI API build
+from the same repo and share one origin (web at `/`, API under `/api`), so
+there's **no CORS and no second URL to wire up**.
 
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&project-name=vcsk&env=B2_KEY_ID,B2_APPLICATION_KEY,B2_ENDPOINT,B2_BUCKET_NAME&envDescription=B2%20credentials%20and%20bucket&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md)
 
-Set the B2 credentials and bucket. Uploads go **directly from the browser to
-B2** (presigned PUT), so Vercel's 4.5 MB Function payload limit doesn't apply
-and the starter's 100 MB default stays — one caveat: the bucket must allow your
-deploy origin in its CORS (see the
-[Vercel delivery contract](infra/vercel/README.md)). The web app reaches the API
-at the same-origin `/api` automatically, so **no `NEXT_PUBLIC_API_URL` is
-needed**; the repo-root `vercel.json` declares the `web` and `api` services and
-routes `/api/*` to FastAPI (which serves its native `/health`, `/files`, … paths
-— the Vercel-only `services/api/index.py` strips the `/api` prefix).
+Set your B2 credentials and bucket, and you're live. Uploads go **directly from
+the browser to B2** (presigned PUT), so Vercel's 4.5 MB payload limit doesn't
+apply — you keep the 100 MB default. Two things to know before a real deploy:
 
-The button clones the repo into your account as a quick preview. For the full
-variable classification, the two-separate-Projects alternative, security
-controls, preview/production process, `/health` verification, and rollback,
-follow the [Vercel delivery contract](infra/vercel/README.md). The API is
-unauthenticated and bucket-wide, so use a dedicated B2 bucket/prefix and key for
-any preview. Deploying is a human-approved action — nothing here performs one
-for you.
+- Your bucket's CORS must allow the deploy origin.
+- The deployed API is unauthenticated and bucket-wide — use a dedicated B2
+  bucket/prefix and key for any preview.
+
+Full setup — variable reference, the two-Projects alternative, security,
+preview/production, `/health` checks, and rollback — is in the
+[Vercel delivery contract](infra/vercel/README.md).
 
 ## Documentation Map
 
@@ -348,8 +321,6 @@ Start with [AGENTS.md](AGENTS.md). It's the map — everything else is discovera
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Claude Agent B2 Skill
+## Related projects
 
-Manage Backblaze B2 from your terminal using natural language (list/search, audits, stale or large file detection, security checks, safe cleanup).
-
-Repo: [https://github.com/backblaze-b2-samples/claude-skill-b2-cloud-storage](https://github.com/backblaze-b2-samples/claude-skill-b2-cloud-storage)
+**Claude Agent B2 Skill** — manage Backblaze B2 from your terminal using natural language (list/search, audits, stale or large file detection, security checks, safe cleanup). Repo: [claude-skill-b2-cloud-storage](https://github.com/backblaze-b2-samples/claude-skill-b2-cloud-storage).

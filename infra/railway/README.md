@@ -35,7 +35,15 @@ config file is therefore the repository-root `railway.json`, alongside
 
 Both versioned configs use Railpack, constrained watch paths, a 100-second
 health-check timeout, and restart-on-failure with ten retries. Railway injects
-`PORT`; do not define it manually. The API build installs the committed
+`PORT`; do not define it manually.
+
+The web service starts with `pnpm --filter … exec next start …`, not
+`pnpm --filter … start -- …`. The `--` separator does not survive the trip: pnpm
+forwards it to the script, Next treats it as the end of its own options, and the
+next token becomes a positional *project directory* — the container then
+crash-loops on `Invalid project directory provided, no such directory:
+/app/apps/web/--hostname` while the build reports success. `exec` runs the
+binary in the workspace directly, so the flags arrive as flags. The API build installs the committed
 `services/api/requirements.lock`, so Railway builds from the same pinned Python
 resolution as local setup and CI rather than re-resolving floating versions. The web health check only confirms that
 Next.js serves a response. API `/health` returns HTTP 200 even when B2 is

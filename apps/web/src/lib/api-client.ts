@@ -88,6 +88,32 @@ function networkError(): ApiError {
   );
 }
 
+/**
+ * Build the status-0 ApiError for a failed browser→B2 PUT.
+ *
+ * Deliberately not `networkError()`: these bytes never touch the API, so
+ * "check the API logs" sends the developer to the one place that looks fine —
+ * the presign that produced this URL succeeded and logged a clean 200.
+ *
+ * On a deployed origin the overwhelmingly likely cause is that the *bucket's*
+ * CORS does not allow that origin, so the browser blocks the PUT before it
+ * leaves and XHR reports only a contentless `error` event. Local dev rarely
+ * trips it because localhost origins are usually already allowed — which is
+ * exactly why it first appears immediately after a deploy. Name the cause and
+ * the remedy instead of leaving a mystery.
+ */
+function storageNetworkError(): ApiError {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return new ApiError("You appear to be offline — check your connection", 0);
+  }
+  return new ApiError(
+    "Couldn't upload to B2 storage. If this app is deployed, the bucket's CORS " +
+      "must allow this origin — run services/api/scripts/setup_b2_cors.py " +
+      "--origin <your origin>.",
+    0,
+  );
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
@@ -313,7 +339,7 @@ function putFileToStorage(
       }
     });
 
-    xhr.addEventListener("error", () => reject(networkError()));
+    xhr.addEventListener("error", () => reject(storageNetworkError()));
     xhr.addEventListener("abort", () =>
       reject(new ApiError("Upload aborted", 0)),
     );

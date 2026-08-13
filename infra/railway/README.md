@@ -68,6 +68,27 @@ production environment variables, logs, and metrics visible only to people who
 operate production; enable Railway production-environment restriction when the
 workspace plan supports it and otherwise limit project administration.
 
+### The B2 bucket needs its own CORS rule for the web domain
+
+`API_CORS_ORIGINS` is not the only CORS to configure, and the second one is on
+the B2 side. Uploads go **browser → B2** via a presigned PUT, so the *bucket*
+must allow the deployed web origin (method `PUT`, header `content-type`) or the
+browser blocks every upload before it leaves. Nothing in Railway can do this for
+you, and it is invisible until you try to upload: `/health` reports
+`b2_connected: true`, the UI loads, listing works, and only uploading fails.
+
+Add the rule once per deployed web origin, with the helper that merges rather
+than replaces existing rules:
+
+```bash
+python services/api/scripts/setup_b2_cors.py --origin https://<web-domain> --apply
+```
+
+Local development rarely trips this because `localhost` origins are usually
+already allowed on a bucket used for development — which is exactly why the
+failure shows up for the first time right after a deploy. Remove the rule when
+the deployment is retired, and keep the allowlist to origins that still exist.
+
 ## Setup: Human-Approved Only
 
 1. Create isolated `staging` and `production` environments. Keep staging
@@ -109,7 +130,15 @@ rollback deployment in the PR or change record.
    Request `GET /health` from the API and require `b2_connected: true`; load
    the web root and perform the relevant user-flow smoke test. Verify the API's
    exact CORS origin and that interactive API docs are disabled in production.
-5. Record the deployed commit, health evidence, smoke-test result, approver,
+   **A deployment status of `SUCCESS` is not evidence the app runs.** A service
+   with no configured health check reports success the moment the container
+   starts, so it can crash-loop behind a green deployment; confirm the deployed
+   commit (`railway deployment list --json`, `meta.commitHash`) and read the
+   deploy logs, not just the status.
+5. Smoke-test an **upload from a browser**, not only from `curl`. A server-side
+   request bypasses CORS entirely, so the bucket-CORS rule above can be missing
+   and every scripted check will still pass while real users cannot upload.
+6. Record the deployed commit, health evidence, smoke-test result, approver,
    and any skipped check. Monitor errors, B2 cost/egress, and Railway spend
    after promotion.
 

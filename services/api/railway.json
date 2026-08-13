@@ -4,8 +4,7 @@
     "builder": "RAILPACK",
     "buildCommand": "pip install --no-cache-dir -r requirements.lock",
     "watchPatterns": [
-      "/services/api/**",
-      "/infra/railway/api.railway.json"
+      "/services/api/**"
     ]
   },
   "deploy": {

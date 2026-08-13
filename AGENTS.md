@@ -16,7 +16,7 @@ services/api/      FastAPI backend (layered: types/config/repo/service/runtime)
 packages/shared/   Shared TypeScript types
 docs/              System of record (features, workflows, security, reliability)
 docs/exec-plans/   Execution plans and tech debt tracker
-infra/railway/     Deployment config
+infra/railway/     Railway delivery contract (per-service railway.json live at their service roots)
 infra/vercel/      Vercel deployment contract
 ```
 

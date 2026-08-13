@@ -71,8 +71,11 @@ services/api/
   - API: `localhost:8000`
 - **Railway** — two services from the same repository: `web` builds from the
   repository root because it consumes `packages/shared`; `api` builds from
-  `services/api`. The versioned per-service configs and the human-approved
-  staging/production contract live in [infra/railway/README.md](infra/railway/README.md).
+  `services/api`. Each service's versioned config sits at its own root —
+  `railway.json` and `services/api/railway.json` — the default path Railway
+  discovers, so a one-click template deploy inherits the same build, start, and
+  health behavior with nothing to configure by hand. The human-approved
+  staging/production contract lives in [infra/railway/README.md](infra/railway/README.md).
 - **Vercel** — one project using [Vercel Services](https://vercel.com/docs/services):
   the `web` (Next.js) and `api` (FastAPI) services build from the same repo and
   share one origin — the web app at `/`, the API under `/api`. The repo-root

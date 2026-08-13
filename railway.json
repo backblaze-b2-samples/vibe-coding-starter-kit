@@ -9,11 +9,11 @@
       "/package.json",
       "/pnpm-lock.yaml",
       "/pnpm-workspace.yaml",
-      "/infra/railway/web.railway.json"
+      "/railway.json"
     ]
   },
   "deploy": {
-    "startCommand": "pnpm --filter @vibe-coding-starter-kit/web start -- --hostname 0.0.0.0 --port $PORT",
+    "startCommand": "pnpm --filter @vibe-coding-starter-kit/web exec next start --hostname 0.0.0.0 --port $PORT",
     "healthcheckPath": "/",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",

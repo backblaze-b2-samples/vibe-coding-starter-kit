@@ -7,6 +7,7 @@ import {
   getFile,
   getFileDetail,
   getPreviewUrl,
+  uploadFile,
 } from "./api-client";
 
 type FileKeyOperation = {
@@ -210,5 +211,66 @@ describe("getFileDetail", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// A blocked browser→B2 PUT is the one failure a deployer hits first, and XHR
+// reports it as a contentless `error` event. The message therefore has to name
+// bucket CORS: pointing at the API instead sends people to a clean 200 in the
+// API log and wastes the debugging session.
+describe("uploadFile — direct-to-B2 PUT failure", () => {
+  class BlockedXhr {
+    static instances: BlockedXhr[] = [];
+    upload = { addEventListener: vi.fn() };
+    private handlers: Record<string, (() => void)[]> = {};
+    status = 0;
+
+    constructor() {
+      BlockedXhr.instances.push(this);
+    }
+
+    addEventListener(event: string, handler: () => void) {
+      (this.handlers[event] ??= []).push(handler);
+    }
+
+    open = vi.fn();
+    setRequestHeader = vi.fn();
+
+    send() {
+      // What the browser does when the bucket's CORS rejects the origin.
+      for (const handler of this.handlers.error ?? []) handler();
+    }
+  }
+
+  beforeEach(() => {
+    BlockedXhr.instances = [];
+    vi.stubGlobal("XMLHttpRequest", BlockedXhr);
+  });
+
+  it("blames bucket CORS, not the API", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        headers: { "Content-Type": "text/plain" },
+        key: "uploads/note.txt",
+        method: "put",
+        url: "https://s3.example.backblazeb2.com/bucket/uploads/note.txt",
+      })
+    );
+
+    const file = new File(["hi"], "note.txt", { type: "text/plain" });
+
+    const error = await uploadFile(file).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(0);
+    expect((error as ApiError).message).toMatch(/bucket's CORS/);
+    expect((error as ApiError).message).not.toMatch(/API logs/);
+
+    // The presign succeeded; verify must never run after a failed PUT.
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        String(input).includes("/upload/verify")
+      )
+    ).toBe(false);
   });
 });

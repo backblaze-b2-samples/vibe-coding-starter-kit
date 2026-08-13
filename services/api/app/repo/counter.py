@@ -26,18 +26,29 @@ _lock = Lock()
 
 
 def _counter_path() -> Path:
-    """Resolve the counter file path relative to the repo root.
+    """Resolve the counter file path relative to the repo root, when there is one.
 
     The repo root — not services/api/ — on purpose: `uvicorn --reload` watches
     services/api/, so runtime state written there lands inside the reloader's
     watch tree. Every download then emits "N changes detected" noise (and would
     become a real API restart the moment someone adds `--reload-include`).
     Runtime state belongs outside the watched source tree.
+
+    A deployment that ships *only this service* has no repo root above it: with
+    Railway's service root directory set to services/api (or a Docker build that
+    copies just this directory) the tree is /app/app/repo/counter.py, four levels
+    deep instead of six. Anchor on this service's own root there — nothing is
+    watching it, so the reload concern does not apply — rather than indexing past
+    the filesystem root, which raised IndexError at import time and took the
+    whole API down before it could serve a request.
     """
     p = Path(settings.download_count_file)
     if not p.is_absolute():
-        # Anchor at the repo root (repo/ -> app/ -> api/ -> services/ -> root).
-        p = Path(__file__).resolve().parents[4] / p
+        # repo/ -> services/ -> api/ -> app/ -> repo/ -> counter.py, so the repo
+        # root is parents[4] and this service's root is parents[2].
+        parents = Path(__file__).resolve().parents
+        anchor = parents[4] if len(parents) > 4 else parents[2]
+        p = anchor / p
     return p
 
 

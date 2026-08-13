@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-08-06 -->
+<!-- last_verified: 2026-08-13 -->
 # Dev Workflows
 
 Engineering workflows for this repo.
@@ -61,6 +61,40 @@ This starter kit has no `CODEOWNERS` file, so GitHub assigns no reviewer
 automatically — request one manually. This is the canonical statement of that
 status: if `CODEOWNERS` is ever added, update this section, and the templates
 that point here stay correct without edits.
+
+## Releases and versioning
+
+Tags follow SemVer (`vMAJOR.MINOR.PATCH`) and mark the states external
+documentation points at. A release aggregates many PRs — nothing is versioned
+per-PR, and `main` between releases carries no compatibility promise.
+
+The versioned surface is what someone building on this repo actually depends on:
+the HTTP API, environment variables, `pnpm` commands, the runtime baseline, the
+required setup steps, and the starter contract in [AGENTS.md](../AGENTS.md) §2.
+
+| Bump | The range since the last tag contains |
+|------|---------------------------------------|
+| **major** | a removed or renamed HTTP route, or a changed request/response shape; a renamed, removed, or newly required env var; a raised minimum runtime (Node, Python, pnpm); a new mandatory setup or deploy step; a renamed or removed `pnpm` command the docs name; a moved or deleted starter-contract piece |
+| **minor** | anything purely additive — a new feature, route, optional env var, command, or check |
+| **patch** | docs, CI, refactors, and fixes that leave every surface above unchanged |
+
+Highest match wins: one breaking change anywhere in the range makes the whole
+release a major.
+
+Cut a release when external documentation is about to be written or refreshed,
+and when a breaking change has landed. Classify by reading the range, not the
+commit prefixes — a breaking change can land under a `feat:` or `fix:` message:
+
+```bash
+git log --oneline <last-tag>..main   # classify against the table above
+git tag v1.1.0 && git push origin v1.1.0
+gh release create v1.1.0 --generate-notes
+```
+
+Auto-generated notes list the PR titles in the range, which is why this repo
+keeps no `CHANGELOG.md`. External documentation should name the tag it was
+written against and link to it (`.../tree/v1.0.0`), so the code a reader follows
+stays fixed even as `main` moves on.
 
 ## Testing
 

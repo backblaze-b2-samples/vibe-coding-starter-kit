@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-28 -->
+<!-- last_verified: 2026-08-13 -->
 # Railway Delivery Contract
 
 This is the canonical runbook for Railway. It records the intended deployment
@@ -9,19 +9,29 @@ external action.
 ## Service Contracts
 
 Railway config-as-code applies to one service deployment at a time. Create two
-services from the same repository and set each service's **Config as Code**
-path to the absolute repository path below. Config in code overrides the
-corresponding dashboard build/deploy settings, but does not configure a service
-source, root directory, environment variables, domains, or access controls.
+services from the same repository, set each service's root directory to the
+value below, and Railway discovers that service's config file on its own.
+Config in code overrides the corresponding dashboard build/deploy settings, but
+does not configure a service source, root directory, environment variables,
+domains, or access controls.
 
-| Service | Root directory | Config as Code path | Build / start | Health check |
+| Service | Root directory | Config file | Build / start | Health check |
 | --- | --- | --- | --- | --- |
-| `web` | `/` | `/infra/railway/web.railway.json` | root pnpm workspace build; `next start` on Railway's `PORT` | `/` |
-| `api` | `/services/api` | `/infra/railway/api.railway.json` | `pip install -r requirements.lock`; Uvicorn on Railway's `PORT` | `/health` |
+| `web` | `/` | `railway.json` | root pnpm workspace build; `next start` on Railway's `PORT` | `/` |
+| `api` | `/services/api` | `services/api/railway.json` | `pip install -r requirements.lock`; Uvicorn on Railway's `PORT` | `/health` |
+
+Each file sits at the **default discovery path for its service's root
+directory**, so there is nothing to type into the dashboard's **Config as Code**
+field — leave it empty. Keep them there. A custom location works only when a
+human sets that field per service, and anyone deploying this repository as a
+one-click template never opens dashboard settings; from a default path the same
+build, start, and health behavior is inherited automatically.
 
 The web service uses the repository root intentionally: it builds against the
 shared workspace package in `packages/shared`. Do not change its root to
-`/apps/web` unless the build is redesigned to make that package available.
+`/apps/web` unless the build is redesigned to make that package available. Its
+config file is therefore the repository-root `railway.json`, alongside
+`vercel.json`.
 
 Both versioned configs use Railpack, constrained watch paths, a 100-second
 health-check timeout, and restart-on-failure with ten retries. Railway injects
@@ -56,7 +66,8 @@ workspace plan supports it and otherwise limit project administration.
    non-production and use it for debugging; copy configuration deliberately,
    then replace production secrets rather than sharing values casually.
 2. Create the `web` and `api` services, connect the intended repository branch,
-   and apply the exact roots and Config as Code paths in the table above.
+   and apply the exact root directories in the table above. Leave **Config as
+   Code** empty; each service picks up its own `railway.json` from that root.
 3. Set only the variable names required by each service. Add domains only after
    a human has reviewed visibility, CORS, and the environment's purpose.
 4. For production, disable GitHub autodeploy and deploy the reviewed commit
@@ -117,8 +128,8 @@ them against Railway's published schema without credentials or a linked project:
 ```bash
 curl --fail --silent --show-error --location \
   https://railway.com/railway.schema.json --output /tmp/railway.schema.json
-python3 -m jsonschema --instance infra/railway/web.railway.json /tmp/railway.schema.json
-python3 -m jsonschema --instance infra/railway/api.railway.json /tmp/railway.schema.json
+python3 -m jsonschema --instance railway.json /tmp/railway.schema.json
+python3 -m jsonschema --instance services/api/railway.json /tmp/railway.schema.json
 ```
 
 If `jsonschema` is not installed, validate JSON syntax with `python3 -m json.tool`

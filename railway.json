@@ -9,7 +9,7 @@
       "/package.json",
       "/pnpm-lock.yaml",
       "/pnpm-workspace.yaml",
-      "/infra/railway/web.railway.json"
+      "/railway.json"
     ]
   },
   "deploy": {

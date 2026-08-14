@@ -73,7 +73,7 @@ views plus a switcher) and drop the "Demo field" wording in the same change.
 - Required cases: the offered theme set is exactly what `setTheme()` accepts and unknown values fall back to `system`; demo preferences round-trip through localStorage, fall back field-by-field on a partial/corrupt blob, and report `false` when storage is unavailable
 - Focused verify command: `pnpm test:web`
 - Default pre-PR verify command: `pnpm verify`
-- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Verification](../verification.md#non-live-verification) are available
 - Pass criteria: focused tests and `pnpm verify` green; saving theme = dark leaves `html.class="dark"` and survives a reload; the demo banner is present and every demo field is labelled as such
 
 ## Related Docs

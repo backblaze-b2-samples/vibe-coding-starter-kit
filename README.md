@@ -98,8 +98,8 @@ Local scripts run on macOS, Linux, and WSL2 — native Windows isn't supported
 yet (the dev scripts use POSIX shell syntax), so use WSL2 on Windows. Cloud or
 sandboxed agent environments also need permission to install dependencies and to
 bind localhost ports; see
-[docs/dev-workflows.md](docs/dev-workflows.md) for the sandbox, port-fallback,
-and IPv6 behavior.
+[docs/verification.md](docs/verification.md#local-environments) for the sandbox,
+port-fallback, and IPv6 behavior.
 
 ## When to use
 
@@ -157,7 +157,9 @@ ARCHITECTURE.md        System layout, layering rules, data flows
 docs/
   features/            Feature docs (inputs, outputs, flows, edge cases)
   app-workflows.md     User journeys
-  dev-workflows.md     Engineering workflows and testing
+  dev-workflows.md     Engineering workflows, command index, releases
+  verification.md      What each gate checks, and failure recovery
+  frontend-conventions.md  Frontend conventions and data fetching
   SECURITY.md          Security principles
   RELIABILITY.md       Reliability expectations
   exec-plans/          Execution plans and tech debt tracker
@@ -224,9 +226,10 @@ it breaks down into `pnpm verify:api` (backend lint, tests, structure),
 `pnpm check:agent-docs` (agent-doc drift).
 
 For the full command reference (`dev:web`, `dev:api`, `lint`, `test:*`,
-`check:structure`, `test:e2e`, live B2 tests), plus worktree/parallel-run notes,
-port-fallback behavior, and slow-run recovery, see
-[docs/dev-workflows.md](docs/dev-workflows.md).
+`check:structure`, `test:e2e`, live B2 tests), see
+[docs/dev-workflows.md](docs/dev-workflows.md#commands). For worktree/parallel-run
+notes, port-fallback behavior, and slow-run recovery, see
+[docs/verification.md](docs/verification.md).
 
 ## Deploying to Vercel
 
@@ -257,7 +260,9 @@ preview/production, `/health` checks, and rollback — is in the
 | [docs/features/](docs/features/) | Feature docs (upload, browser, dashboard, metadata) |
 | [docs/design-system.md](docs/design-system.md) | Design tokens, primitives, AI elements, loader, error/empty states |
 | [docs/app-workflows.md](docs/app-workflows.md) | User journeys |
-| [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows and testing |
+| [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows, command index, releases |
+| [docs/verification.md](docs/verification.md) | What each gate checks, and failure recovery |
+| [docs/frontend-conventions.md](docs/frontend-conventions.md) | Frontend conventions, screens, data fetching |
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
 | [docs/api/openapi.json](docs/api/openapi.json) | Checked contract for the template's local FastAPI API |
@@ -313,7 +318,7 @@ separately by the applicable Backblaze terms and support plan.
 
 ## Contributing
 
-Start with [AGENTS.md](AGENTS.md). It's the map — everything else is discoverable from there. For local commit hooks, follow [the pre-commit workflow](docs/dev-workflows.md#pre-commit).
+Start with [AGENTS.md](AGENTS.md). It's the map — everything else is discoverable from there. For local commit hooks, follow [the pre-commit workflow](docs/verification.md#pre-commit).
 
 ## License
 

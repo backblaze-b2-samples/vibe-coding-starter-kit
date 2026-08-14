@@ -1,7 +1,7 @@
 name: CI
 
 # Runs the canonical non-live verification gate documented in AGENTS.md and
-# docs/dev-workflows.md. `pnpm verify` = `pnpm check:agent-docs &&
+# docs/verification.md. `pnpm verify` = `pnpm check:agent-docs &&
 # pnpm verify:api && pnpm verify:web`; CI runs those three checks as parallel
 # jobs so the suite stays fast and a frontend failure never hides a backend
 # failure. No secrets required: backend tests deny socket access and mock the

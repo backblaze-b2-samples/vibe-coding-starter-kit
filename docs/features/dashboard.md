@@ -54,7 +54,7 @@ Provide an at-a-glance overview of file storage usage and recent upload activity
 - Required cases: stats with files, stats with empty bucket, API error fallback, cached listing reused across stats and listing calls, loading copy escalating at its thresholds
 - Focused verify command: `pnpm test:api`
 - Default pre-PR verify command: `pnpm verify`
-- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Verification](../verification.md#non-live-verification) are available
 - Pass criteria: focused tests and `pnpm verify` green; explain any skipped `pnpm verify:full` prerequisites
 
 ## Related Docs

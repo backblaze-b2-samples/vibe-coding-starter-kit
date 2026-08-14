@@ -63,7 +63,7 @@ Extract rich metadata (checksums, image/PDF fields) from stored objects, on dema
 - Required cases: image with EXIF, image without EXIF, PDF with metadata, PDF without metadata, unknown file type, corrupt file handling, skipped extraction reported via `metadata_warning`
 - Focused verify command: `pnpm test:api`
 - Default pre-PR verify command: `pnpm verify`
-- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Verification](../verification.md#non-live-verification) are available
 - Pass criteria: focused tests and `pnpm verify` green; explain any skipped `pnpm verify:full` prerequisites
 
 ## Related Docs

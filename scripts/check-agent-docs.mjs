@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { checkBranding } from "./agent-docs/branding.mjs";
+import { checkDocLinks } from "./agent-docs/doc-links.mjs";
 import { checkEnvIgnores } from "./agent-docs/env-ignore.mjs";
 import { checkInstructionTrustBoundary } from "./agent-docs/instruction-trust.mjs";
 import { headings, sectionBody } from "./agent-docs/markdown.mjs";
@@ -273,6 +274,16 @@ if (readme && /vercel\.com\/new\/clone/.test(readme)) {
     }
   }
 }
+
+// --- internal Markdown links ---------------------------------------------
+// Only the SECURITY.md -> AGENTS.md anchor above was ever verified, so every
+// other cross-doc anchor could rot in silence: GitHub serves the file and lands
+// the reader at the top. See ./agent-docs/doc-links.mjs.
+
+const docLinks = checkDocLinks(REPO_ROOT);
+passes.push(...docLinks.passes);
+failures.push(...docLinks.failures);
+skips.push(...docLinks.skips);
 
 // --- branding / identity alignment ---------------------------------------
 // The starter is cloned and rebranded; these assert every identity surface

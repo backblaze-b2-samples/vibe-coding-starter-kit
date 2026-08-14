@@ -88,6 +88,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 | Frontend `API_CLIENT_ROUTES` and the OpenAPI artifact agree in both directions | `apps/web/src/lib/api-contract.test.ts` (also `pnpm contract:check`) |
 | `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
+| Relative Markdown links resolve, and every `#anchor` matches a real heading | `pnpm check:agent-docs` (`scripts/agent-docs/doc-links.mjs`) |
 | If the README ships a Vercel deploy button, it deploys the whole app — a root `vercel.json` declaring `web` + `api` services (one project), or buttons covering both Projects — backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |
 | FastAPI `API_TITLE`/description (and the OpenAPI artifact) derive from the frontend `APP_NAME` — one display name, not a copy that drifts on rebrand | `pnpm check:agent-docs` (`scripts/agent-docs/branding.mjs`) |
 | The display name is not hardcoded in frontend source outside `app-config.ts` (components import `APP_NAME`) | `pnpm check:agent-docs` |
@@ -99,7 +100,7 @@ command chain — that literal lives only in `package.json`. The env-file rules
 ask git which repo-tracked `.gitignore` matches each path, so a path (or, with
 no git work tree, the whole group) that git cannot answer for is reported as
 `SKIPPED` instead of passing or failing; see
-[docs/dev-workflows.md](docs/dev-workflows.md#testing).
+[docs/verification.md](docs/verification.md#agent-docs-check).
 
 ## 6. Commands
 
@@ -135,20 +136,21 @@ commands before pnpm 11, and `pnpm setup` / `pnpm doctor` run pnpm's own
 commands instead of these scripts. Never shorten them in docs or scripts.
 
 `pnpm check:agent-docs` validates this instruction surface, command docs, CI
-claims, and `.env` ignore coverage. `pnpm verify` is the default credential-free
-non-live gate.
+claims, internal Markdown links, and `.env` ignore coverage. `pnpm verify` is the
+default credential-free non-live gate.
 It chains `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint,
 backend tests, structural boundary tests), then `pnpm verify:web` (frontend
 lint, frontend unit tests, frontend typecheck + build). CI
 (`.github/workflows/ci.yml`) runs those three checks as parallel jobs on every
 PR and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
 live-service prerequisites are available — see
-[docs/dev-workflows.md](docs/dev-workflows.md#commands) for the prerequisite list.
+[docs/verification.md](docs/verification.md#non-live-verification) for the
+prerequisite list.
 
 `pnpm verify` supports parallel agents when each uses a separate Git worktree;
 run it only once at a time within one checkout because Next.js locks `.next`
 during the build. A warm local run is normally about 30 seconds; see
-`docs/dev-workflows.md` for the worktree, slow-run, and interrupted-run
+`docs/verification.md` for the worktree, slow-run, and interrupted-run
 recovery workflows. `pnpm verify` needs `services/api/.venv` to exist (run
 `pnpm run setup`); without
 it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`, and
@@ -156,7 +158,7 @@ it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`, and
 `.venv/bin/python`. Setup rejects an older or broken existing venv with a
 recovery instruction. The API's complete Python 3.12 resolution is committed in
 `services/api/requirements.lock`; setup and CI install it. Update it only with
-the reviewed workflow in [docs/dev-workflows.md](docs/dev-workflows.md#python-dependency-updates).
+the reviewed workflow in [docs/verification.md](docs/verification.md#python-dependency-updates).
 
 ## 7. Agent Workflow
 
@@ -171,7 +173,7 @@ the reviewed workflow in [docs/dev-workflows.md](docs/dev-workflows.md#python-de
 
 ## 8. Frontend Conventions
 
-See [docs/dev-workflows.md](docs/dev-workflows.md) for full details.
+See [docs/frontend-conventions.md](docs/frontend-conventions.md) for full details.
 
 ## 9. Doc Update Mapping
 
@@ -180,7 +182,9 @@ See [docs/dev-workflows.md](docs/dev-workflows.md) for full details.
 | Feature logic, inputs, outputs, tests | `docs/features/<feature>.md` |
 | User journeys | `docs/app-workflows.md` |
 | System layout, deployments | `ARCHITECTURE.md` |
-| Dev or testing process | `docs/dev-workflows.md` |
+| Dev process, command index, releases | `docs/dev-workflows.md` |
+| Testing, verification gates, CI, dependency locks | `docs/verification.md` |
+| Frontend conventions, screens, data fetching | `docs/frontend-conventions.md` |
 | Setup or scope changes | `README.md` |
 | Security changes | `docs/SECURITY.md` |
 | Agent instruction surface (rules, a new agent shim) | `AGENTS.md` + the shims (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) + register it in `scripts/check-agent-docs.mjs` |
@@ -197,7 +201,9 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 | System layout, data flows, boundaries | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Feature docs | [docs/features/](docs/features/) |
 | User journeys | [docs/app-workflows.md](docs/app-workflows.md) |
-| Engineering workflows and testing | [docs/dev-workflows.md](docs/dev-workflows.md) |
+| Engineering workflows, command index, releases | [docs/dev-workflows.md](docs/dev-workflows.md) |
+| What each gate checks; failure recovery | [docs/verification.md](docs/verification.md) |
+| Frontend conventions and data fetching | [docs/frontend-conventions.md](docs/frontend-conventions.md) |
 | Security principles | [docs/SECURITY.md](docs/SECURITY.md) |
 | Reliability expectations | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
 | Execution plans | [docs/exec-plans/](docs/exec-plans/) |

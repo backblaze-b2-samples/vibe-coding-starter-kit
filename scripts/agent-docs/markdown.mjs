@@ -29,12 +29,19 @@ export function headings(markdown) {
   return found;
 }
 
-/** GitHub heading anchor: `## 12. Secret Handling` -> `12-secret-handling`. */
+/**
+ * GitHub heading anchor: `## 12. Secret Handling` -> `12-secret-handling`.
+ *
+ * Each space becomes its own hyphen, matching GitHub rather than collapsing
+ * runs: dropping punctuation can leave two spaces (`Counters & Durability` ->
+ * `counters--durability`), and collapsing them invented an anchor GitHub never
+ * serves, so a working link failed the check.
+ */
 export function anchorOf(headingText) {
   return headingText
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-");
+    .replace(/\s/g, "-");
 }
 
 /**

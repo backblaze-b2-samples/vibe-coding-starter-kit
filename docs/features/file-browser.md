@@ -86,7 +86,7 @@ List, preview, download, and delete files stored in Backblaze B2.
 - Focused API verify command: `pnpm test:api`
 - Focused client route-construction command: `pnpm test:web`
 - Default pre-PR verify command: `pnpm verify`
-- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Verification](../verification.md#non-live-verification) are available
 - Pass criteria: focused tests and `pnpm verify` green; explain any skipped `pnpm verify:full` prerequisites
 
 ## Related Docs

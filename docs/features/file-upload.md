@@ -114,7 +114,7 @@ See [infra/vercel/README.md](../../infra/vercel/README.md) for the deploy-time d
 - Required cases: presign validation rejections (413 oversized, 415 disallowed type / extension mismatch, 400 empty/no filename), presign returns a signed PUT, verify accepts a valid object, verify rejects + deletes on content-signature mismatch (415) and oversize (413), verify 404 on missing object, verify rejects a key outside `uploads/`, `uploads_total` metric increments on verify, status label switches to the server phase at 100%, queue summary and interrupted-upload copy
 - Focused verify command: `pnpm test:api`
 - Default pre-PR verify command: `pnpm verify`
-- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Dev Workflows](../dev-workflows.md#commands) are available
+- Full local verify command: `pnpm verify:full` when the E2E/live prerequisites in [Verification](../verification.md#non-live-verification) are available
 - Pass criteria: focused tests and `pnpm verify` green; explain any skipped `pnpm verify:full` prerequisites
 
 ## Related Docs

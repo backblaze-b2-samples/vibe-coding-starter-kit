@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-08-12 -->
+<!-- last_verified: 2026-08-17 -->
 # Vibe Coding Starter Kit
 
 Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a well-engineered foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
@@ -20,7 +20,8 @@ Stop wiring boilerplate and start building. This open-source starter kit gives v
 
 ![File browser view showing a tree of files with hover actions](docs/images/b2-starterkit-fileview2.png)
 
-> **Deploy your own in one click** → [Deploy to Vercel](#deploying-to-vercel). One project, one origin, no CORS to wire up.
+> **Deploy your own in one click** → [Deploy to Vercel](#deploying-to-vercel)
+> or [Deploy to Render](#deploying-to-render).
 
 ## Quick Start
 
@@ -251,6 +252,25 @@ Full setup — variable reference, the two-Projects alternative, security,
 preview/production, `/health` checks, and rollback — is in the
 [Vercel delivery contract](infra/vercel/README.md).
 
+## Deploying to Render
+
+Deploys the complete app as **two Render web services** from one Blueprint:
+Next.js at the repository root and FastAPI from `services/api`. Render derives
+both public URLs and wires the frontend API URL and exact API CORS origin
+automatically.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit)
+
+The deploy form asks for your four B2 values. After Render assigns the web URL,
+add that origin to the B2 bucket's CORS rules so browser uploads work. The API
+is unauthenticated and bucket-wide, so use a dedicated bucket and key for a
+public preview. Automatic deploys are disabled in the Blueprint.
+
+The button opens Render but does not create anything until you review and
+approve the Blueprint. Full setup, variable wiring, browser verification,
+security, rollback, and cleanup are in the
+[Render delivery contract](infra/render/README.md).
+
 ## Documentation Map
 
 | Doc | Purpose |
@@ -266,6 +286,7 @@ preview/production, `/health` checks, and rollback — is in the
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
 | [docs/api/openapi.json](docs/api/openapi.json) | Checked contract for the template's local FastAPI API |
+| [infra/render/README.md](infra/render/README.md) | Render Blueprint and deployment contract |
 | [infra/vercel/README.md](infra/vercel/README.md) | Vercel deployment contract |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
 
@@ -296,7 +317,7 @@ Frontend: TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Que
 Edit a single file — `apps/web/src/lib/app-config.ts` (`APP_NAME`, `APP_DESCRIPTION`) — and the page title, sidebar, and breadcrumb update everywhere. See [Building Your App](#building-your-app).
 
 **How do I deploy it?**
-It deploys to Vercel as a single project — the web app and FastAPI API build from the same repo and share one origin (web at `/`, API under `/api`), so there's no CORS or second URL to wire up. A Railway path is also documented. Deploying is always a human-approved action — see [Deploying to Vercel](#deploying-to-vercel).
+Use the one-click Vercel path for a single project and origin, or the one-click Render path for a two-service Blueprint whose public URLs are wired automatically. A manual Railway path is also documented. Deployment is always a human-approved action — see [Deploying to Vercel](#deploying-to-vercel) or [Deploying to Render](#deploying-to-render).
 
 **Does it work on Windows?**
 Local scripts are supported on macOS, Linux, and WSL2. Native Windows is not supported yet — use WSL2 on Windows.

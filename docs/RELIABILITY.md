@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-08-06 -->
+<!-- last_verified: 2026-08-17 -->
 # Reliability
 
 Reliability expectations and practices for this project.
@@ -57,13 +57,15 @@ The download counter and the `/metrics` counters are **in-process, per replica**
 - The API contracts check `/health`; it confirms process readiness, but the
   response is still HTTP 200 when B2 is degraded. Promotion therefore also
   requires `b2_connected: true` and an affected-flow smoke test.
-- Railway uses a persistent service model; Vercel runs the API as a Function.
-  On Vercel, set `WARM_LIST_CACHE_ON_STARTUP=false` to avoid a cold-start bucket
-  scan. Uploads go directly from the browser to B2 (presigned PUT), so they no
-  longer pass through the Function and Vercel's 4.5 MB payload ceiling does not
-  apply — `MAX_FILE_SIZE` can stay at the 100 MB default. The bucket must allow
-  the deploy origin in its CORS (see infra/vercel/README.md).
-- See [infra/railway/README.md](../infra/railway/README.md) or
+- Railway and Render use persistent web-service models; Vercel runs the API as
+  a Function. On Render and Vercel, set `WARM_LIST_CACHE_ON_STARTUP=false` to
+  avoid a cold-start bucket scan. Uploads go directly from the browser to B2
+  (presigned PUT), so they no longer pass through the Function and Vercel's
+  4.5 MB payload ceiling does not apply — `MAX_FILE_SIZE` can stay at the 100 MB
+  default. The bucket must allow the deploy origin in its CORS (see the selected
+  platform contract below).
+- See [infra/railway/README.md](../infra/railway/README.md),
+  [infra/render/README.md](../infra/render/README.md), or
   [infra/vercel/README.md](../infra/vercel/README.md) for the selected
   platform's versioned configuration, approval, rollback, and cleanup procedure.
 - Environment-specific configuration uses platform variables; no environment

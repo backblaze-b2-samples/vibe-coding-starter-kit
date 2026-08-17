@@ -275,6 +275,93 @@ if (readme && /vercel\.com\/new\/clone/.test(readme)) {
   }
 }
 
+// --- Render deploy button: one Blueprint must cover the whole app ----------
+// The button is optional, but if present it must target this repository and be
+// backed by two cross-wired services. Keep this parser dependency-free so the
+// agent-docs gate still runs before pnpm install.
+
+if (readme && /render\.com\/deploy\?repo=/.test(readme)) {
+  check(
+    readme.includes(
+      "render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit",
+    ),
+    "Render deploy button explicitly targets the canonical repository",
+    "expected the encoded canonical repository in the Render deploy URL",
+  );
+  check(
+    existsSync(repoPath("infra/render/README.md")),
+    "Render deploy button is backed by infra/render/README.md",
+    "README ships a Render deploy button but infra/render/README.md is missing",
+  );
+
+  const renderBlueprint = readText("render.yaml");
+  if (renderBlueprint) {
+    const serviceBlocks = renderBlueprint
+      .split(/(?=^  - type: web\s*$)/m)
+      .filter((block) => /^  - type: web\s*$/m.test(block));
+    const serviceBlock = (name) =>
+      serviceBlocks.find((block) =>
+        new RegExp(`^    name: ${name}$`, "m").test(block),
+      ) ?? "";
+    const apiService = serviceBlock("vcsk-api");
+    const webService = serviceBlock("vcsk-web");
+
+    check(
+      serviceBlocks.length === 2,
+      "Render Blueprint defines exactly two web services",
+      `expected 2 web services, actual ${serviceBlocks.length}`,
+    );
+    check(
+      /runtime: python/.test(apiService) &&
+        /rootDir: services\/api/.test(apiService) &&
+        /healthCheckPath: \/health/.test(apiService),
+      "Render Blueprint defines the Python API service root",
+      "expected vcsk-api with runtime: python, rootDir: services/api, and healthCheckPath: /health",
+    );
+    for (const key of [
+      "B2_KEY_ID",
+      "B2_APPLICATION_KEY",
+      "B2_ENDPOINT",
+      "B2_BUCKET_NAME",
+    ]) {
+      check(
+        new RegExp(`key: ${key}\\s+sync: false`).test(apiService),
+        `Render Blueprint prompts for ${key}`,
+        `expected ${key} with sync: false in vcsk-api`,
+      );
+    }
+    check(
+      /key: API_CORS_ORIGINS[\s\S]*?name: vcsk-web[\s\S]*?envVarKey: RENDER_EXTERNAL_URL/.test(
+        apiService,
+      ),
+      "Render API CORS is derived from the web service URL",
+      "expected API_CORS_ORIGINS to reference vcsk-web RENDER_EXTERNAL_URL",
+    );
+    check(
+      /runtime: node/.test(webService) && !/^    rootDir:/m.test(webService),
+      "Render Blueprint builds the web workspace from the repository root",
+      "expected vcsk-web with runtime: node and no rootDir",
+    );
+    check(
+      /key: NEXT_PUBLIC_API_URL[\s\S]*?name: vcsk-api[\s\S]*?envVarKey: RENDER_EXTERNAL_URL/.test(
+        webService,
+      ),
+      "Render web API URL is derived from the API service URL",
+      "expected NEXT_PUBLIC_API_URL to reference vcsk-api RENDER_EXTERNAL_URL",
+    );
+    for (const [name, block] of [
+      ["vcsk-api", apiService],
+      ["vcsk-web", webService],
+    ]) {
+      check(
+        /autoDeploy: false/.test(block),
+        `Render ${name} automatic deploys are disabled`,
+        `expected autoDeploy: false in ${name}`,
+      );
+    }
+  }
+}
+
 // --- internal Markdown links ---------------------------------------------
 // Only the SECURITY.md -> AGENTS.md anchor above was ever verified, so every
 // other cross-doc anchor could rot in silence: GitHub serves the file and lands

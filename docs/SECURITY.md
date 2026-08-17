@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-30 -->
+<!-- last_verified: 2026-08-17 -->
 # Security
 
 Security principles and implementation for the vibe-coding-starter-kit.
@@ -75,9 +75,10 @@ Uploads go directly from the browser to B2, so the API validates at two points:
 
 ## Deployment Configuration
 
-The [Railway](../infra/railway/README.md) and
+The [Railway](../infra/railway/README.md),
+[Render](../infra/render/README.md), and
 [Vercel](../infra/vercel/README.md) delivery contracts are the canonical
-locations for production variable classification and environment access rules.
+locations for platform variable classification and environment access rules.
 In particular, `B2_KEY_ID` and `B2_APPLICATION_KEY` are secrets; the web
 service's `NEXT_PUBLIC_API_URL` is intentionally public build-time
 configuration and must never contain a credential. Keep production variables,

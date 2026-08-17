@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "location": {
+      "value": "${AZURE_LOCATION}"
+    },
+    "b2KeyId": {
+      "value": "${B2_KEY_ID}"
+    },
+    "b2ApplicationKey": {
+      "value": "${B2_APPLICATION_KEY}"
+    },
+    "b2Endpoint": {
+      "value": "${B2_ENDPOINT}"
+    },
+    "b2BucketName": {
+      "value": "${B2_BUCKET_NAME}"
+    },
+    "webExists": {
+      "value": "${SERVICE_WEB_RESOURCE_EXISTS=false}"
+    },
+    "apiExists": {
+      "value": "${SERVICE_API_RESOURCE_EXISTS=false}"
+    }
+  }
+}

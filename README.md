@@ -251,6 +251,23 @@ Full setup — variable reference, the two-Projects alternative, security,
 preview/production, `/health` checks, and rollback — is in the
 [Vercel delivery contract](infra/vercel/README.md).
 
+## Deploying with Azure Developer CLI
+
+The repository is also an `azd` template for the complete two-service app.
+It provisions Next.js and FastAPI as Azure Container Apps, builds both images
+remotely in Azure Container Registry, injects B2 credentials as Container Apps
+secrets, and wires the provisioned API URL into the web image.
+
+```bash
+azd init --template backblaze-b2-samples/vibe-coding-starter-kit
+```
+
+Azure deployment is not free and creates public cloud resources. Before an
+authorized human runs `azd up`, review the subscription, region, expected
+spend, B2 bucket CORS, and cleanup owner. The full variable setup, security,
+verification, rollback, and deletion boundaries are in the
+[Azure Developer CLI delivery contract](infra/azure/README.md).
+
 ## Documentation Map
 
 | Doc | Purpose |
@@ -267,6 +284,7 @@ preview/production, `/health` checks, and rollback — is in the
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
 | [docs/api/openapi.json](docs/api/openapi.json) | Checked contract for the template's local FastAPI API |
 | [infra/vercel/README.md](infra/vercel/README.md) | Vercel deployment contract |
+| [infra/azure/README.md](infra/azure/README.md) | Azure Developer CLI deployment contract |
 | [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
 
 ## FAQ
@@ -296,7 +314,11 @@ Frontend: TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Que
 Edit a single file — `apps/web/src/lib/app-config.ts` (`APP_NAME`, `APP_DESCRIPTION`) — and the page title, sidebar, and breadcrumb update everywhere. See [Building Your App](#building-your-app).
 
 **How do I deploy it?**
-It deploys to Vercel as a single project — the web app and FastAPI API build from the same repo and share one origin (web at `/`, API under `/api`), so there's no CORS or second URL to wire up. A Railway path is also documented. Deploying is always a human-approved action — see [Deploying to Vercel](#deploying-to-vercel).
+Vercel provides the shortest path: one project and one origin. The repository
+also includes a Railway two-service contract and an Azure Developer CLI
+template for two Container Apps. Every external deployment is a human-approved
+action; start with [Deploying to Vercel](#deploying-to-vercel) or
+[Deploying with Azure Developer CLI](#deploying-with-azure-developer-cli).
 
 **Does it work on Windows?**
 Local scripts are supported on macOS, Linux, and WSL2. Native Windows is not supported yet — use WSL2 on Windows.

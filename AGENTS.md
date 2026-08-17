@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-08-06 -->
+<!-- last_verified: 2026-08-17 -->
 # AGENTS.md
 
 This is the authoritative control surface for all coding agents. Read this first.
@@ -17,6 +17,7 @@ packages/shared/   Shared TypeScript types
 docs/              System of record (features, workflows, security, reliability)
 docs/exec-plans/   Execution plans and tech debt tracker
 infra/railway/     Railway delivery contract (per-service railway.json live at their service roots)
+infra/render/      Render Blueprint delivery contract (root render.yaml)
 infra/vercel/      Vercel deployment contract
 ```
 
@@ -90,6 +91,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
 | Relative Markdown links resolve, and every `#anchor` matches a real heading | `pnpm check:agent-docs` (`scripts/agent-docs/doc-links.mjs`) |
 | If the README ships a Vercel deploy button, it deploys the whole app — a root `vercel.json` declaring `web` + `api` services (one project), or buttons covering both Projects — backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |
+| If the README ships a Render deploy button, root `render.yaml` defines and cross-wires both `vcsk-web` and `vcsk-api`, backed by `infra/render/README.md` | `pnpm check:agent-docs` |
 | FastAPI `API_TITLE`/description (and the OpenAPI artifact) derive from the frontend `APP_NAME` — one display name, not a copy that drifts on rebrand | `pnpm check:agent-docs` (`scripts/agent-docs/branding.mjs`) |
 | The display name is not hardcoded in frontend source outside `app-config.ts` (components import `APP_NAME`) | `pnpm check:agent-docs` |
 | One B2 attribution token across `user_agent_extra` (custom user agent) and `utm_content` (Backblaze links) | `pnpm check:agent-docs` |
@@ -224,7 +226,8 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 ## 13. External Delivery
 
 - Never provision, deploy, migrate, publish, or create an externally reachable preview without the user's explicit approval.
-- For approved Railway or Vercel work, follow the selected platform's delivery
-  contract — [infra/railway/README.md](infra/railway/README.md) or
+- For approved Railway, Render, or Vercel work, follow the selected platform's
+  delivery contract — [infra/railway/README.md](infra/railway/README.md),
+  [infra/render/README.md](infra/render/README.md), or
   [infra/vercel/README.md](infra/vercel/README.md) — for configuration, review,
   verification, rollback, and cleanup.

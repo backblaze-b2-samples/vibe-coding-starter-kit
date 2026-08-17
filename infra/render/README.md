@@ -6,6 +6,19 @@ button. The versioned configuration describes the intended topology; it does
 not create a Render account, service, Blueprint, preview, or public resource.
 An authorized human approves every external action.
 
+## Discovery Surface and Naming
+
+Render supports a repository-owned Blueprint button but does not expose a
+public submission path for third-party projects into a searchable template
+gallery. There is therefore no separate listing name, category, description,
+publisher profile, or listing linkback surface to configure. The public name
+remains **Vibe Coding Starter Kit** in GitHub, while `vcsk-web` and `vcsk-api`
+are technical service names shown to the deployer.
+
+Do not describe this button as a Render Marketplace or gallery listing. Search
+and referral improvements belong in the repository README until Render exposes
+a publisher catalog route.
+
 ## One Blueprint, Two Services
 
 The root [`render.yaml`](../../render.yaml) creates the complete application:
@@ -34,6 +47,11 @@ The deploy form prompts for these API variables and stores them in Render:
 | --- | --- | --- |
 | `B2_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Use a least-privilege key restricted to this app's bucket. |
 | `B2_ENDPOINT`, `B2_BUCKET_NAME` | Service configuration | Copy the exact values from the B2 bucket. |
+
+Setup links use the same attribution token as the application:
+
+- [Create a Backblaze B2 account](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=render&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)
+- [Create a bucket and application key](https://www.backblaze.com/docs/cloud-storage-create-and-manage-app-keys?utm_source=render&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)
 
 The Blueprint fixes `ENABLE_DOCS=false` and
 `WARM_LIST_CACHE_ON_STARTUP=false`. The latter avoids a B2 scan during startup,
@@ -93,6 +111,28 @@ render blueprints validate render.yaml
 The repository also checks the whole-app button contract in
 `pnpm check:agent-docs`, and the canonical credential-free gate remains
 `pnpm verify`.
+
+## Metrics Contract
+
+Render does not expose publisher-wide deployment counts for a repository
+Blueprint button. Service metrics belong to each deployer's Render account, so
+they cannot be aggregated by this repository and must not be represented as a
+distribution metric.
+
+Capture the available signals manually at merge and then weekly for the first
+four weeks:
+
+| Level | Signal | Source |
+| --- | --- | --- |
+| Leading | Repository views, unique cloners, and referring sites | GitHub traffic, treated as directional because its window is 14 days |
+| Leading | Button deployments | **Unavailable** to the publisher; do not infer a count from clicks or clones |
+| Objective | Storage and data moved through B2 | Backblaze attribution for the `b2ai-oss-start` custom user agent |
+
+Record the snapshot date, button URL, and merge commit with each measurement.
+The Render and B2 links above carry `utm_source=render` where attribution is
+available. The button itself targets Render directly, so exact click tracking
+would require a separately approved first-party redirect; do not add a third-
+party shortener or analytics dependency just to manufacture a metric.
 
 ## Rollback and Cleanup
 

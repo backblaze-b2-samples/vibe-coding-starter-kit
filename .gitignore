@@ -62,3 +62,7 @@ services/api/data/
 
 # Vercel CLI local link state (project IDs, pulled env). Never commit it.
 .vercel
+
+# Azure Developer CLI environment state. It can contain subscription details
+# and resolved secrets, so it stays local even though the template is tracked.
+.azure/

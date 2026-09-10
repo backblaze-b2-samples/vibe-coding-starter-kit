@@ -1,0 +1,177 @@
+import json
+import logging
+import sys
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Single source of truth: repo-root .env. Anchored to this file's path so it
+# resolves correctly regardless of where uvicorn is invoked from (local
+# `cd services/api && uvicorn`, Docker WORKDIR, etc.). A deployment that ships
+# only this service has no repo root above it — there the file simply does not
+# exist and configuration comes from real environment variables, so anchor on
+# this service's root and let load_dotenv be the no-op it already is.
+_API_ROOT = Path(__file__).resolve().parent
+_REPO_ROOT = _API_ROOT.parents[1] if len(_API_ROOT.parents) > 1 else _API_ROOT
+REPO_ROOT_ENV = _REPO_ROOT / ".env"
+load_dotenv(REPO_ROOT_ENV)
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
+
+from app.config import settings  # noqa: E402
+from app.runtime import files, health, metrics, ratelimit, upload  # noqa: E402
+from app.service.files import warm_listing_cache  # noqa: E402
+
+# --- Startup validation ---
+# Required B2 settings are declared with empty-string defaults so that
+# `Settings()` instantiation (and therefore `from main import app`) never
+# raises during test collection. We instead fail fast at server startup
+# with a human-readable message — uvicorn surfaces this as the first log
+# line, so misconfiguration is obvious within seconds rather than turning
+# into mysterious 500s on the first request.
+REQUIRED_B2_SETTINGS = (
+    ("b2_key_id", "B2_KEY_ID"),
+    ("b2_application_key", "B2_APPLICATION_KEY"),
+    ("b2_bucket_name", "B2_BUCKET_NAME"),
+    ("b2_endpoint", "B2_ENDPOINT"),
+)
+
+# Exact placeholder strings shipped in .env.example. If a user copied
+# the example and didn't edit it, Settings will pass the "non-empty"
+# check above but every B2 call will still 403. Catch that here.
+PLACEHOLDER_VALUES = frozenset({
+    "your_b2_endpoint",
+    "your_key_id",
+    "your_application_key",
+    "your-bucket-name",
+})
+
+
+@asynccontextmanager
+async def lifespan(_app: "FastAPI"):
+    missing = [
+        env_name
+        for attr, env_name in REQUIRED_B2_SETTINGS
+        if not getattr(settings, attr)
+    ]
+    if missing:
+        raise RuntimeError(
+            "Missing required B2 configuration: "
+            + ", ".join(missing)
+            + f". Add them to {REPO_ROOT_ENV} (see .env.example) and restart."
+        )
+
+    placeholders = [
+        env_name
+        for attr, env_name in REQUIRED_B2_SETTINGS
+        if getattr(settings, attr) in PLACEHOLDER_VALUES
+    ]
+    if placeholders:
+        raise RuntimeError(
+            "B2 configuration still has placeholder values: "
+            + ", ".join(placeholders)
+            + f". Edit {REPO_ROOT_ENV} with your real B2 credentials and restart."
+        )
+
+    # Fire-and-forget: the full-bucket listing that /files and /files/stats both
+    # need takes 8-20s on a large bucket. Scanning it here means the first page
+    # view reads a warm cache instead of watching skeletons.
+    if settings.warm_list_cache_on_startup:
+        warm_listing_cache()
+    yield
+
+# --- Structured JSON logging ---
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        log_entry = {
+            "timestamp": datetime.now(UTC).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if hasattr(record, "request_id"):
+            log_entry["request_id"] = record.request_id
+        if record.exc_info and record.exc_info[1]:
+            log_entry["exception"] = str(record.exc_info[1])
+        return json.dumps(log_entry)
+
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(JSONFormatter())
+logging.root.handlers = [handler]
+logging.root.setLevel(logging.INFO)
+# Quiet noisy libraries
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("botocore").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+logger = logging.getLogger("api")
+
+
+# --- App setup ---
+
+API_TITLE = "Vibe Coding Starter Kit API"
+API_DESCRIPTION = (
+    "Local API for the Vibe Coding Starter Kit template, providing file upload "
+    "and management backed by Backblaze B2. This contract documents the "
+    "template's local API, not a hosted public endpoint."
+)
+API_VERSION = "0.1.0"
+
+app = FastAPI(
+    title=API_TITLE,
+    description=API_DESCRIPTION,
+    version=API_VERSION,
+    lifespan=lifespan,
+    # Interactive docs are toggleable so production can hide the API surface.
+    docs_url="/docs" if settings.enable_docs else None,
+    redoc_url="/redoc" if settings.enable_docs else None,
+    openapi_url="/openapi.json" if settings.enable_docs else None,
+)
+
+# --- Middleware ordering matters for CORS-on-errors ---
+# Starlette wraps middleware so the LAST one registered is the OUTERMOST. We
+# need CORSMiddleware to be outermost (closest to the client) so that EVERY
+# response — including the 500 produced by the timing middleware's catch-all
+# for an uncaught exception — flows back out through CORS and gets an
+# `Access-Control-Allow-Origin` header.
+#
+# If CORS were registered last-but-one (inner to timing), an uncaught-exception
+# 500 would be generated outside CORS and ship without that header; the browser
+# would block it and the frontend would only see an opaque "network error",
+# masking the real server bug. So: register the inner middleware FIRST, CORS
+# LAST. Do not reorder these two without re-reading this comment.
+
+# Rate limiting (innermost). Registered first so it sits inside timing: a 429
+# is a normal response that timing records and CORS still wraps with headers.
+app.add_middleware(BaseHTTPMiddleware, dispatch=ratelimit.rate_limit_middleware)
+
+# Request ID + timing middleware. Its except-clause is the catch-all
+# that turns uncaught exceptions into a typed 500 — see metrics.timing_middleware.
+app.add_middleware(BaseHTTPMiddleware, dispatch=metrics.timing_middleware)
+
+# CORS (outermost) — wraps every response, including error responses.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    # Optional regex (empty by default). When set, any origin matching
+    # the pattern is allowed in addition to the explicit allowlist.
+    allow_origin_regex=settings.api_cors_origin_regex or None,
+    # No cookie/session auth today, so credentialed CORS isn't needed. Keeping
+    # this False avoids the footgun where a loose origin regex would otherwise
+    # reflect an attacker's origin *with* credentials. Flip to True only when
+    # you add cookie-based auth AND have tightened the origin allowlist.
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
+
+app.include_router(health.router, tags=["health"])
+app.include_router(upload.router, tags=["upload"])
+app.include_router(files.router, tags=["files"])
+app.include_router(metrics.router, tags=["metrics"])

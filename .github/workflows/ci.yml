@@ -1,0 +1,112 @@
+name: CI
+
+# Runs the canonical non-live verification gate documented in AGENTS.md and
+# docs/verification.md. `pnpm verify` = `pnpm check:agent-docs &&
+# pnpm verify:api && pnpm verify:web`; CI runs those three checks as parallel
+# jobs so the suite stays fast and a frontend failure never hides a backend
+# failure. No secrets required: backend tests deny socket access and mock the
+# B2 repo layer, including both /health states.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Least privilege for GITHUB_TOKEN: all three jobs only check out the repo and
+# run the verify gates. Applies to every job — add a narrower job-level block if
+# a future job needs more (e.g. `checks: write` to publish annotations).
+permissions:
+  contents: read
+
+# Skip CI on Dependabot's PRs: dependency bumps are reviewed manually, and
+# GitHub has no actor filter at the `on:` level, so each job guards on the
+# actor instead. The jobs report "skipped", not a failure. If any of these
+# become required status checks in branch protection, drop this guard (a
+# required check that is skipped blocks the merge) or add a Dependabot
+# auto-merge workflow.
+jobs:
+  verify-agent-docs:
+    name: Verify agent docs (pnpm check:agent-docs)
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # No `pnpm install`: the checker is a zero-dependency stdlib script and
+      # `pnpm run` resolves root scripts without node_modules. Skipping the
+      # install also drops a needless dependency on lockfile freshness.
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Agent instruction health check
+        run: pnpm check:agent-docs
+
+  verify-api:
+    name: Verify API (pnpm verify:api)
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Only so `pnpm verify:api` resolves as a root script; the backend gates
+      # themselves shell out to services/api/.venv and need no Node packages.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install API dependencies
+        working-directory: services/api
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.lock
+
+      - name: Backend lint, tests, structure boundaries
+        run: pnpm verify:api
+
+  verify-web:
+    name: Verify web (pnpm verify:web)
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Frontend lint, unit tests, typecheck + build
+        run: pnpm verify:web

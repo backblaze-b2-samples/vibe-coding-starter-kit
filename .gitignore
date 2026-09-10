@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Environment
+# Real env files are never tracked; example/template files always are.
+# Negations must stay after the ignore patterns above them to take effect.
+.env
+.env.*
+!.env*.example
+!.env*.template
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.pytest_cache/
+playwright-report/
+test-results/
+
+# Throwaway, app-specific verification specs. A verification pass writes these
+# into the workspace so they run under playwright.config.ts (real browser
+# resolution, real webServer readiness) instead of as standalone scripts — but
+# they are scratch evidence for one run, never part of the app. Ignored so a
+# `git add -A` in the app's own repo cannot sweep one into a commit.
+apps/web/e2e/verify/
+
+# B2 / AWS
+.aws/
+
+# Local runtime data (download counter, etc.). Deliberately at the repo root and
+# NOT under services/api/ — that directory is what `uvicorn --reload` watches, so
+# runtime writes there make the dev reloader report changes on every download.
+.data/
+# Legacy location, still ignored for clones that already have it.
+services/api/data/
+
+# Local-only working area (machine/user-specific)
+.local/
+
+# Vercel CLI local link state (project IDs, pulled env). Never commit it.
+.vercel

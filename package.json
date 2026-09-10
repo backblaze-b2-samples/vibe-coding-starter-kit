@@ -1,0 +1,68 @@
+{
+  "name": "vibe-coding-starter-kit",
+  "private": true,
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "predev": "node scripts/doctor.mjs",
+    "dev": "sh scripts/dev.sh",
+    "dev:web": "pnpm --filter @vibe-coding-starter-kit/web dev",
+    "dev:api": "cd services/api && .venv/bin/uvicorn main:app --reload --port ${API_PORT:-8000}",
+    "build": "pnpm --filter @vibe-coding-starter-kit/web build",
+    "typecheck": "pnpm --filter @vibe-coding-starter-kit/web typecheck",
+    "contract:export": "services/api/.venv/bin/python services/api/scripts/export_openapi.py",
+    "contract:check": "services/api/.venv/bin/python services/api/scripts/export_openapi.py --check && pnpm --filter @vibe-coding-starter-kit/web exec vitest run src/lib/api-contract.test.ts",
+    "check:agent-docs": "node scripts/check-agent-docs.mjs",
+    "wait-ready": "node scripts/wait-ready.mjs",
+    "verify": "pnpm check:agent-docs && pnpm verify:api && pnpm verify:web",
+    "verify:api": "pnpm lint:api && pnpm test:api && pnpm check:structure",
+    "verify:web": "pnpm lint && pnpm typecheck && pnpm test:web && pnpm build",
+    "verify:full": "pnpm run doctor && pnpm verify && pnpm test:e2e",
+    "lint": "pnpm --filter @vibe-coding-starter-kit/web lint",
+    "lint:api": "cd services/api && .venv/bin/ruff check .",
+    "test:web": "pnpm --filter @vibe-coding-starter-kit/web test",
+    "test:api": "cd services/api && .venv/bin/python -m pytest",
+    "test:live:b2": "cd services/api && .venv/bin/python -m pytest live_tests/test_b2_connectivity.py -m live",
+    "check:structure": "cd services/api && .venv/bin/python -m pytest tests/test_structure.py -v",
+    "test:e2e": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test --project=chromium",
+    "test:verify": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test --project=verify"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@babel/core@<=7.29.0": "7.29.7",
+      "@hono/node-server@<1.19.15": "1.19.15",
+      "ajv@<6.14.0": "6.14.0",
+      "ajv@>=7.0.0-alpha.0 <8.18.0": "8.18.0",
+      "body-parser@>=2.0.0 <2.3.0": "2.3.0",
+      "brace-expansion@<1.1.18": "1.1.18",
+      "brace-expansion@>=2.0.0 <2.1.4": "2.1.4",
+      "esbuild@<=0.24.2": "0.25.12",
+      "express-rate-limit@>=8.2.0 <8.2.2": "8.2.2",
+      "fast-uri@>=3.0.0 <3.1.5": "3.1.5",
+      "flatted@<3.4.2": "3.4.2",
+      "hono@<4.12.34": "4.12.34",
+      "ip-address@<=10.3.0": "10.3.1",
+      "js-yaml@>=4.0.0 <4.3.1": "4.3.1",
+      "lodash@<=4.17.23": "4.18.1",
+      "minimatch@<3.1.4": "3.1.5",
+      "minimatch@>=9.0.0 <9.0.7": "9.0.7",
+      "minimatch@>=10.0.0 <10.2.3": "10.2.6",
+      "nanoid@<3.3.18": "3.3.18",
+      "path-to-regexp@>=8.0.0 <8.4.0": "8.4.0",
+      "picomatch@<2.3.2": "2.3.2",
+      "picomatch@>=4.0.0 <4.0.4": "4.0.5",
+      "postcss@<8.5.23": "8.5.26",
+      "postcss-selector-parser@>=7.1.0 <7.1.3": "7.1.3",
+      "qs@>=6.11.1 <=6.15.1": "6.15.2",
+      "shell-quote@<=1.8.4": "1.9.0",
+      "vite@<=6.4.2": "6.4.3"
+    }
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}

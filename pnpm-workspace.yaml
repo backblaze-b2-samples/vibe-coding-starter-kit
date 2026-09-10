@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+# Dependencies whose install/build scripts are trusted to run during
+# `pnpm install` (including fresh per-worktree `pnpm run setup`); pnpm blocks
+# all others by default. esbuild's postinstall links its platform binary.
+allowBuilds:
+  esbuild: true
+  msw: true
+  sharp: true
+  unrs-resolver: true

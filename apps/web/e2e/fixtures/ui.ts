@@ -272,6 +272,78 @@ export async function affordances(page: Page): Promise<Affordances> {
   });
 }
 
+export type BusyState = {
+  /** A spinner, progress bar, or aria-busy region is currently on screen. */
+  busy: boolean;
+  /** Visible status/stage text, in DOM order — the strings a run reports progress with. */
+  stages: string[];
+  /** Text in an error/alert role, if any. */
+  errors: string[];
+  /** Any progress element's value as a 0-1 fraction, when the DOM exposes one. */
+  progress: number | null;
+  /** Controls currently disabled — the usual "work in flight" tell on a form. */
+  disabledControls: number;
+};
+
+/**
+ * Read whether the app is mid-run, and what it says it is doing, from the DOM.
+ *
+ * This is the cheap answer to the question a verification pass asks most often:
+ * "is it still working, and does it say so?". The expensive answer is taking a
+ * screenshot and reading the image back, which costs image tokens on every
+ * remaining turn of that agent's run — and a spinner is exactly the kind of
+ * thing the DOM states plainly.
+ *
+ * Deliberately app-agnostic: it keys on roles and ARIA (`status`, `alert`,
+ * `progressbar`, `aria-busy`) plus the animation-class convention every
+ * Tailwind/shadcn spinner in this kit follows, so it works before anyone has
+ * told it what this app's stages are called. Assert on the returned strings;
+ * only screenshot when you need to show a human what it looked like.
+ */
+export async function busyState(page: Page): Promise<BusyState> {
+  return page.evaluate(() => {
+    const clean = (value: string | null | undefined) => (value ?? "").replace(/\s+/g, " ").trim();
+    const visible = (element: Element) => {
+      const rect = element.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return false;
+      const style = window.getComputedStyle(element);
+      return style.visibility !== "hidden" && style.display !== "none";
+    };
+    const all = (selector: string) =>
+      Array.from(document.querySelectorAll(selector)).filter(visible);
+
+    const spinners = all(
+      '[role="progressbar"], [aria-busy="true"], [data-loading="true"], .animate-spin, progress',
+    );
+    const stages = all('[role="status"], [aria-live="polite"], [data-stage], [data-status]')
+      .map((element) => clean(element.textContent))
+      .filter(Boolean);
+    const errors = all('[role="alert"], [aria-live="assertive"], [data-error]')
+      .map((element) => clean(element.textContent))
+      .filter(Boolean);
+
+    let progress: number | null = null;
+    for (const element of spinners) {
+      const now = element.getAttribute("aria-valuenow") ?? (element as HTMLProgressElement).value;
+      const max = element.getAttribute("aria-valuemax") ?? (element as HTMLProgressElement).max;
+      const nowNumber = Number(now);
+      const maxNumber = Number(max);
+      if (Number.isFinite(nowNumber) && Number.isFinite(maxNumber) && maxNumber > 0) {
+        progress = nowNumber / maxNumber;
+        break;
+      }
+    }
+
+    return {
+      busy: spinners.length > 0,
+      stages,
+      errors,
+      progress,
+      disabledControls: all("button[disabled], input[disabled], [aria-disabled='true']").length,
+    };
+  });
+}
+
 type MediaPaintResult = {
   ok: boolean;
   kind: string;

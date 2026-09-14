@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-08-06 -->
+<!-- last_verified: 2026-08-17 -->
 # Architecture
 
 ## Components
@@ -76,6 +76,11 @@ services/api/
   discovers, so a one-click template deploy inherits the same build, start, and
   health behavior with nothing to configure by hand. The human-approved
   staging/production contract lives in [infra/railway/README.md](infra/railway/README.md).
+- **Render** — one root Blueprint creates two web services: `vcsk-web` builds
+  the pnpm workspace from the repository root, and `vcsk-api` builds the locked
+  Python service from `services/api`. Render's generated external URLs wire
+  `NEXT_PUBLIC_API_URL` and `API_CORS_ORIGINS` in both directions. The complete
+  contract lives in [infra/render/README.md](infra/render/README.md).
 - **Vercel** — one project using [Vercel Services](https://vercel.com/docs/services):
   the `web` (Next.js) and `api` (FastAPI) services build from the same repo and
   share one origin — the web app at `/`, the API under `/api`. The repo-root

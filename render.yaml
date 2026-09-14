@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: vcsk-api
+    runtime: python
+    rootDir: services/api
+    plan: free
+    autoDeploy: false
+    buildCommand: pip install --no-cache-dir -r requirements.lock
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: B2_KEY_ID
+        sync: false
+      - key: B2_APPLICATION_KEY
+        sync: false
+      - key: B2_ENDPOINT
+        sync: false
+      - key: B2_BUCKET_NAME
+        sync: false
+      - key: API_CORS_ORIGINS
+        fromService:
+          type: web
+          name: vcsk-web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: ENABLE_DOCS
+        value: "false"
+      - key: WARM_LIST_CACHE_ON_STARTUP
+        value: "false"
+
+  - type: web
+    name: vcsk-web
+    runtime: node
+    plan: free
+    autoDeploy: false
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @vibe-coding-starter-kit/web build
+    startCommand: corepack enable && pnpm --filter @vibe-coding-starter-kit/web exec next start --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: vcsk-api
+          envVarKey: RENDER_EXTERNAL_URL

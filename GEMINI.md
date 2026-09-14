@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-07-27 -->
+<!-- last_verified: 2026-08-17 -->
 # Gemini Instructions
 
 [AGENTS.md](AGENTS.md) is the authoritative instruction surface for this

@@ -275,6 +275,111 @@ if (readme && /vercel\.com\/new\/clone/.test(readme)) {
   }
 }
 
+// --- Azure Developer CLI template: complete, secret-safe two-service shape -
+// An azure.yaml file opts the repository into a real provisioning workflow.
+// Keep the entire app, its IaC, the human approval boundary, and the local
+// secret-state ignore rule together so a fork cannot silently ship half a
+// template or start tracking `.azure` environment values.
+
+if (existsSync(repoPath("azure.yaml"))) {
+  const azureYaml = readText("azure.yaml");
+  const azureBicep = readText("infra/azure/main.bicep");
+  const azureParameters = readText("infra/azure/main.parameters.json");
+  const azureContract = readText("infra/azure/README.md");
+  const gitignore = readText(".gitignore");
+
+  if (azureYaml) {
+    for (const [service, dockerfile] of [
+      ["web", "apps/web/Dockerfile"],
+      ["api", "services/api/Dockerfile"],
+    ]) {
+      check(
+        new RegExp(`(?:^|\\n)  ${service}:\\n[\\s\\S]*?host: containerapp`).test(azureYaml),
+        `azure.yaml declares the ${service} Container App`,
+        `expected services.${service}.host=containerapp in azure.yaml`,
+      );
+      check(
+        azureYaml.includes(`path: ./${dockerfile}`) && existsSync(repoPath(dockerfile)),
+        `azure.yaml ${service} service has its tracked Dockerfile`,
+        `expected path ./${dockerfile} in azure.yaml and a file at ${dockerfile}`,
+      );
+    }
+
+    check(
+      azureYaml.includes("NEXT_PUBLIC_API_URL=${SERVICE_API_URI}"),
+      "Azure web image receives the provisioned API URI at build time",
+      "expected the NEXT_PUBLIC_API_URL=${SERVICE_API_URI} Docker build argument",
+    );
+    check(
+      /infra:\n  provider: bicep\n  path: infra\/azure/.test(azureYaml),
+      "azure.yaml points azd at the tracked Bicep directory",
+      "expected infra.provider=bicep and infra.path=infra/azure in azure.yaml",
+    );
+  }
+
+  if (azureBicep) {
+    for (const service of ["web", "api"]) {
+      check(
+        azureBicep.includes(`'azd-service-name': '${service}'`),
+        `Azure ${service} resource carries the azd discovery tag`,
+        `expected azd-service-name=${service} in infra/azure/main.bicep`,
+      );
+    }
+
+    check(
+      /@secure\(\)[\s\S]*param b2KeyId string/.test(azureBicep) &&
+        /@secure\(\)[\s\S]*param b2ApplicationKey string/.test(azureBicep),
+      "Azure B2 credentials are secure Bicep parameters",
+      "expected @secure() on b2KeyId and b2ApplicationKey parameters",
+    );
+    check(
+      azureBicep.includes("secretRef: 'b2-key-id'") &&
+        azureBicep.includes("secretRef: 'b2-application-key'"),
+      "Azure API consumes B2 credentials through Container Apps secret refs",
+      "expected B2 credential environment variables to use secretRef",
+    );
+  }
+
+  if (azureParameters) {
+    let parameters = {};
+    try {
+      parameters = JSON.parse(azureParameters).parameters ?? {};
+      passes.push("infra/azure/main.parameters.json is valid JSON");
+    } catch (error) {
+      failures.push(`infra/azure/main.parameters.json is valid JSON — ${error.message}`);
+    }
+
+    for (const key of ["B2_KEY_ID", "B2_APPLICATION_KEY", "B2_ENDPOINT", "B2_BUCKET_NAME"]) {
+      check(
+        Object.values(parameters).some(({ value }) => value === `\${${key}}`),
+        `Azure parameters map ${key} from the azd environment`,
+        `expected one parameter value equal to \${${key}}`,
+      );
+    }
+  }
+
+  if (azureContract) {
+    check(
+      /billable[\s\S]*authorized human/i.test(azureContract),
+      "Azure delivery contract states the cost and human-approval boundary",
+      "expected infra/azure/README.md to name billable resources and authorized-human approval",
+    );
+    check(
+      /azd down[\s\S]*destructive/i.test(azureContract),
+      "Azure delivery contract marks environment deletion as destructive",
+      "expected infra/azure/README.md to mark azd down as destructive",
+    );
+  }
+
+  if (gitignore) {
+    check(
+      /^\.azure\/$/m.test(gitignore),
+      "Azure Developer CLI environment state is ignored",
+      "expected a standalone .azure/ rule in .gitignore",
+    );
+  }
+}
+
 // --- internal Markdown links ---------------------------------------------
 // Only the SECURITY.md -> AGENTS.md anchor above was ever verified, so every
 // other cross-doc anchor could rot in silence: GitHub serves the file and lands

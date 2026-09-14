@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: vibe-coding-starter-kit
+metadata:
+  template: vibe-coding-starter-kit@0.1.0
+requiredVersions:
+  azd: ">= 1.21.0"
+workflows:
+  up:
+    steps:
+      - azd: provision
+      - azd: deploy --all
+infra:
+  provider: bicep
+  path: infra/azure
+services:
+  web:
+    project: .
+    language: docker
+    host: containerapp
+    apiVersion: "2025-01-01"
+    docker:
+      path: ./apps/web/Dockerfile
+      context: .
+      remoteBuild: true
+      buildArgs:
+        - NEXT_PUBLIC_API_URL=${SERVICE_API_URI}
+  api:
+    project: .
+    language: docker
+    host: containerapp
+    apiVersion: "2025-01-01"
+    docker:
+      path: ./services/api/Dockerfile
+      context: .
+      remoteBuild: true

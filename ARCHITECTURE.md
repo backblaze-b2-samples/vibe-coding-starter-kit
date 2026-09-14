@@ -87,6 +87,13 @@ services/api/
   4.5 MB payload ceiling entirely — the bucket must allow the deploy origin in
   its CORS. A two-separate-Projects alternative and the full delivery contract
   live in [infra/vercel/README.md](infra/vercel/README.md).
+- **Azure Developer CLI** — two public Azure Container Apps built remotely in
+  Azure Container Registry: Next.js on port 3000 and FastAPI on port 8000.
+  Bicep provisions the shared Container Apps environment, capped Log Analytics
+  workspace, registry, per-service pull identities, exact API CORS origin, and
+  Container Apps secret references for B2 credentials. The versioned template,
+  cost boundary, verification, rollback, and cleanup contract live in
+  [infra/azure/README.md](infra/azure/README.md).
 
 External provisioning and deployment remain explicit user-approved actions.
 

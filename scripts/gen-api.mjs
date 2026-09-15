@@ -433,6 +433,7 @@ function main() {
   };
 
   const stale = [];
+  const written = [];
 
   for (const [relativePath, content] of Object.entries(rendered)) {
     const absolute = join(REPO_ROOT, relativePath);
@@ -455,6 +456,7 @@ function main() {
 
     mkdirSync(dirname(absolute), { recursive: true });
     writeFileSync(absolute, content, "utf8");
+    written.push(relativePath);
   }
 
   if (check) {
@@ -472,7 +474,9 @@ function main() {
   }
 
   process.stdout.write(
-    `gen:api wrote ${Object.keys(rendered).length} files from ${operations.length} operations\n`,
+    written.length === 0
+      ? `gen:api: all 3 generated files were already current (${operations.length} operations)\n`
+      : `gen:api updated ${written.length} file(s) from ${operations.length} operations: ${written.join(", ")}\n`,
   );
 }
 

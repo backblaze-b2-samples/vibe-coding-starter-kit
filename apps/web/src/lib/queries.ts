@@ -20,22 +20,21 @@ import {
 import type {
   FileMetadata,
   FileMetadataDetail,
+  FileUrlResponse,
 } from "@vibe-coding-starter-kit/shared";
+import { qk } from "@/lib/generated/query-keys";
 
-// Single source of truth for query keys. Keep these tightly scoped so that
-// invalidating "files" doesn't blow away unrelated caches, and so an IDE
-// "find usages" of `qk.files` reveals every consumer.
-export const qk = {
-  all: ["b2"] as const,
-  files: (prefix?: string, limit?: number) =>
-    [...qk.all, "files", prefix ?? "", limit ?? 100] as const,
-  stats: () => [...qk.all, "stats"] as const,
-  uploadActivity: (days: number) =>
-    [...qk.all, "stats", "activity", days] as const,
-  preview: (key: string) => [...qk.all, "preview", key] as const,
-  detail: (key: string) => [...qk.all, "detail", key] as const,
-  health: () => [...qk.all, "health"] as const,
-};
+// Query keys are GENERATED from the API contract (`pnpm gen:api`) and their
+// hierarchy is declared in `scripts/gen/api-gen.config.json`, so invalidating
+// a parent key still reaches its children and no hook can invent a key the API
+// cannot answer. Re-exported here because this module is the data layer's
+// public surface: components and tests import `qk` from `@/lib/queries`.
+//
+// The caching policy below — staleTime, refetchInterval, retry, `enabled`
+// gating, the query-vs-mutation choice, and the cache surgery in
+// `dropDeletedFileFromCache` — is hand-written on purpose and is never
+// generated.
+export { qk };
 
 export type Health = Awaited<ReturnType<typeof getHealth>>;
 
@@ -149,7 +148,7 @@ export function dropDeletedFileFromCache(qc: QueryClient, fileKey: string) {
  */
 export function useDownloadUrl() {
   const qc = useQueryClient();
-  return useMutation<{ url: string }, ApiError, FileMetadata>({
+  return useMutation<FileUrlResponse, ApiError, FileMetadata>({
     mutationFn: (file) => getDownloadUrl(file.key),
     // The server counted a download, so the dashboard's "Total Downloads" is
     // now stale. Cheap: /files/stats reads a cached bucket listing.

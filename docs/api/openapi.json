@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "DailyUploadCount": {
+        "description": "One day's upload count, for the dashboard activity chart.",
         "properties": {
           "date": {
             "title": "Date",
@@ -19,7 +20,27 @@
         "title": "DailyUploadCount",
         "type": "object"
       },
+      "DeleteFileResponse": {
+        "description": "Acknowledgement that one object was removed from the bucket.",
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deleted",
+          "key"
+        ],
+        "title": "DeleteFileResponse",
+        "type": "object"
+      },
       "FileMetadata": {
+        "description": "One stored object as the file list and the by-key metadata route see it.",
         "properties": {
           "content_type": {
             "title": "Content Type",
@@ -59,6 +80,7 @@
                 "type": "null"
               }
             ],
+            "description": "Public object URL, set only when B2_PUBLIC_URL_BASE is configured and the bucket is public. Null otherwise \u2014 the UI asks for a presigned URL instead.",
             "title": "Url"
           }
         },
@@ -69,12 +91,14 @@
           "size_bytes",
           "size_human",
           "content_type",
-          "uploaded_at"
+          "uploaded_at",
+          "url"
         ],
         "title": "FileMetadata",
         "type": "object"
       },
       "FileMetadataDetail": {
+        "description": "Rich metadata recomputed on demand by re-reading the stored object.",
         "properties": {
           "bitrate": {
             "anyOf": [
@@ -85,6 +109,7 @@
                 "type": "null"
               }
             ],
+            "description": "Audio/video: bits per second.",
             "title": "Bitrate"
           },
           "codec": {
@@ -96,6 +121,7 @@
                 "type": "null"
               }
             ],
+            "description": "Audio/video: codec name.",
             "title": "Codec"
           },
           "duration_seconds": {
@@ -107,18 +133,22 @@
                 "type": "null"
               }
             ],
+            "description": "Audio/video: duration in seconds.",
             "title": "Duration Seconds"
           },
           "exif": {
             "anyOf": [
               {
-                "additionalProperties": true,
+                "additionalProperties": {
+                  "type": "string"
+                },
                 "type": "object"
               },
               {
                 "type": "null"
               }
             ],
+            "description": "Image-specific: EXIF tags, values stringified. Null for non-images or when no EXIF block was present.",
             "title": "Exif"
           },
           "extension": {
@@ -138,6 +168,7 @@
                 "type": "null"
               }
             ],
+            "description": "Image-specific: pixel height. Null for non-images.",
             "title": "Image Height"
           },
           "image_width": {
@@ -149,6 +180,7 @@
                 "type": "null"
               }
             ],
+            "description": "Image-specific: pixel width. Null for non-images.",
             "title": "Image Width"
           },
           "md5": {
@@ -164,6 +196,7 @@
                 "type": "null"
               }
             ],
+            "description": "Set when a format-specific extractor was skipped or failed (e.g. an image above Pillow's decompression-bomb limit). The core fields are always exact, so the UI shows this instead of silently dropping the Image / PDF section.",
             "title": "Metadata Warning"
           },
           "mime_type": {
@@ -179,6 +212,7 @@
                 "type": "null"
               }
             ],
+            "description": "PDF-specific: author.",
             "title": "Pdf Author"
           },
           "pdf_pages": {
@@ -190,6 +224,7 @@
                 "type": "null"
               }
             ],
+            "description": "PDF-specific: page count. Null for non-PDFs.",
             "title": "Pdf Pages"
           },
           "pdf_title": {
@@ -201,6 +236,7 @@
                 "type": "null"
               }
             ],
+            "description": "PDF-specific: title.",
             "title": "Pdf Title"
           },
           "sha256": {
@@ -229,12 +265,23 @@
           "extension",
           "md5",
           "sha256",
-          "uploaded_at"
+          "uploaded_at",
+          "metadata_warning",
+          "image_width",
+          "image_height",
+          "exif",
+          "pdf_pages",
+          "pdf_author",
+          "pdf_title",
+          "duration_seconds",
+          "codec",
+          "bitrate"
         ],
         "title": "FileMetadataDetail",
         "type": "object"
       },
       "FileUploadResponse": {
+        "description": "The stored object as `POST /upload/verify` reports it back.",
         "properties": {
           "content_type": {
             "title": "Content Type",
@@ -256,7 +303,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Rich metadata, when extraction succeeded for this type."
           },
           "size_bytes": {
             "title": "Size Bytes",
@@ -280,6 +328,7 @@
                 "type": "null"
               }
             ],
+            "description": "Public object URL when the bucket is public, else null.",
             "title": "Url"
           }
         },
@@ -289,9 +338,26 @@
           "size_bytes",
           "size_human",
           "content_type",
-          "uploaded_at"
+          "uploaded_at",
+          "url",
+          "metadata"
         ],
         "title": "FileUploadResponse",
+        "type": "object"
+      },
+      "FileUrlResponse": {
+        "description": "A short-lived presigned GET for downloading or previewing one object.",
+        "properties": {
+          "url": {
+            "description": "Presigned GET URL. Download URLs force an attachment disposition; preview URLs are signed inline so a PDF renders in place.",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "FileUrlResponse",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -305,6 +371,27 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthStatus": {
+        "description": "Liveness plus B2 reachability.\n\nThe route answers HTTP 200 even when B2 is unreachable, so a caller must\nread `b2_connected` rather than trusting the status code.",
+        "properties": {
+          "b2_connected": {
+            "description": "True when the bucket answered a cheap head request.",
+            "title": "B2 Connected",
+            "type": "boolean"
+          },
+          "status": {
+            "description": "\"healthy\" when B2 answered, else \"degraded\".",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "b2_connected"
+        ],
+        "title": "HealthStatus",
         "type": "object"
       },
       "PresignUploadRequest": {
@@ -346,6 +433,7 @@
             "additionalProperties": {
               "type": "string"
             },
+            "description": "Signed into the URL, so the browser must send them verbatim \u2014 B2 answers a mismatch with 403.",
             "title": "Headers",
             "type": "object"
           },
@@ -374,6 +462,7 @@
         "type": "object"
       },
       "UploadStats": {
+        "description": "Aggregate bucket figures behind the dashboard stat cards.",
         "properties": {
           "total_downloads": {
             "title": "Total Downloads",
@@ -544,7 +633,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteFileResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -627,7 +718,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FileUrlResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -710,7 +803,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FileUrlResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -818,7 +913,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteFileResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -898,7 +995,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FileUrlResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -939,7 +1038,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FileUrlResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -968,7 +1069,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
               }
             },
             "description": "Successful Response"

@@ -10,6 +10,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { AGENT_DOC_LIMITS } from "./agent-docs/limits.mjs";
 import { checkBranding } from "./agent-docs/branding.mjs";
 import { checkDocLinks } from "./agent-docs/doc-links.mjs";
 import { checkEnvIgnores } from "./agent-docs/env-ignore.mjs";
@@ -93,9 +94,13 @@ if (agents) {
   const { size } = statSync(repoPath("AGENTS.md"));
   const lineCount = agents.trimEnd().split(/\r?\n/).length;
 
-  check(size >= 1_000, "AGENTS.md is not unexpectedly small", `expected >= 1000 bytes, actual ${size}`);
-  check(size <= 20_000, "AGENTS.md stays under 20 KB", `expected <= 20000 bytes, actual ${size}`);
-  check(lineCount <= 250, "AGENTS.md stays under 250 lines", `expected <= 250 lines, actual ${lineCount}`);
+  // Limits live in ./agent-docs/limits.mjs, which scripts/gen-docs.mjs also
+  // imports so it refuses to write a file this check would then reject.
+  const { minBytes, maxBytes, maxLines } = AGENT_DOC_LIMITS;
+
+  check(size >= minBytes, "AGENTS.md is not unexpectedly small", `expected >= ${minBytes} bytes, actual ${size}`);
+  check(size <= maxBytes, `AGENTS.md stays under ${maxBytes} bytes`, `expected <= ${maxBytes} bytes, actual ${size}`);
+  check(lineCount <= maxLines, `AGENTS.md stays under ${maxLines} lines`, `expected <= ${maxLines} lines, actual ${lineCount}`);
 
   // AGENTS.md is canonical here; docs/SECURITY.md links to it (checked below).
   const secretRule = sectionBody(agents, /secret handling/i);

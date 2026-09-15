@@ -3,21 +3,21 @@
 
 ## Components
 
-- **apps/web/** — Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
-  - Dashboard with stats, upload chart, recent uploads
-  - File upload with drag-and-drop, progress tracking
-  - File browser with preview, download, delete
-  - Dark mode via `next-themes`
-- **services/api/** — FastAPI backend (layered architecture)
-  - REST API for file upload, listing, deletion
-  - B2 S3 integration via boto3
-  - File metadata extraction (images, PDFs)
-  - Health check endpoint with B2 connectivity verification
-  - Structured JSON logging with request tracing
-  - Prometheus-format metrics endpoint
-- **packages/shared/** — TypeScript type definitions
-  - Mirrors Pydantic models from the API
-  - Consumed by `apps/web/` as workspace dependency
+<!-- gen:begin arch-components -->
+A well-engineered full-stack foundation — dashboard, drag-and-drop upload and a file browser — with Backblaze B2 storage already wired in, so builders skip the boilerplate loop.
+
+- **apps/web/** — Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query, Recharts
+  - File Upload (`/upload`) — drag-and-drop upload with real-time progress
+  - File Browser (`/files`) — list, preview, download, delete files
+  - Dashboard (`/`) — stats cards, upload chart, recent uploads
+  - Settings (`/settings`) — theme plus labelled demo preference fields
+- **services/api/** — FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, PyPDF2
+  - REST API for every operation the frontend consumes, exported to `docs/api/openapi.json`
+  - Backblaze B2 (S3-compatible API) access isolated in the `repo/` layer
+  - Metadata Extraction — image dimensions, EXIF, PDF info, checksums
+  - Structured JSON logging with request tracing, plus `/health` and Prometheus `/metrics`
+- **packages/shared/** — TypeScript types generated from the API contract by `pnpm gen:api`, consumed by `apps/web/` as a workspace dependency (pnpm workspaces)
+<!-- gen:end arch-components -->
 
 ## Backend Layering
 
@@ -45,17 +45,20 @@ runtime/   FastAPI routes — calls service, never repo directly
 
 ### Directory Structure
 
+<!-- gen:begin arch-directory -->
 ```
 services/api/
   main.py                  App entrypoint, middleware, router registration
   app/
-    types/                 Pydantic models (FileMetadata, UploadStats, etc.)
+    types/                 Pydantic models, and the response-model base
     config/                Settings loaded from environment
     repo/                  B2 S3 client (data access layer)
-    service/               Business logic (upload, files, metadata)
+    service/               Business logic
     runtime/               FastAPI route handlers
+  scripts/                 Operational scripts (OpenAPI export, bucket CORS)
   tests/                   pytest tests (structural + integration)
 ```
+<!-- gen:end arch-directory -->
 
 ## Boundary Invariants
 
@@ -92,14 +95,25 @@ External provisioning and deployment remain explicit user-approved actions.
 
 ## Data Stores
 
-- **Backblaze B2** — object storage (S3-compatible API)
-  - All uploaded files stored in a single bucket
-  - File listing and metadata via S3 `list_objects_v2` / `head_object`
-  - No application database — B2 is the sole data store
+<!-- gen:begin arch-data-stores -->
+- **Backblaze B2 (S3-compatible API)** — the only data store; there is no application database
+  - Every object this app writes lives under the `uploads/` key prefix of one bucket
+  - Listing, per-key metadata and presigned URLs all come from the S3 surface below
+  - The primary entity is `FileMetadata`; one file is one object
+<!-- gen:end arch-data-stores -->
 
 ## External Services
 
-- **Backblaze B2 S3 API** — file storage, retrieval, deletion, presigned URLs
+<!-- gen:begin arch-external-services -->
+- **Backblaze B2 (S3-compatible API)** — reached only through `services/api/app/repo/`, using:
+  - `put_object` — store an uploaded object
+  - `presigned PUT` — the browser uploads bytes directly to B2, bypassing the Function payload cap
+  - `list_objects_v2` — the shared full-bucket listing behind the file list and the stats cards
+  - `head_object` — cheap per-key metadata, and the /health connectivity probe
+  - `get_object` — re-read bytes to recompute rich metadata on demand
+  - `presigned GET` — download and inline preview URLs
+  - `delete_object` — remove an object
+<!-- gen:end arch-external-services -->
 
 ## Trust Boundaries
 
@@ -125,38 +139,84 @@ See [docs/SECURITY.md](docs/SECURITY.md) for full security documentation.
 
 ## API Contract
 
+<!-- gen:begin arch-api-contract -->
 - Checked-in OpenAPI artifact: `docs/api/openapi.json`
-- Export/check command: `pnpm contract:export` / `pnpm contract:check`
+- Export / check: `pnpm contract:export` / `pnpm contract:check`
+- Generate the client seam from it: `pnpm gen:api` (drift gate: `pnpm gen:check`)
 - FastAPI freshness test: `services/api/tests/test_openapi_contract.py`
 - Frontend route drift test: `apps/web/src/lib/api-contract.test.ts`
 
-The frontend client keeps a small `API_CLIENT_ROUTES` registry in
-`apps/web/src/lib/api-client.ts`. Tests compare that registry to the checked-in
-OpenAPI artifact so route changes fail loudly before the hand-written client can
-silently drift from FastAPI. `GET /metrics` is intentionally server-only.
+The FastAPI routers and Pydantic models are the single source of truth. The
+frontend's `API_CLIENT_ROUTES` registry, the `qk` query-key factory and the
+shared TypeScript types are **generated** from the exported artifact by
+`pnpm gen:api`, so the client cannot drift from the backend — there is no
+hand-written copy left to disagree. The two contract tests are kept as a
+belt-and-braces check that the generated files and the committed artifact are
+still in step.
+
+| Route | Returns | Generated client route |
+| --- | --- | --- |
+| `DELETE /files-by-key` | `DeleteFileResponse` | `fileByKeyDelete` |
+| `DELETE /files/{key}` | `DeleteFileResponse` | `legacyFileDelete` |
+| `GET /files` | `FileMetadata[]` | `files` |
+| `GET /files-by-key/detail` | `FileMetadataDetail` | `fileByKeyDetail` |
+| `GET /files-by-key/download` | `FileUrlResponse` | `fileByKeyDownload` |
+| `GET /files-by-key/metadata` | `FileMetadata` | `fileByKeyMetadata` |
+| `GET /files-by-key/preview` | `FileUrlResponse` | `fileByKeyPreview` |
+| `GET /files/{key}` | `FileMetadata` | `legacyFileMetadata` |
+| `GET /files/{key}/download` | `FileUrlResponse` | `legacyFileDownload` |
+| `GET /files/{key}/preview` | `FileUrlResponse` | `legacyFilePreview` |
+| `GET /files/stats` | `UploadStats` | `fileStats` |
+| `GET /files/stats/activity` | `DailyUploadCount[]` | `uploadActivity` |
+| `GET /health` | `HealthStatus` | `health` |
+| `GET /metrics` | — | _server-only_ |
+| `POST /upload/presign` | `PresignUploadResponse` | `uploadPresign` |
+| `POST /upload/verify` | `FileUploadResponse` | `uploadVerify` |
+<!-- gen:end arch-api-contract -->
 
 ## Canonical Files
 
-- Layered API handler: `services/api/app/runtime/upload.py`
-- Service orchestration: `services/api/app/service/upload.py`
+<!-- gen:begin arch-canonical-files -->
+Hand-written — this is the file to edit:
+
+- Layered API handler: `services/api/app/runtime/`
+- Service orchestration: `services/api/app/service/`
 - B2 data access (repo layer): `services/api/app/repo/b2_client.py`
-- Pydantic models: `services/api/app/types/` (`files.py`, `upload.py`, `stats.py`, `formatting.py`)
+- Pydantic models: `services/api/app/types/` (`base.py` carries the response-model config)
 - Config (pydantic-settings): `services/api/app/config/settings.py`
 - Structural tests: `services/api/tests/test_structure.py`
-- OpenAPI contract: `docs/api/openapi.json`
 - OpenAPI exporter: `services/api/scripts/export_openapi.py`
-- Frontend API client: `apps/web/src/lib/api-client.ts`
-- Shared TypeScript types: `packages/shared/src/types.ts`
+- Frontend API client — error policy, transport, fallback: `apps/web/src/lib/api-client.ts`
+- Frontend data layer — caching, invalidation, polling: `apps/web/src/lib/queries.ts`
+- Shared type barrel: `packages/shared/src/types.ts`
+- Generator policy: `scripts/gen/api-gen.config.json`
+- Sample manifest behind the generated docs: `docs/exec-plans/sample.json`
+
+Generated — **never hand-edit**; change the source and re-run the command:
+
+- `docs/api/openapi.json` — `pnpm contract:export` (source: the routers and models)
+- `packages/shared/src/generated/api-types.ts` — `pnpm gen:api`
+- `apps/web/src/lib/generated/api-routes.ts` — `pnpm gen:api`
+- `apps/web/src/lib/generated/query-keys.ts` — `pnpm gen:api`
+- The marker-delimited regions of this file, `AGENTS.md`, `README.md` and the 2 `infra/` runbooks — `pnpm gen:docs`
+<!-- gen:end arch-canonical-files -->
 
 ## Core Features
 
-- [File Upload](docs/features/file-upload.md)
-- [File Browser](docs/features/file-browser.md)
-- [Dashboard](docs/features/dashboard.md)
-- [Metadata Extraction](docs/features/metadata-extraction.md)
+<!-- gen:begin arch-core-features -->
+- [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress
+- [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
+- [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
+- [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
+- [Settings](docs/features/settings.md) — theme plus labelled demo preference fields
+<!-- gen:end arch-core-features -->
 
 ## References
 
+<!-- gen:begin arch-references -->
 - [docs/SECURITY.md](docs/SECURITY.md) — security principles and implementation
 - [docs/RELIABILITY.md](docs/RELIABILITY.md) — reliability expectations
 - [AGENTS.md](AGENTS.md) — architectural invariants and agent instructions
+- [infra/vercel/README.md](infra/vercel/README.md) — Vercel deployment contract
+- [infra/railway/README.md](infra/railway/README.md) — Railway delivery contract
+<!-- gen:end arch-references -->

@@ -1,0 +1,56 @@
+{
+  "$comment": "Naming and scoping policy for `pnpm gen:api`. This file holds NO schema: every route, method, parameter and response type comes from docs/api/openapi.json, which `pnpm contract:export` writes from the FastAPI routers and Pydantic models. What lives here is the part a machine cannot derive — the names humans chose, and the deliberate exclusions. Edit this file; never edit a generated file.",
+
+  "clientName": "API_CLIENT_ROUTES",
+  "routeTypeName": "ApiClientRoute",
+
+  "queryKeys": {
+    "factoryName": "qk",
+    "rootName": "all",
+    "root": ["b2"]
+  },
+
+  "serverOnly": {
+    "$comment": "Operations the app shell must never call, keyed `<method> <path>`. They stay in the contract and out of the generated registry and query keys. The frontend contract test keeps its own copy of this set as a belt-and-braces check, so a set that is too LARGE here fails `pnpm test:web` loudly rather than silently dropping an endpoint.",
+    "operations": {
+      "get /metrics": "Prometheus metrics are scraped server-side, not fetched by the browser."
+    }
+  },
+
+  "operations": {
+    "$comment": "Per-operation naming. `route` is the key in the generated route registry. `query` is present only for operations the UI caches under a TanStack Query key: `name` is the factory member and `segments` are the key parts appended to the root, which is how a deliberate cache hierarchy (invalidating the parent also invalidates the child) is expressed. An operation missing from this map still generates: `route` falls back to a camel-cased path plus a verb suffix, and no query key is emitted. So adding an endpoint needs no edit here unless you want a hand-picked name.",
+    "get /health": { "route": "health", "query": { "name": "health", "segments": ["health"] } },
+    "get /files": { "route": "files", "query": { "name": "files", "segments": ["files"] } },
+    "get /files/stats": { "route": "fileStats", "query": { "name": "stats", "segments": ["stats"] } },
+    "get /files/stats/activity": {
+      "route": "uploadActivity",
+      "query": { "name": "uploadActivity", "segments": ["stats", "activity"] }
+    },
+    "get /files-by-key/download": { "route": "fileByKeyDownload" },
+    "get /files-by-key/preview": {
+      "route": "fileByKeyPreview",
+      "query": { "name": "preview", "segments": ["preview"] }
+    },
+    "get /files-by-key/metadata": { "route": "fileByKeyMetadata" },
+    "get /files-by-key/detail": {
+      "route": "fileByKeyDetail",
+      "query": { "name": "detail", "segments": ["detail"] }
+    },
+    "delete /files-by-key": { "route": "fileByKeyDelete" },
+    "get /files/{key}/download": { "route": "legacyFileDownload" },
+    "get /files/{key}/preview": { "route": "legacyFilePreview" },
+    "get /files/{key}": { "route": "legacyFileMetadata" },
+    "delete /files/{key}": { "route": "legacyFileDelete" },
+    "post /upload/presign": { "route": "uploadPresign" },
+    "post /upload/verify": { "route": "uploadVerify" }
+  },
+
+  "escapeHatch": {
+    "$comment": "The generator owns the mechanical slice only. Everything named here is hand-written on purpose because it encodes per-app judgement the contract does not describe, and `pnpm gen:api` never writes to these paths. If you need behaviour the generator cannot express, it belongs in one of these files — not in a generated one.",
+    "handWritten": {
+      "apps/web/src/lib/api-client.ts": "error policy, API base resolution, the legacy-route fallback, CORS diagnostics and the XHR upload transport",
+      "apps/web/src/lib/queries.ts": "every caching, polling, invalidation and query-vs-mutation decision",
+      "packages/shared/src/types.ts": "the public barrel: re-exports the generated types and adds frontend-only types the API knows nothing about"
+    }
+  }
+}

@@ -15,10 +15,12 @@ Config in code overrides the corresponding dashboard build/deploy settings, but
 does not configure a service source, root directory, environment variables,
 domains, or access controls.
 
+<!-- gen:begin railway-services -->
 | Service | Root directory | Config file | Build / start | Health check |
 | --- | --- | --- | --- | --- |
 | `web` | `/` | `railway.json` | root pnpm workspace build; `next start` on Railway's `PORT` | `/` |
 | `api` | `/services/api` | `services/api/railway.json` | `pip install -r requirements.lock`; Uvicorn on Railway's `PORT` | `/health` |
+<!-- gen:end railway-services -->
 
 Each file sits at the **default discovery path for its service's root
 directory**, so there is nothing to type into the dashboard's **Config as Code**
@@ -55,11 +57,18 @@ status code.
 Set variable values in the correct Railway service and environment; never put
 them in a config file, commit, issue, PR, terminal transcript, or screenshot.
 
+<!-- gen:begin railway-variables -->
 | Service | Variable names | Classification | Notes |
 | --- | --- | --- | --- |
-| API | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Limit the B2 key to the app bucket and least privilege. |
-| API | `B2_REGION`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL_BASE`, `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate and size settings | Non-secret service configuration | Keep values in Railway, not source; set exact production CORS origins and `ENABLE_DOCS=false`. |
-| Web | `NEXT_PUBLIC_API_URL` | Public build-time configuration | Next.js embeds it in browser output; it must be the deployed API origin and contains no credential. |
+| API | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | **Secret** | Restrict the B2 key to the intended bucket and least privilege. |
+| API | `B2_BUCKET_NAME` | Non-secret configuration | bucket unique name (**Bucket Unique Name** in the B2 console). |
+| API | `B2_REGION` | Non-secret configuration | the region inside the bucket's **Endpoint** (`s3.<region>.backblazeb2.com`); the S3 endpoint is derived from it. |
+| API | `B2_PUBLIC_URL_BASE` | Non-secret configuration | public object base URL, when the bucket is public. |
+| Web | `NEXT_PUBLIC_API_URL` | Public build-time configuration | separate-origin deploys only; Next.js inlines it at build time. |
+| API | `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX` | Non-secret configuration | Set `ENABLE_DOCS=false` in production. `ALLOWED_KEY_PREFIX=uploads/` confines key operations when the bucket is shared. |
+| API | `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX` | Non-secret service configuration | Set the exact web origin per environment; never a broad production origin to cover rotating previews. |
+| API | rate and size settings | Non-secret service configuration | `RATE_LIMIT_PER_MINUTE`, `RATE_LIMIT_WRITE_PER_MINUTE`, `MAX_FILE_SIZE`. |
+<!-- gen:end railway-variables -->
 
 > **Breaking change for an existing deployment.** These are the standardized
 > Backblaze names, and they are not the ones older versions of this kit used.
@@ -89,9 +98,11 @@ you, and it is invisible until you try to upload: `/health` reports
 Add the rule once per deployed web origin, with the helper that merges rather
 than replaces existing rules:
 
+<!-- gen:begin railway-cors-command -->
 ```bash
 python services/api/scripts/setup_b2_cors.py --origin https://<web-domain> --apply
 ```
+<!-- gen:end railway-cors-command -->
 
 Local development rarely trips this because `localhost` origins are usually
 already allowed on a bucket used for development — which is exactly why the

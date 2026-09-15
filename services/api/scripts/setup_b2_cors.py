@@ -13,7 +13,7 @@ Usage:
     python services/api/scripts/setup_b2_cors.py --origin https://your-app.vercel.app --apply
 
 Reads B2 credentials from the repo-root .env exactly like the app. It MERGES:
-existing CORS rules are preserved and one rule (ID `vcsk-direct-upload`) is
+existing CORS rules are preserved and one rule (ID `<app slug>-direct-upload`) is
 added/updated for the given origins. Never prints credentials.
 """
 
@@ -34,7 +34,7 @@ if str(API_ROOT) not in sys.path:
     sys.path.insert(0, str(API_ROOT))
 from app.config import settings  # noqa: E402
 
-RULE_ID = "vcsk-direct-upload"
+RULE_ID = f"{settings.app_slug}-direct-upload"
 
 
 def out(message: str) -> None:

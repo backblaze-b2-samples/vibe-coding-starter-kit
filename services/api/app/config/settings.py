@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     b2_region: str = ""
     b2_public_url_base: str = ""
 
+    # Slug for anything that must be namespaced per app — today the B2 CORS
+    # rule ID in scripts/setup_b2_cors.py. Python cannot import the frontend's
+    # app-config.ts, so this is the backend's declaration of the same slug:
+    # keep it equal to the package name, and derive identifiers from it rather
+    # than writing a second name a rename sweep has to know about.
+    app_slug: str = "vibe-coding-starter-kit"
+
     api_port: int = 8000
     # Interactive API docs (/docs, /redoc, /openapi.json). On by default for
     # local dev and starter-kit exploration; set false to hide the full API

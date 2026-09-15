@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from main import app
+from main import API_DESCRIPTION, API_TITLE, API_VERSION, app
 
 # The exporter owns the target path and the JSON rendering format. Importing
 # both (instead of re-deriving them here) keeps this test and
@@ -31,14 +31,15 @@ def test_checked_in_openapi_contract_is_current():
 
 
 def test_openapi_metadata_uses_canonical_local_api_identity():
+    # Asserted against main.py's own constants, never against copies of the
+    # strings: a rebrand edits the name in one place, and a test holding its own
+    # copy of it turns that one-line rename into a failing suite.
     schema = app.openapi()
 
     assert schema["info"] == {
-        "title": "Vibe Coding Starter Kit API",
-        "description": (
-            "Local API for the Vibe Coding Starter Kit template, providing file "
-            "upload and management backed by Backblaze B2. This contract "
-            "documents the template's local API, not a hosted public endpoint."
-        ),
-        "version": "0.1.0",
+        "title": API_TITLE,
+        "description": API_DESCRIPTION,
+        "version": API_VERSION,
     }
+    assert API_TITLE.endswith(" API")
+    assert "Backblaze B2" in API_DESCRIPTION

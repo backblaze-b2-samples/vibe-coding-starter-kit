@@ -47,5 +47,5 @@ def test_anchors_at_service_root_when_only_the_service_is_deployed(
 def test_absolute_setting_bypasses_anchoring(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(settings, "download_count_file", "/var/lib/vcsk/count.json")
-    assert counter._counter_path() == Path("/var/lib/vcsk/count.json")
+    monkeypatch.setattr(settings, "download_count_file", "/var/lib/app/count.json")
+    assert counter._counter_path() == Path("/var/lib/app/count.json")

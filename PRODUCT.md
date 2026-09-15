@@ -1,9 +1,5 @@
 # Product
 
-## Register
-
-product
-
 ## Users
 
 AI coding agents and "vibe coders" (developers who lean on AI to move fast) who clone

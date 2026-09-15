@@ -28,21 +28,6 @@ Known tech debt items. Agents update this when they discover or create tech debt
 | `.github/workflows/ci.yml:4-5` — the header comment holds the only verbatim copy of the verify chain, and `scripts/agent-docs/workflow.mjs` strips comments before parsing by design | `docs/verification.md` makes `package.json` the single source of truth for the literal chain, so this last hand-maintained copy is permanently invisible to the guard and has already needed a hand edit once | Drop the `=` expansion from the comment and point at `package.json` instead | Low |
 | The API contract check covers routes only; request/response *shapes* and the hand-written mirrors of the Pydantic models in `packages/shared/src/types.ts` are still hand-synced | Renaming or retyping a response field passes every gate — `docs/api/openapi.json` updates, the route set is unchanged, and the frontend keeps reading the old field as `undefined`. This is the half of "`api-client.ts` hand-synced to FastAPI" that the contract workflow did not close | Generate the shared TS types from `docs/api/openapi.json` (`openapi-typescript` emits types only, no client), or assert the schema of each client-consumed operation against `packages/shared` | Medium |
 
-## 2026-07-28 — known UI nitpicks
-
-Minor UI issues found during manual QA of the upload → browse → preview flow.
-Low-severity polish, left for a follow-up; none blocks the core flow.
-
-- All screens — no `<button>` reports `cursor: pointer` (Tailwind v4 dropped the UA default), and the `/files` filename button uses the body text colour, so the "this is clickable" signal is weak on the controls the main flow depends on. Fix once via `globals.css`
-- `/upload` result card — "View in Files" is a bare `/files` navigation with no highlight or scroll-to, so in a deep or busy tree the user hunts for the just-uploaded file again. `previewHref()` now exists, so this is a one-line change
-- `/upload` error row — a 113,798,180-byte file is rejected as "exceeds 100MB limit (108.5 MB)"; the cap is actually 100 MiB, so the label and the humanized size use different units than the check
-- `/files` preview + upload metadata panel — an EXIF `Software` value can carry trailing NUL padding straight into the rendered DOM (invisible on screen, but unsanitised)
-- `/settings` Danger Zone — the "Empty this bucket" card copy makes an unconditional destructive claim with no on-card qualifier (the confirm dialog does note it is a demo)
-- `/files` preview dialog — while the presigned URL is pending, the loading label is screen-reader-only and never escalates, so past ~5s a sighted user sees only an unlabelled shimmer (the dashboard, by contrast, escalates its wait copy)
-- `/upload` File Details — the success toast can overlap the Dimensions row and hide its value while the panel is open
-- 404 route — the breadcrumb title-cases the unknown slug (e.g. "This Route Does Not Exist"), presenting a nonexistent route as a real page name; the rest of the 404 is solid
-- `/design` — the "Go to Upload" button inside the Patterns empty-state demo does not navigate; it is presumably a static sample, but it looks live on a linked primary surface
-
 ## Resolved
 
 | Description | Resolution |

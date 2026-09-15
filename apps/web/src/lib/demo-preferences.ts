@@ -13,6 +13,8 @@
  * owned by `next-themes` (see `theme-preference.ts`) and applied for real.
  */
 
+import { APP_SLUG } from "@/lib/app-config";
+
 export const DEMO_VIEW_OPTIONS = ["tree", "list", "grid"] as const;
 export type DemoViewOption = (typeof DEMO_VIEW_OPTIONS)[number];
 
@@ -35,7 +37,8 @@ export const DEMO_PREFERENCES_DEFAULTS: DemoPreferences = {
   quotaThreshold: "80",
 };
 
-const STORAGE_KEY = "vibe-demo-preferences";
+/** Namespaced by app slug so two of these apps on one origin cannot collide. */
+export const DEMO_PREFERENCES_STORAGE_KEY = `${APP_SLUG}-demo-preferences`;
 
 function isViewOption(value: unknown): value is DemoViewOption {
   return (
@@ -54,7 +57,7 @@ export function loadDemoPreferences(): DemoPreferences {
 
   let stored: unknown;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(DEMO_PREFERENCES_STORAGE_KEY);
     if (!raw) return { ...DEMO_PREFERENCES_DEFAULTS };
     stored = JSON.parse(raw);
   } catch {
@@ -97,7 +100,7 @@ export function loadDemoPreferences(): DemoPreferences {
 export function saveDemoPreferences(values: DemoPreferences): boolean {
   if (typeof window === "undefined") return false;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    window.localStorage.setItem(DEMO_PREFERENCES_STORAGE_KEY, JSON.stringify(values));
     return true;
   } catch {
     return false;

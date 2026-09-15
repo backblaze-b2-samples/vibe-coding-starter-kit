@@ -22,8 +22,10 @@ from app.service.files import (
 )
 from app.types import (
     DailyUploadCount,
+    DeleteFileResponse,
     FileMetadata,
     FileMetadataDetail,
+    FileUrlResponse,
     UploadStats,
 )
 
@@ -39,14 +41,14 @@ router = APIRouter()
 # read and delete another user's files.
 
 
-def _file_url_response(key: str, *, preview: bool) -> dict[str, str]:
+def _file_url_response(key: str, *, preview: bool) -> FileUrlResponse:
     try:
         url = get_preview_url(key) if preview else get_download_url(key)
     except FileKeyError as e:
         raise HTTPException(status_code=400, detail=e.detail) from None
     except FileNotFoundServiceError as e:
         raise HTTPException(status_code=404, detail=e.detail) from None
-    return {"url": url}
+    return FileUrlResponse(url=url)
 
 
 def _file_metadata_response(key: str) -> FileMetadata:
@@ -73,7 +75,7 @@ def _file_detail_response(key: str) -> FileMetadataDetail:
         ) from None
 
 
-def _delete_file_response(key: str) -> dict[str, bool | str]:
+def _delete_file_response(key: str) -> DeleteFileResponse:
     try:
         remove_file(key)
     except FileKeyError as e:
@@ -81,7 +83,7 @@ def _delete_file_response(key: str) -> dict[str, bool | str]:
     except RuntimeError:
         raise HTTPException(status_code=500, detail="Failed to delete file") from None
     logger.info("File deleted: key=%s", key)
-    return {"deleted": True, "key": key}
+    return DeleteFileResponse(deleted=True, key=key)
 
 
 @router.get("/files", response_model=list[FileMetadata])
@@ -104,12 +106,12 @@ def upload_activity_endpoint(days: int = 7):
     return get_upload_activity(days=days)
 
 
-@router.get("/files-by-key/download")
+@router.get("/files-by-key/download", response_model=FileUrlResponse)
 def download_file_by_key_endpoint(key: str):
     return _file_url_response(key, preview=False)
 
 
-@router.get("/files-by-key/preview")
+@router.get("/files-by-key/preview", response_model=FileUrlResponse)
 def preview_file_by_key_endpoint(key: str):
     """Return a presigned URL for inline preview. Does not count as a download."""
     return _file_url_response(key, preview=True)
@@ -131,17 +133,17 @@ def get_file_detail_by_key_endpoint(key: str):
     return _file_detail_response(key)
 
 
-@router.delete("/files-by-key")
+@router.delete("/files-by-key", response_model=DeleteFileResponse)
 def delete_file_by_key_endpoint(key: str):
     return _delete_file_response(key)
 
 
-@router.get("/files/{key:path}/download")
+@router.get("/files/{key:path}/download", response_model=FileUrlResponse)
 def download_file_endpoint(key: str):
     return _file_url_response(key, preview=False)
 
 
-@router.get("/files/{key:path}/preview")
+@router.get("/files/{key:path}/preview", response_model=FileUrlResponse)
 def preview_file_endpoint(key: str):
     """Return a presigned URL for inline preview. Does not count as a download."""
     return _file_url_response(key, preview=True)
@@ -152,6 +154,6 @@ def get_file_endpoint(key: str):
     return _file_metadata_response(key)
 
 
-@router.delete("/files/{key:path}")
+@router.delete("/files/{key:path}", response_model=DeleteFileResponse)
 def delete_file_endpoint(key: str):
     return _delete_file_response(key)

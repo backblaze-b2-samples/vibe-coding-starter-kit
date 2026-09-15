@@ -1,11 +1,28 @@
 import type {
   DailyUploadCount,
+  DeleteFileResponse,
   FileMetadata,
   FileMetadataDetail,
   FileUploadResponse,
+  FileUrlResponse,
+  HealthStatus,
   PresignUploadResponse,
   UploadStats,
 } from "@vibe-coding-starter-kit/shared";
+
+import { API_CLIENT_ROUTES } from "./generated/api-routes";
+
+// The route registry is GENERATED from the API contract (`pnpm gen:api`), so
+// it cannot drift from FastAPI. Re-exported from here because this module is
+// the frontend's API surface: consumers and the contract test import it from
+// `lib/api-client`, and that import path should not change just because the
+// registry moved behind a generator.
+//
+// Everything else in this file is hand-written on purpose — error policy, base
+// URL resolution, the legacy-route fallback, the CORS diagnostics and the XHR
+// upload transport are per-app judgement the contract does not describe. See
+// `scripts/gen/api-gen.config.json` (`escapeHatch`).
+export { API_CLIENT_ROUTES };
 
 // Single-origin deploys (Vercel `services`: one project serving web + API) put
 // the API under /api on the same origin, so no NEXT_PUBLIC_API_URL is needed —
@@ -15,33 +32,6 @@ import type {
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:8000");
-
-type ApiClientRoute = {
-  method: "delete" | "get" | "post";
-  path: string;
-};
-
-export const API_CLIENT_ROUTES = {
-  health: { method: "get", path: "/health" },
-  files: { method: "get", path: "/files" },
-  fileStats: { method: "get", path: "/files/stats" },
-  uploadActivity: { method: "get", path: "/files/stats/activity" },
-  fileByKeyDownload: { method: "get", path: "/files-by-key/download" },
-  fileByKeyPreview: { method: "get", path: "/files-by-key/preview" },
-  fileByKeyMetadata: { method: "get", path: "/files-by-key/metadata" },
-  fileByKeyDetail: { method: "get", path: "/files-by-key/detail" },
-  fileByKeyDelete: { method: "delete", path: "/files-by-key" },
-  legacyFileDownload: { method: "get", path: "/files/{key}/download" },
-  legacyFilePreview: { method: "get", path: "/files/{key}/preview" },
-  legacyFileMetadata: { method: "get", path: "/files/{key}" },
-  legacyFileDelete: { method: "delete", path: "/files/{key}" },
-  // Uploads go direct to B2: the API validates + signs a PUT (presign), the
-  // browser uploads the bytes straight to B2, then the API inspects the stored
-  // object (verify). Bytes never traverse the API, so Vercel's ~4.5 MB Function
-  // payload ceiling no longer caps upload size.
-  uploadPresign: { method: "post", path: "/upload/presign" },
-  uploadVerify: { method: "post", path: "/upload/verify" },
-} as const satisfies Record<string, ApiClientRoute>;
 
 /** Typed API error with HTTP status code for caller-side branching. */
 export class ApiError extends Error {
@@ -199,9 +189,7 @@ function isLegacyPathFallbackSafe(
 }
 
 export async function getHealth() {
-  return apiFetch<{ status: string; b2_connected: boolean }>(
-    API_CLIENT_ROUTES.health.path
-  );
+  return apiFetch<HealthStatus>(API_CLIENT_ROUTES.health.path);
 }
 
 export async function getFiles(prefix = "", limit = 100) {
@@ -244,7 +232,7 @@ export async function getFileDetail(key: string) {
 }
 
 export async function getDownloadUrl(key: string) {
-  return apiFetchWithLegacyFallback<{ url: string }>(
+  return apiFetchWithLegacyFallback<FileUrlResponse>(
     `${API_CLIENT_ROUTES.fileByKeyDownload.path}?${fileKeyQuery(key)}`,
     () => legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFileDownload.path, key)
   );
@@ -252,14 +240,14 @@ export async function getDownloadUrl(key: string) {
 
 /** Preview-only presigned URL — does NOT increment the download counter. */
 export async function getPreviewUrl(key: string) {
-  return apiFetchWithLegacyFallback<{ url: string }>(
+  return apiFetchWithLegacyFallback<FileUrlResponse>(
     `${API_CLIENT_ROUTES.fileByKeyPreview.path}?${fileKeyQuery(key)}`,
     () => legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFilePreview.path, key)
   );
 }
 
 export async function deleteFile(key: string) {
-  return apiFetchWithLegacyFallback<{ deleted: boolean; key: string }>(
+  return apiFetchWithLegacyFallback<DeleteFileResponse>(
     `${API_CLIENT_ROUTES.fileByKeyDelete.path}?${fileKeyQuery(key)}`,
     () => legacyFileKeyRoute(API_CLIENT_ROUTES.legacyFileDelete.path, key),
     {

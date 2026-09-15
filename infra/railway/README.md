@@ -57,9 +57,18 @@ them in a config file, commit, issue, PR, terminal transcript, or screenshot.
 
 | Service | Variable names | Classification | Notes |
 | --- | --- | --- | --- |
-| API | `B2_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Limit the B2 key to the app bucket and least privilege. |
-| API | `B2_ENDPOINT`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL`, `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate and size settings | Non-secret service configuration | Keep values in Railway, not source; set exact production CORS origins and `ENABLE_DOCS=false`. |
+| API | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Limit the B2 key to the app bucket and least privilege. |
+| API | `B2_REGION`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL_BASE`, `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate and size settings | Non-secret service configuration | Keep values in Railway, not source; set exact production CORS origins and `ENABLE_DOCS=false`. |
 | Web | `NEXT_PUBLIC_API_URL` | Public build-time configuration | Next.js embeds it in browser output; it must be the deployed API origin and contains no credential. |
+
+> **Breaking change for an existing deployment.** These are the standardized
+> Backblaze names, and they are not the ones older versions of this kit used.
+> Rename the API service's variables before you redeploy: `B2_KEY_ID` becomes
+> `B2_APPLICATION_KEY_ID`, `B2_PUBLIC_URL` becomes `B2_PUBLIC_URL_BASE`, and the
+> endpoint variable is gone — set `B2_REGION` to the region inside your old
+> endpoint host (`s3.<region>.backblazeb2.com`) and the API derives the endpoint
+> from it. There is no fallback to the old names: the API refuses to start while
+> a required variable is missing, and says which one.
 
 The browser needs a public API origin, so both services require a deliberate
 domain decision. Expose only the intended web and API domains, use an exact API

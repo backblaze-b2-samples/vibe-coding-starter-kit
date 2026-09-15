@@ -87,6 +87,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 | `docs/api/openapi.json` matches the FastAPI app | `tests/test_openapi_contract.py` (also `pnpm contract:check`) |
 | Frontend `API_CLIENT_ROUTES` and the OpenAPI artifact agree in both directions | `apps/web/src/lib/api-contract.test.ts` (also `pnpm contract:check`) |
 | `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
+| The required B2 variables are declared once, in `app/config/b2_required_vars.json`, and read by both `app/config/settings.py` and `scripts/doctor.mjs` | `tests/test_b2_required_vars.py` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
 | Relative Markdown links resolve, and every `#anchor` matches a real heading | `pnpm check:agent-docs` (`scripts/agent-docs/doc-links.mjs`) |
 | If the README ships a Vercel deploy button, it deploys the whole app — a root `vercel.json` declaring `web` + `api` services (one project), or buttons covering both Projects — backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |

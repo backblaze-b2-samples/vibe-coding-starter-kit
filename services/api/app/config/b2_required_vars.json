@@ -1,0 +1,31 @@
+{
+  "$comment": "Single source of truth for the B2 configuration contract. Read by services/api/app/config/settings.py (Python, at import time) and by scripts/doctor.mjs (Node, zero-dependency, runs before the venv exists). Never duplicate this list in either file: the two used to carry their own copies behind a 'keep in sync' comment, and they drifted. `setting` is the Settings field the env var binds to; tests/test_b2_required_vars.py asserts every one of them exists.",
+  "required": [
+    {
+      "env": "B2_APPLICATION_KEY_ID",
+      "setting": "b2_application_key_id",
+      "placeholder": "your_key_id"
+    },
+    {
+      "env": "B2_APPLICATION_KEY",
+      "setting": "b2_application_key",
+      "placeholder": "your_application_key"
+    },
+    {
+      "env": "B2_BUCKET_NAME",
+      "setting": "b2_bucket_name",
+      "placeholder": "your-bucket-name"
+    },
+    {
+      "env": "B2_REGION",
+      "setting": "b2_region",
+      "placeholder": "your-b2-region"
+    }
+  ],
+  "optional": [
+    {
+      "env": "B2_PUBLIC_URL_BASE",
+      "setting": "b2_public_url_base"
+    }
+  ]
+}

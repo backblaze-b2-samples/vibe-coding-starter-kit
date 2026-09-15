@@ -63,11 +63,20 @@ Set values in the Vercel Project and environment. Never put values in
 
 | Variable names | Classification | Notes |
 | --- | --- | --- |
-| `B2_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Restrict the B2 key to the intended bucket and least privilege. |
-| `B2_ENDPOINT`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate settings | Non-secret configuration | Set `ENABLE_DOCS=false` in production. |
+| `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Restrict the B2 key to the intended bucket and least privilege. |
+| `B2_REGION`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL_BASE`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate settings | Non-secret configuration | Set `ENABLE_DOCS=false` in production. |
 | `MAX_FILE_SIZE` | Optional configuration | Uploads go directly to B2 (presigned PUT), so Vercel's 4.5 MB Function limit no longer applies — leave at the 100 MB default or set your own cap. |
 | `WARM_LIST_CACHE_ON_STARTUP=false` | Recommended Vercel configuration | Avoid an expensive full B2 scan on each cold start. |
 | `DOWNLOAD_COUNT_FILE=/tmp/download_count.json` | Optional ephemeral configuration | Lets a warm Function instance write the counter, but it is not durable or shared. |
+
+> **Breaking change for an existing deployment.** These are the standardized
+> Backblaze names, and they are not the ones older versions of this kit used.
+> Rename the Project's variables before you redeploy: `B2_KEY_ID` becomes
+> `B2_APPLICATION_KEY_ID`, `B2_PUBLIC_URL` becomes `B2_PUBLIC_URL_BASE`, and the
+> endpoint variable is gone — set `B2_REGION` to the region inside your old
+> endpoint host (`s3.<region>.backblazeb2.com`) and the API derives the endpoint
+> from it. There is no fallback to the old names: the API refuses to start while
+> a required variable is missing, and says which one.
 
 In the single-project topology the web and API share an origin, so
 `NEXT_PUBLIC_API_URL` and `API_CORS_ORIGINS` are **not** required. They apply
@@ -115,7 +124,7 @@ repo-root `vercel.json` and creates one Services project:
 
 | `root-directory` | Pre-filled `env` |
 | --- | --- |
-| _(none — repo root)_ | `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_ENDPOINT`, `B2_BUCKET_NAME` |
+| _(none — repo root)_ | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_REGION`, `B2_BUCKET_NAME` |
 
 Alongside `repository-url` and the `env` list, the button carries the
 presentation parameters Vercel's clone flow renders in its preview card:

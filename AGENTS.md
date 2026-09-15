@@ -10,15 +10,18 @@ This is the authoritative control surface for all coding agents. Read this first
 
 ## 1. Repository Map
 
+<!-- gen:begin agents-repo-map -->
 ```
-apps/web/          Next.js 16 frontend (App Router, Tailwind v4, shadcn/ui)
+apps/web/          Next.js frontend (App Router, Tailwind, shadcn/ui)
 services/api/      FastAPI backend (layered: types/config/repo/service/runtime)
-packages/shared/   Shared TypeScript types
+packages/shared/   Shared TypeScript types, generated from the API contract
 docs/              System of record (features, workflows, security, reliability)
-docs/exec-plans/   Execution plans and tech debt tracker
-infra/railway/     Railway delivery contract (per-service railway.json live at their service roots)
+docs/exec-plans/   Execution plans, tech debt, and sample.json (the gen:docs input)
+scripts/gen/       Generator policy: API naming, sample-manifest schema
 infra/vercel/      Vercel deployment contract
+infra/railway/     Railway delivery contract (per-service railway.json at their service roots)
 ```
+<!-- gen:end agents-repo-map -->
 
 ## 2. Shared Scaffolding Contract
 
@@ -31,7 +34,7 @@ These pieces are shared scaffolding rather than app-specific code: keep them, an
 - The sidebar nav itself (Dashboard, Upload, Files, Settings, plus the Design System utility link).
 
 **Adapt to this app**
-- **Dashboard.** `/` route and `apps/web/src/components/dashboard/` (stats cards, upload chart, recent uploads table) are illustrative defaults. Replace them with metrics, charts, and tables that reflect what this app actually does (e.g. transcripts processed, embeddings indexed, classifications run). New aggregations must flow through the same `runtime -> service -> repo` layering and be exposed via TanStack Query hooks in `apps/web/src/lib/queries.ts` — no bare `useEffect + fetch`.
+- **Dashboard.** `/` route and `apps/web/src/components/dashboard/` (stats cards, upload chart, recent uploads table) are illustrative defaults. Replace them with metrics, charts, and tables that reflect what this app actually does (e.g. transcripts processed, embeddings indexed, classifications run). New aggregations must flow through the same `runtime -> service -> repo` layering and be exposed via TanStack Query hooks in `apps/web/src/lib/queries.ts` — no bare `useEffect + fetch`, and no hand-added `qk` entry: query keys come from `pnpm gen:api`.
 - Update `docs/features/dashboard.md` in the same PR as any dashboard change (see §9).
 
 **Why this contract exists** — the UI kit, Files, and Upload pages are the reusable B2-backed scaffolding; stripping them costs the app its whole storage surface. The dashboard is the one screen designed to be rewritten per app.
@@ -49,9 +52,9 @@ These pieces are shared scaffolding rather than app-specific code: keep them, an
 
 **Frontend**: shadcn/ui components in `src/components/ui/` are generated — never modify them.
 
-**Data fetching**: every API call flows through TanStack Query hooks in `apps/web/src/lib/queries.ts`. No bare `useEffect + fetch` patterns. Frontend-consumed endpoints update `runtime/<router>.py`, `lib/api-client.ts` (`API_CLIENT_ROUTES`), `lib/queries.ts`, and `docs/api/openapi.json`.
+**Data fetching**: every API call flows through TanStack Query hooks in `apps/web/src/lib/queries.ts`. No bare `useEffect + fetch` patterns. To add or change a frontend-consumed endpoint, edit only `runtime/<router>.py` and its Pydantic models, then run `pnpm contract:export && pnpm gen:api`. The route registry, the shared types and the query keys are GENERATED — never hand-edit `apps/web/src/lib/generated/**` or `packages/shared/src/generated/**`; `pnpm gen:check` fails if you do, and the next `pnpm gen:api` discards the edit.
 
-**API contract**: *every* route change — including backend-only routes — re-exports `docs/api/openapi.json` (`pnpm contract:export`), or `pnpm test:api` fails. A backend-only route additionally goes in `SERVER_ONLY_OPERATIONS` in `apps/web/src/lib/api-contract.test.ts`, or `pnpm test:web` fails.
+**API contract**: *every* route change — including backend-only routes — re-exports `docs/api/openapi.json` (`pnpm contract:export`), or `pnpm test:api` fails. A backend-only route additionally goes in `serverOnly` in `scripts/gen/api-gen.config.json` (and its mirror in `apps/web/src/lib/api-contract.test.ts`), or `pnpm test:web` fails.
 
 ## 4. Quality Expectations
 
@@ -77,7 +80,9 @@ These pieces are shared scaffolding rather than app-specific code: keep them, an
 | Import ordering | `ruff` rule I001 |
 | Frontend strict equality | `eslint` rule eqeqeq |
 | No unused vars | `eslint` + `ruff` rules |
-| This file stays agent-sized (≥ 1 KB, ≤ 20 KB, ≤ 250 lines) | `pnpm check:agent-docs` (`scripts/check-agent-docs.mjs`) |
+| This file stays agent-sized (≥ 1 KB, ≤ 20 KB, ≤ 258 lines — 250 of prose plus the 8 region-marker lines) | `pnpm check:agent-docs` (budget: `scripts/agent-docs/limits.mjs`) |
+| The generated API seam (`packages/shared/src/generated/`, `apps/web/src/lib/generated/`) matches `docs/api/openapi.json` | `pnpm gen:check` (`scripts/gen-api.mjs`) |
+| The generated doc regions match `docs/exec-plans/sample.json`, and every `gen:begin`/`gen:end` pair is intact | `pnpm gen:check` (`scripts/gen-docs.mjs`) |
 | Agent shims stay thin pointers to AGENTS.md (non-empty, ≤ 1 KB, ≤ 20 lines) | `pnpm check:agent-docs` |
 | The instruction-trust boundary names authoritative sources and untrusted embedded content | `pnpm check:agent-docs` |
 | Secret-handling rule stays in the "Secret Handling" section, phrased as a prohibition, and `docs/SECURITY.md` links to that heading by anchor | `pnpm check:agent-docs` |
@@ -104,6 +109,7 @@ no git work tree, the whole group) that git cannot answer for is reported as
 
 ## 6. Commands
 
+<!-- gen:begin agents-commands -->
 ```bash
 # Run
 pnpm run setup         # idempotent cold-start setup (.env copy, deps, venv)
@@ -112,14 +118,19 @@ pnpm dev               # start both frontend and backend
 pnpm dev:web           # frontend only
 pnpm dev:api           # backend only
 pnpm wait-ready        # block until web + API answer, then exit (no sleep/curl polling)
+
+# Generate
 pnpm contract:export   # export deterministic FastAPI OpenAPI JSON
 pnpm contract:check    # check OpenAPI artifact + frontend client routes
+pnpm gen:api           # regenerate shared types, client routes and query keys
+pnpm gen:docs          # regenerate the doc regions from docs/exec-plans/sample.json
+pnpm gen:check         # fail if any generated file or doc region is stale
 
 # Test & Lint
 pnpm check:agent-docs  # agent instruction/documentation drift check
 pnpm verify            # credential-free canonical non-live pre-PR suite
 pnpm verify:api        # backend half of verify (lint, tests, structure)
-pnpm verify:web        # frontend half of verify (lint, unit tests, typecheck + build)
+pnpm verify:web        # frontend half of verify (generator drift, lint, unit tests, typecheck + build)
 pnpm verify:full       # doctor + verify + Playwright E2E (requires browser + live local app prerequisites)
 pnpm lint              # frontend lint (eslint)
 pnpm typecheck         # frontend TypeScript check without producing a build
@@ -129,38 +140,36 @@ pnpm lint:api          # backend lint (ruff)
 pnpm test:api          # backend tests (pytest)
 pnpm test:live:b2      # opt-in real B2 connectivity test (requires explicit flag)
 pnpm check:structure   # structural boundary tests
-pnpm test:e2e          # the kit's own Playwright smoke suite (project: chromium)
+pnpm test:e2e          # this app's own Playwright smoke suite (project: chromium)
 pnpm test:verify       # throwaway app verification specs in apps/web/e2e/verify/ (project: verify)
 ```
+<!-- gen:end agents-commands -->
 
 `setup` and `doctor` use the `pnpm run` form on purpose: both are built-in pnpm
 commands before pnpm 11, and `pnpm setup` / `pnpm doctor` run pnpm's own
 commands instead of these scripts. Never shorten them in docs or scripts.
 
 `pnpm check:agent-docs` validates this instruction surface, command docs, CI
-claims, internal Markdown links, and `.env` ignore coverage. `pnpm verify` is the
-default credential-free non-live gate.
-It chains `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint,
-backend tests, structural boundary tests), then `pnpm verify:web` (frontend
-lint, frontend unit tests, frontend typecheck + build). CI
-(`.github/workflows/ci.yml`) runs those three checks as parallel jobs on every
-PR and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
+claims, internal Markdown links, and env-file ignore coverage. `pnpm verify` is
+the default credential-free non-live gate. It chains `pnpm check:agent-docs`,
+then `pnpm verify:api` (backend lint, backend tests, structural boundary tests),
+then `pnpm verify:web` (generator drift, frontend lint, unit tests, typecheck +
+build). CI (`.github/workflows/ci.yml`) runs those three as parallel jobs on
+every PR and push to `main`. Use `pnpm verify:full` locally when browser/E2E and
 live-service prerequisites are available — see
-[docs/verification.md](docs/verification.md#non-live-verification) for the
-prerequisite list.
+[docs/verification.md](docs/verification.md#non-live-verification) for the list.
 
 `pnpm verify` supports parallel agents when each uses a separate Git worktree;
 run it only once at a time within one checkout because Next.js locks `.next`
 during the build. A warm local run is normally about 30 seconds; see
-`docs/verification.md` for the worktree, slow-run, and interrupted-run
-recovery workflows. `pnpm verify` needs `services/api/.venv` to exist (run
-`pnpm run setup`); without
-it `pnpm verify:api` fails with a bare "no such file" on `.venv/bin/ruff`, and
-`pnpm contract:export` / `pnpm contract:check` fail the same way on
-`.venv/bin/python`. Setup rejects an older or broken existing venv with a
-recovery instruction. The API's complete Python 3.12 resolution is committed in
-`services/api/requirements.lock`; setup and CI install it. Update it only with
-the reviewed workflow in [docs/verification.md](docs/verification.md#python-dependency-updates).
+`docs/verification.md` for the worktree, slow-run, and interrupted-run recovery
+workflows. `pnpm verify` needs `services/api/.venv` to exist (run
+`pnpm run setup`); without it `pnpm verify:api` fails with a bare "no such file"
+on `.venv/bin/ruff`, and `pnpm contract:export` / `pnpm contract:check` fail the
+same way on `.venv/bin/python`. Setup rejects an older or broken existing venv
+with a recovery instruction. The API's complete Python 3.12 resolution is
+committed in `services/api/requirements.lock`; setup and CI install it. Update it
+only with the reviewed workflow in [docs/verification.md](docs/verification.md#python-dependency-updates).
 
 ## 7. Agent Workflow
 
@@ -179,10 +188,11 @@ See [docs/frontend-conventions.md](docs/frontend-conventions.md) for full detail
 
 ## 9. Doc Update Mapping
 
+<!-- gen:begin agents-doc-update-mapping -->
 | Change Type | Update Location |
-|-------------|-----------------|
+| --- | --- |
 | Feature logic, inputs, outputs, tests | `docs/features/<feature>.md` |
-| User journeys | `docs/app-workflows.md` |
+| User journeys | `docs/app-workflows.md` (headings and `See:` links come from `pnpm gen:docs`) |
 | System layout, deployments | `ARCHITECTURE.md` |
 | Dev process, command index, releases | `docs/dev-workflows.md` |
 | Testing, verification gates, CI, dependency locks | `docs/verification.md` |
@@ -191,15 +201,19 @@ See [docs/frontend-conventions.md](docs/frontend-conventions.md) for full detail
 | Security changes | `docs/SECURITY.md` |
 | Agent instruction surface (rules, a new agent shim) | `AGENTS.md` + the shims (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) + register it in `scripts/check-agent-docs.mjs` |
 | Reliability changes | `docs/RELIABILITY.md` |
+| Routes, request/response shapes | the router and Pydantic model, then `pnpm contract:export && pnpm gen:api` |
+| App name, features, env vars, screenshots | `docs/exec-plans/sample.json`, then `pnpm gen:docs` |
 | Active work plans | `docs/exec-plans/active/` |
 | Known tech debt | `docs/exec-plans/tech-debt-tracker.md` |
+<!-- gen:end agents-doc-update-mapping -->
 
 If documentation and implementation conflict, update docs in the same PR. Documentation rot destroys agent reliability.
 
 ## 10. Doc Map
 
+<!-- gen:begin agents-doc-map -->
 | Topic | Location |
-|-------|----------|
+| --- | --- |
 | System layout, data flows, boundaries | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Feature docs | [docs/features/](docs/features/) |
 | User journeys | [docs/app-workflows.md](docs/app-workflows.md) |
@@ -208,8 +222,12 @@ If documentation and implementation conflict, update docs in the same PR. Docume
 | Frontend conventions and data fetching | [docs/frontend-conventions.md](docs/frontend-conventions.md) |
 | Security principles | [docs/SECURITY.md](docs/SECURITY.md) |
 | Reliability expectations | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
+| The API contract itself | [docs/api/openapi.json](docs/api/openapi.json) |
 | Execution plans | [docs/exec-plans/](docs/exec-plans/) |
 | Tech debt | [docs/exec-plans/tech-debt-tracker.md](docs/exec-plans/tech-debt-tracker.md) |
+| Deploying to vercel | [infra/vercel/README.md](infra/vercel/README.md) |
+| Deploying to railway | [infra/railway/README.md](infra/railway/README.md) |
+<!-- gen:end agents-doc-map -->
 
 ## 11. When Unsure
 

@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scripts/gen/sample.schema.json",
+  "title": "Sample manifest",
+  "description": "Input to `pnpm gen:docs`. Declares the handful of facts that differ between one app built on this kit and the next, so the mechanical parts of ARCHITECTURE.md, AGENTS.md, README.md, docs/app-workflows.md and the infra runbooks are written once instead of retyped per app. It carries NO API description: routes, parameters and response shapes come from docs/api/openapi.json, which `pnpm contract:export` writes from the FastAPI routers. Lives at docs/exec-plans/sample.json.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "name",
+    "slug",
+    "package_scope",
+    "purpose",
+    "tagline",
+    "primary_entity",
+    "features",
+    "b2_surface",
+    "b2_key_prefix",
+    "stack",
+    "deployment_targets",
+    "env_vars",
+    "attribution_token",
+    "repo",
+    "screenshots"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": {
+      "description": "Manifest format version. The generator refuses a version it does not understand rather than emitting garbage, because the manifest and the generator can travel separately.",
+      "const": 1
+    },
+    "name": {
+      "description": "Display name. Must equal APP_NAME in apps/web/src/lib/app-config.ts — `pnpm gen:check` asserts it, because the branding check derives the FastAPI title from APP_NAME.",
+      "type": "string",
+      "examples": ["My Sample App"]
+    },
+    "slug": {
+      "description": "URL- and storage-safe form of the name. Must equal the APP_SLUG derived in app-config.ts.",
+      "type": "string",
+      "examples": ["my-sample-app"]
+    },
+    "package_scope": {
+      "description": "npm scope for the workspace packages, i.e. <scope>/web and <scope>/shared.",
+      "type": "string",
+      "examples": ["@my-sample-app"]
+    },
+    "purpose": {
+      "description": "One full sentence saying what the app is for. Used as prose, not as a label, so write it as a sentence.",
+      "type": "string"
+    },
+    "tagline": {
+      "description": "One short hook for the README's first line. Kept separate from `purpose` so the generator never has to truncate a paragraph.",
+      "type": "string"
+    },
+    "primary_entity": {
+      "description": "The thing this app is mostly about, in the three grammatical forms the docs need. `schema` must name a real key in docs/api/openapi.json components.schemas.",
+      "type": "object",
+      "required": ["schema", "singular", "plural"],
+      "properties": {
+        "schema": { "type": "string", "examples": ["FileMetadata"] },
+        "singular": { "type": "string", "examples": ["file"] },
+        "plural": { "type": "string", "examples": ["files"] }
+      }
+    },
+    "features": {
+      "description": "Drives the README and ARCHITECTURE feature lists, the documentation map, and the docs/app-workflows.md section skeleton.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "route", "doc", "summary"],
+        "properties": {
+          "title": { "type": "string" },
+          "route": {
+            "description": "The screen this feature lives on, or null for a feature with no screen of its own.",
+            "type": ["string", "null"]
+          },
+          "doc": {
+            "description": "Repo-relative path to the feature doc. Must exist: the doc-link check resolves it.",
+            "type": "string"
+          },
+          "summary": { "type": "string" },
+          "workflow_heading": {
+            "description": "Optional heading for this feature's section in docs/app-workflows.md, when the user journey is named differently from the feature. Defaults to `title`.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "b2_surface": {
+      "description": "Which Backblaze B2 operations the app uses and why. The `why` is what makes the architecture doc readable instead of a bare verb list.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operation", "why"],
+        "properties": {
+          "operation": { "type": "string", "examples": ["put_object"] },
+          "why": { "type": "string" }
+        }
+      }
+    },
+    "b2_key_prefix": {
+      "description": "Key prefix every object this app writes lives under. Also the value to use for ALLOWED_KEY_PREFIX when confining a shared bucket.",
+      "type": "string",
+      "examples": ["objects/"]
+    },
+    "stack": {
+      "type": "object",
+      "required": ["web", "api", "storage", "package_manager"],
+      "properties": {
+        "web": { "type": "string" },
+        "api": { "type": "string" },
+        "storage": { "type": "string" },
+        "package_manager": { "type": "string" }
+      }
+    },
+    "deployment_targets": {
+      "description": "Which delivery contracts this app ships. Decides which infra/<target>/README.md is referenced, and whether the README carries a one-click deploy button.",
+      "type": "array",
+      "items": { "enum": ["vercel", "railway"] }
+    },
+    "env_vars": {
+      "description": "Every variable the app reads. `secret` splits the infra variable tables; `required` decides whether the README and the deploy button ask for it.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "required", "secret", "note"],
+        "properties": {
+          "name": { "type": "string" },
+          "required": { "type": "boolean" },
+          "secret": { "type": "boolean" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "attribution_token": {
+      "description": "The one B2 attribution token, shared by the S3 client's user_agent_extra and every utm_content. `pnpm gen:check` asserts it matches the value in services/api/app/repo/b2_client.py.",
+      "type": "string",
+      "examples": ["b2ai-my-sample-app"]
+    },
+    "repo": {
+      "description": "Where this app lives, for the absolute GitHub URLs the README needs (clone command, deploy button, issue links).",
+      "type": "object",
+      "required": ["org", "name"],
+      "properties": {
+        "org": { "type": "string", "examples": ["my-org"] },
+        "name": { "type": "string", "examples": ["my-sample-app"] }
+      }
+    },
+    "screenshots": {
+      "description": "README screenshots. An EMPTY array is valid and meaningful: the generator then emits no image embeds, no \"What it looks like\" section and no demo-image parameter, so a fresh scaffold that has not taken its screenshots yet still passes the doc-link check.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "alt", "caption"],
+        "properties": {
+          "path": { "type": "string", "examples": ["docs/images/dashboard.png"] },
+          "alt": { "type": "string" },
+          "caption": { "type": "string" }
+        }
+      }
+    }
+  }
+}

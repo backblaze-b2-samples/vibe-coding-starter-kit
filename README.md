@@ -1,15 +1,26 @@
 <!-- last_verified: 2026-08-12 -->
+<!-- gen:begin readme-header -->
 # Vibe Coding Starter Kit
 
-Stop wiring boilerplate and start building. This open-source starter kit gives vibe coders and AI coding agents a well-engineered foundation — a full-stack TypeScript + Python template with a pre-built dashboard UI, file upload system, and **[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)** cloud storage already integrated. Save thousands of tokens on setup prompts, skip the "build me a dashboard from scratch" loop, and go straight to building your app's unique features.
+Stop wiring boilerplate and start building. A well-engineered full-stack foundation — dashboard, drag-and-drop upload and a file browser — with Backblaze B2 storage already wired in, so builders skip the boilerplate loop.
+
+Built for developers and AI coding agents: the scaffolding, the storage
+wiring and the agent-facing docs are already done, so you start on your
+app's own features instead of rebuilding the same shell. Storage is
+**[Backblaze B2](https://www.backblaze.com/sign-up/ai-cloud-storage?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start)**, integrated through the S3-compatible API.
 
 **What you get out of the box:**
-- Full-stack dashboard UI (Next.js 16 + React 19 + Tailwind v4 + shadcn/ui)
-- File upload with drag-and-drop, progress tracking, and metadata extraction
-- File browser with preview, download, and delete
-- FastAPI backend with strict layered architecture and structural tests
+- Full-stack dashboard UI (Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query, Recharts)
+- File Upload — drag-and-drop upload with real-time progress
+- File Browser — list, preview, download, delete files
+- Dashboard — stats cards, upload chart, recent uploads
+- Metadata Extraction — image dimensions, EXIF, PDF info, checksums
+- Settings — theme plus labelled demo preference fields
+- Backend with a strict layered architecture and structural tests (FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, PyPDF2)
 - Agent-optimized docs — your AI coding agent can read the repo and start contributing immediately
+<!-- gen:end readme-header -->
 
+<!-- gen:begin readme-screenshots -->
 ## What it looks like
 
 **Dashboard** — stats, upload activity, and recent uploads at a glance:
@@ -21,6 +32,7 @@ Stop wiring boilerplate and start building. This open-source starter kit gives v
 ![File browser view showing a tree of files with hover actions](docs/images/b2-starterkit-fileview2.png)
 
 > **Deploy your own in one click** → [Deploy to Vercel](#deploying-to-vercel). One project, one origin, no CORS to wire up.
+<!-- gen:end readme-screenshots -->
 
 ## Quick Start
 
@@ -73,12 +85,17 @@ existing `.env`.
 
 Open `.env` in your editor and keep it visible. Then head to the [Backblaze B2 dashboard](https://secure.backblaze.com/b2_buckets.htm?utm_source=github&utm_medium=referral&utm_campaign=ai_artifacts&utm_content=b2ai-oss-start) and:
 
-1. **Create a bucket.** B2 will show two values — paste each into `.env`:
-   - **Bucket Unique Name** → `B2_BUCKET_NAME`
-   - the region inside the **Endpoint** (`s3.<region>.backblazeb2.com`) → `B2_REGION`
-2. **Create an application key** with `Read and Write` permission. B2 will show two values — paste each into `.env`:
-   - **keyID** → `B2_APPLICATION_KEY_ID`
-   - **applicationKey** → `B2_APPLICATION_KEY` *(only shown once — paste it now)*
+<!-- gen:begin readme-credentials -->
+1. **Create a bucket** and an **application key** with `Read and Write`
+   permission, then paste each value into `.env`:
+   - `B2_APPLICATION_KEY_ID` — B2 application key ID (**keyID** in the B2 console)
+   - `B2_APPLICATION_KEY` — B2 application key (**applicationKey**) — shown once at creation
+   - `B2_BUCKET_NAME` — bucket unique name (**Bucket Unique Name** in the B2 console)
+   - `B2_REGION` — the region inside the bucket's **Endpoint** (`s3.<region>.backblazeb2.com`); the S3 endpoint is derived from it
+
+   B2 shows an application key once, at creation. The optional variables are
+   documented in `.env.example` and in the delivery runbooks.
+<!-- gen:end readme-credentials -->
 
 > Want a walkthrough? See the docs for [creating a bucket](https://www.backblaze.com/docs/cloud-storage-create-and-manage-buckets) and [creating app keys](https://www.backblaze.com/docs/cloud-storage-create-and-manage-app-keys).
 
@@ -183,14 +200,17 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 
 ## Core Features
 
+<!-- gen:begin readme-core-features -->
 - [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress
 - [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
 - [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
 - [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
+- [Settings](docs/features/settings.md) — theme plus labelled demo preference fields
+<!-- gen:end readme-core-features -->
 - [Design System](docs/design-system.md) — tokens, primitives, AI elements, the blaze generating loader, and inline `ErrorState` / `EmptyState` patterns. Live preview at `/design`.
 - Inline error handling — fetch failures surface *what's wrong* (API offline, 401, 5xx) and offer a Retry, instead of silently rendering empty state.
 - Single-source config — one `.env` at the repo root powers both API and web app, validated at startup so misconfig fails fast with a readable message.
-- Centralized data layer — every fetch goes through TanStack Query hooks in `apps/web/src/lib/queries.ts`; cache invalidation is one call after a mutation.
+- Centralized data layer — every fetch goes through TanStack Query hooks in `apps/web/src/lib/queries.ts`; cache invalidation is one call after a mutation. The types, route registry and query keys underneath are generated from the API contract by `pnpm gen:api`, so the client cannot drift from the backend.
 - Checked local API contract — [`docs/api/openapi.json`](docs/api/openapi.json) plus `pnpm contract:check` catch FastAPI/client route drift; it describes the template API you run, not a hosted public endpoint.
 - Structural tests — verify layering rules, import boundaries, SDK containment, and backend application Python file-size limits
 - Structured JSON logging — every request traced with `request_id` and timing
@@ -211,15 +231,21 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 
 The commands you reach for day to day:
 
+<!-- gen:begin readme-commands -->
 | Command | What it does |
-|---------|-------------|
+| --- | --- |
 | `pnpm run setup` | One-time cold start: copy `.env.example` → `.env` (only if missing), install workspace deps, create the backend venv, install locked API deps |
 | `pnpm dev` | Start frontend + backend (runs the `pnpm run doctor` preflight first) |
 | `pnpm wait-ready` | Block until the running web + API answer, print one line, exit 0/1 — use instead of sleeping before driving the app |
+| `pnpm contract:export` | Export the FastAPI OpenAPI contract into `docs/api/openapi.json` |
+| `pnpm contract:check` | Verify the exported contract and the generated client routes agree, both ways |
+| `pnpm gen:api` | Regenerate the shared types, the client route registry and the query-key factory from the exported contract |
+| `pnpm gen:docs` | Regenerate the marker-delimited doc regions from `docs/exec-plans/sample.json` |
+| `pnpm gen:check` | Fail if any generated file or doc region is stale (first step of `pnpm verify:web`) |
 | `pnpm verify` | Credential-free pre-PR suite — runs `check:agent-docs`, `verify:api`, then `verify:web` |
-| `pnpm verify:full` | `pnpm verify` plus Playwright E2E; needs a live local stack, real `.env`, free port 3000, and Chromium |
+| `pnpm verify:full` | `pnpm verify` plus Playwright E2E; needs a live local stack, real `.env`, a free web port, and Chromium |
 | `pnpm test:verify` | Run throwaway verification specs from `apps/web/e2e/verify/` against the app, with the shared browser fixtures |
-| `pnpm contract:export` / `pnpm contract:check` | Export / verify the FastAPI OpenAPI contract in `docs/api/openapi.json` |
+<!-- gen:end readme-commands -->
 
 `pnpm verify` is the gate to run before opening a PR. It needs
 `services/api/.venv` from `pnpm run setup`, but no B2 credentials or browser, and
@@ -239,7 +265,9 @@ Deploys as **one Vercel project** — the Next.js web app and FastAPI API build
 from the same repo and share one origin (web at `/`, API under `/api`), so
 there's **no CORS and no second URL to wire up**.
 
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&project-name=vibe-coding-starter-kit&repository-name=vibe-coding-starter-kit&demo-title=Vibe%20Coding%20Starter%20Kit&demo-description=Full-stack%20Next.js%20%2B%20FastAPI%20dashboard%20with%20drag-and-drop%20file%20uploads%20on%20Backblaze%20B2%20object%20storage.&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fmain%2Fdocs%2Fimages%2Fb2-starterkit-dashboard1.png&env=B2_APPLICATION_KEY_ID,B2_APPLICATION_KEY,B2_REGION,B2_BUCKET_NAME&envDescription=B2%20credentials%20and%20bucket&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md)
+<!-- gen:begin readme-deploy-button -->
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit&project-name=vibe-coding-starter-kit&repository-name=vibe-coding-starter-kit&demo-title=Vibe%20Coding%20Starter%20Kit&demo-description=A%20well-engineered%20full-stack%20foundation%20%E2%80%94%20dashboard%2C%20drag-and-drop%20upload%20and%20a%20file%20browser%20%E2%80%94%20with%20Backblaze%20B2%20storage%20already%20wired%20in%2C%20so%20builders%20skip%20the%20boilerplate%20loop.&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fmain%2Fdocs%2Fimages%2Fb2-starterkit-dashboard1.png&env=B2_APPLICATION_KEY_ID%2CB2_APPLICATION_KEY%2CB2_BUCKET_NAME%2CB2_REGION&envDescription=B2%20credentials%20and%20bucket&envLink=https%3A%2F%2Fgithub.com%2Fbackblaze-b2-samples%2Fvibe-coding-starter-kit%2Fblob%2Fmain%2Finfra%2Fvercel%2FREADME.md)
+<!-- gen:end readme-deploy-button -->
 
 Set your B2 credentials and bucket, and you're live. Uploads go **directly from
 the browser to B2** (presigned PUT), so Vercel's 4.5 MB payload limit doesn't
@@ -255,21 +283,24 @@ preview/production, `/health` checks, and rollback — is in the
 
 ## Documentation Map
 
+<!-- gen:begin readme-doc-map -->
 | Doc | Purpose |
-|-----|---------|
+| --- | --- |
 | [AGENTS.md](AGENTS.md) | Agent table of contents — start here |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System layout, layering, data flows |
-| [docs/features/](docs/features/) | Feature docs (upload, browser, dashboard, metadata) |
-| [docs/design-system.md](docs/design-system.md) | Design tokens, primitives, AI elements, loader, error/empty states |
+| [docs/features/](docs/features/) | Feature docs (file upload, file browser, dashboard, metadata extraction, settings) |
+| [docs/design-system.md](docs/design-system.md) | Design tokens, primitives, loader, error/empty states |
 | [docs/app-workflows.md](docs/app-workflows.md) | User journeys |
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows, command index, releases |
 | [docs/verification.md](docs/verification.md) | What each gate checks, and failure recovery |
 | [docs/frontend-conventions.md](docs/frontend-conventions.md) | Frontend conventions, screens, data fetching |
 | [docs/SECURITY.md](docs/SECURITY.md) | Security principles |
 | [docs/RELIABILITY.md](docs/RELIABILITY.md) | Reliability expectations |
-| [docs/api/openapi.json](docs/api/openapi.json) | Checked contract for the template's local FastAPI API |
+| [docs/api/openapi.json](docs/api/openapi.json) | The checked-in API contract the client seam is generated from |
 | [infra/vercel/README.md](infra/vercel/README.md) | Vercel deployment contract |
-| [docs/exec-plans/](docs/exec-plans/) | Execution plans and tech debt tracker |
+| [infra/railway/README.md](infra/railway/README.md) | Railway delivery contract |
+| [docs/exec-plans/](docs/exec-plans/) | Execution plans, tech debt, and the sample manifest |
+<!-- gen:end readme-doc-map -->
 
 ## FAQ
 

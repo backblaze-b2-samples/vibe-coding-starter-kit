@@ -1,0 +1,85 @@
+{
+  "$schema": "../../scripts/gen/sample.schema.json",
+  "schema_version": 1,
+  "name": "Vibe Coding Starter Kit",
+  "slug": "vibe-coding-starter-kit",
+  "package_scope": "@vibe-coding-starter-kit",
+  "purpose": "A well-engineered full-stack foundation — dashboard, drag-and-drop upload and a file browser — with Backblaze B2 storage already wired in, so builders skip the boilerplate loop.",
+  "tagline": "Stop wiring boilerplate and start building.",
+  "primary_entity": { "schema": "FileMetadata", "singular": "file", "plural": "files" },
+  "features": [
+    {
+      "title": "File Upload",
+      "route": "/upload",
+      "doc": "docs/features/file-upload.md",
+      "summary": "drag-and-drop upload with real-time progress",
+      "workflow_heading": "Upload Files"
+    },
+    {
+      "title": "File Browser",
+      "route": "/files",
+      "doc": "docs/features/file-browser.md",
+      "summary": "list, preview, download, delete files",
+      "workflow_heading": "Browse and Manage Files"
+    },
+    {
+      "title": "Dashboard",
+      "route": "/",
+      "doc": "docs/features/dashboard.md",
+      "summary": "stats cards, upload chart, recent uploads",
+      "workflow_heading": "View Dashboard"
+    },
+    {
+      "title": "Metadata Extraction",
+      "route": null,
+      "doc": "docs/features/metadata-extraction.md",
+      "summary": "image dimensions, EXIF, PDF info, checksums"
+    },
+    {
+      "title": "Settings",
+      "route": "/settings",
+      "doc": "docs/features/settings.md",
+      "summary": "theme plus labelled demo preference fields",
+      "workflow_heading": "Change Preferences"
+    }
+  ],
+  "b2_surface": [
+    { "operation": "put_object", "why": "store an uploaded object" },
+    { "operation": "presigned PUT", "why": "the browser uploads bytes directly to B2, bypassing the Function payload cap" },
+    { "operation": "list_objects_v2", "why": "the shared full-bucket listing behind the file list and the stats cards" },
+    { "operation": "head_object", "why": "cheap per-key metadata, and the /health connectivity probe" },
+    { "operation": "get_object", "why": "re-read bytes to recompute rich metadata on demand" },
+    { "operation": "presigned GET", "why": "download and inline preview URLs" },
+    { "operation": "delete_object", "why": "remove an object" }
+  ],
+  "b2_key_prefix": "uploads/",
+  "stack": {
+    "web": "Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query, Recharts",
+    "api": "FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, PyPDF2",
+    "storage": "Backblaze B2 (S3-compatible API)",
+    "package_manager": "pnpm workspaces"
+  },
+  "deployment_targets": ["vercel", "railway"],
+  "env_vars": [
+    { "name": "B2_APPLICATION_KEY_ID", "required": true, "secret": true, "note": "B2 application key ID (**keyID** in the B2 console)" },
+    { "name": "B2_APPLICATION_KEY", "required": true, "secret": true, "note": "B2 application key (**applicationKey**) — shown once at creation" },
+    { "name": "B2_BUCKET_NAME", "required": true, "secret": false, "note": "bucket unique name (**Bucket Unique Name** in the B2 console)" },
+    { "name": "B2_REGION", "required": true, "secret": false, "note": "the region inside the bucket's **Endpoint** (`s3.<region>.backblazeb2.com`); the S3 endpoint is derived from it" },
+    { "name": "B2_PUBLIC_URL_BASE", "required": false, "secret": false, "note": "public object base URL, when the bucket is public" },
+    { "name": "NEXT_PUBLIC_API_URL", "required": false, "secret": false, "note": "separate-origin deploys only; Next.js inlines it at build time" }
+  ],
+  "attribution_token": "b2ai-oss-start",
+  "repo": { "org": "backblaze-b2-samples", "name": "vibe-coding-starter-kit" },
+  "screenshots": [
+    {
+      "path": "docs/images/b2-starterkit-dashboard1.png",
+      "alt": "Dashboard view showing stat cards, upload activity chart, and recent uploads table",
+      "caption": "**Dashboard** — stats, upload activity, and recent uploads at a glance:"
+    },
+    {
+      "path": "docs/images/b2-starterkit-fileview2.png",
+      "alt": "File browser view showing a tree of files with hover actions",
+      "caption": "**File browser** — tree view with preview, download, and delete:"
+    }
+  ]
+}

@@ -13,10 +13,12 @@ The default is a **single Vercel project** that uses
 FastAPI API build from the same repository and share one origin, one domain, and
 one deployment.
 
+<!-- gen:begin vercel-services -->
 | Service | Root directory | Framework | Public path | Health check |
 | --- | --- | --- | --- | --- |
 | `web` | `apps/web` | Next.js | `/` | `/` |
 | `api` | `services/api` | FastAPI | `/api/*` | `/api/health` |
+<!-- gen:end vercel-services -->
 
 The repo-root `vercel.json` declares both services and the public route table:
 `/api/(.*)` routes to the `api` service and everything else routes to the `web`
@@ -61,13 +63,19 @@ GitHub Actions CI is skipped for the same PRs via an actor guard in
 Set values in the Vercel Project and environment. Never put values in
 `vercel.json`, source code, an issue, PR, terminal transcript, or screenshot.
 
+<!-- gen:begin vercel-variables -->
 | Variable names | Classification | Notes |
 | --- | --- | --- |
-| `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | Secret | Restrict the B2 key to the intended bucket and least privilege. |
-| `B2_REGION`, `B2_BUCKET_NAME`, `B2_PUBLIC_URL_BASE`, `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX`, rate settings | Non-secret configuration | Set `ENABLE_DOCS=false` in production. |
-| `MAX_FILE_SIZE` | Optional configuration | Uploads go directly to B2 (presigned PUT), so Vercel's 4.5 MB Function limit no longer applies — leave at the 100 MB default or set your own cap. |
-| `WARM_LIST_CACHE_ON_STARTUP=false` | Recommended Vercel configuration | Avoid an expensive full B2 scan on each cold start. |
+| `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | **Secret** | Restrict the B2 key to the intended bucket and least privilege. |
+| `B2_BUCKET_NAME` | Non-secret configuration | bucket unique name (**Bucket Unique Name** in the B2 console). |
+| `B2_REGION` | Non-secret configuration | the region inside the bucket's **Endpoint** (`s3.<region>.backblazeb2.com`); the S3 endpoint is derived from it. |
+| `B2_PUBLIC_URL_BASE` | Non-secret configuration | public object base URL, when the bucket is public. |
+| `NEXT_PUBLIC_API_URL` | Public build-time configuration | separate-origin deploys only; Next.js inlines it at build time. |
+| `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX` | Non-secret configuration | Set `ENABLE_DOCS=false` in production. `ALLOWED_KEY_PREFIX=uploads/` confines key operations when the bucket is shared. |
+| `MAX_FILE_SIZE` | Optional configuration | Uploads go directly to B2 (presigned PUT), so the platform's Function payload limit no longer applies — leave at the default or set your own cap. |
+| `WARM_LIST_CACHE_ON_STARTUP=false` | Recommended on this platform | Avoid an expensive full B2 scan on each cold start. |
 | `DOWNLOAD_COUNT_FILE=/tmp/download_count.json` | Optional ephemeral configuration | Lets a warm Function instance write the counter, but it is not durable or shared. |
+<!-- gen:end vercel-variables -->
 
 > **Breaking change for an existing deployment.** These are the standardized
 > Backblaze names, and they are not the ones older versions of this kit used.
@@ -101,9 +109,11 @@ Because the browser PUTs directly to B2, **the bucket's CORS must allow your
 deploy origin** (method `PUT` + the `content-type` header). After you know your
 URL, run once:
 
+<!-- gen:begin vercel-cors-command -->
 ```bash
 python services/api/scripts/setup_b2_cors.py --origin https://your-app.vercel.app --apply
 ```
+<!-- gen:end vercel-cors-command -->
 
 The helper merges the origin into the bucket's CORS, preserving any existing
 rules (dry-run by default; add `--apply` to write). You can also set the rule
@@ -122,21 +132,27 @@ The repository README carries a single Vercel deploy button. It opens Vercel's
 clone flow for the whole repository (no root directory), so Vercel reads the
 repo-root `vercel.json` and creates one Services project:
 
+<!-- gen:begin vercel-deploy-button -->
 | `root-directory` | Pre-filled `env` |
 | --- | --- |
-| _(none — repo root)_ | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_REGION`, `B2_BUCKET_NAME` |
+| _(none — repo root)_ | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_REGION` |
 
 Alongside `repository-url` and the `env` list, the button carries the
-presentation parameters Vercel's clone flow renders in its preview card:
-`project-name` and `repository-name` (both `vibe-coding-starter-kit`, so the
-cloned repo and the Vercel Project get a readable default name), plus
-`demo-title`, `demo-description`, and `demo-image` — the last pointing at the
-dashboard screenshot in `docs/images/`. There is no `demo-url`: this repository
-hosts no public demo deployment, and the API is unauthenticated and bucket-wide
-(see [Variables and Public Exposure](#variables-and-public-exposure)), so a
+presentation parameters the clone flow renders in its preview card:
+`project-name` and `repository-name` (both `vibe-coding-starter-kit`, so the cloned repo and
+the created Project get a readable default name), plus
+`demo-title`, `demo-description`, `demo-image`.
+
+`demo-image` points at `docs/images/b2-starterkit-dashboard1.png`, resolved against this
+repository's default branch.
+
+There is no `demo-url`: this repository hosts no public demo deployment, and
+the API is unauthenticated and bucket-wide (see
+[Variables and Public Exposure](#variables-and-public-exposure)), so a
 casually exposed demo origin is a liability rather than a feature. Any future
 demo needs its own throwaway bucket/prefix, a no-delete key, and lifecycle
 cleanup before a `demo-url` is added.
+<!-- gen:end vercel-deploy-button -->
 
 The button deliberately does not pre-set the `ENABLE_DOCS=false` and
 `WARM_LIST_CACHE_ON_STARTUP=false` production values; set those in the Project

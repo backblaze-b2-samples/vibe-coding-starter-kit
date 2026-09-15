@@ -2,12 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEMO_PREFERENCES_DEFAULTS,
+  DEMO_PREFERENCES_STORAGE_KEY,
   loadDemoPreferences,
   saveDemoPreferences,
   type DemoPreferences,
 } from "./demo-preferences";
 
-const KEY = "vibe-demo-preferences";
+const KEY = DEMO_PREFERENCES_STORAGE_KEY;
 
 // jsdom is not the default test environment here, so stand up a minimal
 // localStorage-backed `window` for the persistence round-trip.

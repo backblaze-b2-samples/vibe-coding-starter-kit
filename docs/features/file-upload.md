@@ -121,4 +121,3 @@ See [infra/vercel/README.md](../../infra/vercel/README.md) for the deploy-time d
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - [Metadata Extraction](metadata-extraction.md)
 - [App Workflows](../app-workflows.md)
-- [Design plan: presigned direct upload](../exec-plans/active/2026-08-06-presigned-direct-upload.md)

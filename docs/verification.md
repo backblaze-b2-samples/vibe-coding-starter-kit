@@ -25,9 +25,9 @@ with `--frozen-lockfile`, so run `pnpm install` yourself after editing
 `package.json`.
 
 `setup` and `doctor` must always be invoked as `pnpm run setup` / `pnpm run
-doctor`. Both are built-in pnpm commands before pnpm 11 (the version CI pins and
-the minimum `engines` allows), and the bare `pnpm setup` / `pnpm doctor` forms
-run pnpm's own commands — `pnpm setup` silently edits your shell profile instead
+doctor`. Both are built-in pnpm commands before pnpm 11, and pnpm 10 is the
+minimum `engines` allows (CI pins 11), so the bare `pnpm setup` / `pnpm doctor`
+forms run pnpm's own commands — `pnpm setup` silently edits your shell profile instead
 of preparing the repo. `predev` and `verify:full` therefore use the `run` form
 too, and `pnpm check:agent-docs` asserts it.
 

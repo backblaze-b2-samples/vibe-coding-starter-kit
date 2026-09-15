@@ -28,25 +28,16 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENV_FILE = resolve(REPO_ROOT, ".env");
 const VENV_PYTHON = resolve(REPO_ROOT, "services/api/.venv/bin/python");
 const VENV_UVICORN = resolve(REPO_ROOT, "services/api/.venv/bin/uvicorn");
+// The API's own declaration of its required B2 variables and their
+// .env.example placeholders. `app/config/settings.py` reads this very file, so
+// this preflight cannot drift from the server it is checking. Parsed rather
+// than imported: doctor stays zero-dependency and must work before the venv
+// exists — it is the script that tells you to create it.
+const B2_VARS_FILE = "services/api/app/config/b2_required_vars.json";
 
 // Required minimum versions. Bump as upstream support shifts.
 const REQUIRED_NODE_MAJOR = 20;
-const REQUIRED_PNPM_MAJOR = 9;
-// Required B2 env vars + the exact placeholder strings shipped in
-// .env.example. Keep in sync with services/api/main.py REQUIRED_B2_SETTINGS
-// and PLACEHOLDER_VALUES.
-const REQUIRED_B2_VARS = [
-  "B2_ENDPOINT",
-  "B2_KEY_ID",
-  "B2_APPLICATION_KEY",
-  "B2_BUCKET_NAME",
-];
-const PLACEHOLDERS = new Set([
-  "your_b2_endpoint",
-  "your_key_id",
-  "your_application_key",
-  "your-bucket-name",
-]);
+const REQUIRED_PNPM_MAJOR = 10;
 
 // Only Next.js: `pnpm dev` self-heals the API side via scripts/pick-port.mjs,
 // so warning about 8000 here would just duplicate dev.sh's own banner.
@@ -171,7 +162,40 @@ function parseEnvFile(path) {
   return out;
 }
 
+/**
+ * @returns {{names: string[], placeholders: Set<string>}|null} the API's
+ * required-variable contract, or null when it cannot be read. Never a
+ * hardcoded fallback: a stale built-in list would check the wrong variables
+ * and pass, which is the drift this file exists to remove.
+ */
+function readB2Vars() {
+  try {
+    const parsed = JSON.parse(readFileSync(resolve(REPO_ROOT, B2_VARS_FILE), "utf8"));
+    const required = Array.isArray(parsed.required) ? parsed.required : [];
+    const names = required.map((entry) => entry?.env).filter(Boolean);
+    if (names.length === 0) return null;
+    return {
+      names,
+      placeholders: new Set(
+        required.map((entry) => entry?.placeholder).filter(Boolean),
+      ),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function checkEnv() {
+  const b2Vars = readB2Vars();
+  if (!b2Vars) {
+    fail(
+      `Could not read the required B2 variables from ${B2_VARS_FILE}`,
+      `Restore ${B2_VARS_FILE} — app/config/settings.py and this check both read it as the single source of truth`,
+    );
+    return;
+  }
+  const { names: REQUIRED_B2_VARS, placeholders: PLACEHOLDERS } = b2Vars;
+
   if (!existsSync(ENV_FILE)) {
     fail(
       ".env is missing at the repo root",

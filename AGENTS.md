@@ -20,9 +20,9 @@ infra/railway/     Railway delivery contract (per-service railway.json live at t
 infra/vercel/      Vercel deployment contract
 ```
 
-## 2. Building on This Starter Kit
+## 2. Shared Scaffolding Contract
 
-When this repo is used as the foundation for a new app, the following pieces are part of the starter contract — keep them. Adapt only what the new use case actually requires.
+These pieces are shared scaffolding rather than app-specific code: keep them, and adapt only what this app actually requires.
 
 **Keep as-is (do not strip, rename, or replace)**
 - **UI kit / design system.** `apps/web/src/components/ui/` (shadcn primitives), the design tokens in `apps/web/src/app/globals.css`, and the `/design` reference page. Build new screens with these primitives; never edit the generated `components/ui/` files directly. Restyling happens through tokens in `globals.css`.
@@ -30,12 +30,11 @@ When this repo is used as the foundation for a new app, the following pieces are
 - **Upload.** `/upload` route, `apps/web/src/app/upload/`, and `apps/web/src/components/upload/`. The Upload sidebar entry stays.
 - The sidebar nav itself (Dashboard, Upload, Files, Settings, plus the Design System utility link).
 
-**Adapt to the new use case**
-- **Dashboard.** `/` route and `apps/web/src/components/dashboard/` (stats cards, upload chart, recent uploads table) are illustrative defaults. Replace them with metrics, charts, and tables that reflect what the new app actually does (e.g. transcripts processed, embeddings indexed, classifications run). New aggregations must flow through the same `runtime -> service -> repo` layering and be exposed via TanStack Query hooks in `apps/web/src/lib/queries.ts` — no bare `useEffect + fetch`.
+**Adapt to this app**
+- **Dashboard.** `/` route and `apps/web/src/components/dashboard/` (stats cards, upload chart, recent uploads table) are illustrative defaults. Replace them with metrics, charts, and tables that reflect what this app actually does (e.g. transcripts processed, embeddings indexed, classifications run). New aggregations must flow through the same `runtime -> service -> repo` layering and be exposed via TanStack Query hooks in `apps/web/src/lib/queries.ts` — no bare `useEffect + fetch`.
 - Update `docs/features/dashboard.md` in the same PR as any dashboard change (see §9).
 
-**Why this contract exists**
-- The UI kit, Files, and Upload pages are the reusable B2-backed scaffolding that makes this a starter kit — stripping them defeats the purpose. The dashboard is the only screen explicitly designed to be rewritten per app.
+**Why this contract exists** — the UI kit, Files, and Upload pages are the reusable B2-backed scaffolding; stripping them costs the app its whole storage surface. The dashboard is the one screen designed to be rewritten per app.
 
 ## 3. Architectural Invariants
 
@@ -87,6 +86,7 @@ When this repo is used as the foundation for a new app, the following pieces are
 | `docs/api/openapi.json` matches the FastAPI app | `tests/test_openapi_contract.py` (also `pnpm contract:check`) |
 | Frontend `API_CLIENT_ROUTES` and the OpenAPI artifact agree in both directions | `apps/web/src/lib/api-contract.test.ts` (also `pnpm contract:check`) |
 | `.env.example` exists (`pnpm run setup` copies it to `.env`) | `pnpm check:agent-docs` |
+| The required B2 variables are declared once, in `app/config/b2_required_vars.json`, and read by both `app/config/settings.py` and `scripts/doctor.mjs` | `tests/test_b2_required_vars.py` |
 | Env files ignored; example/template env files trackable | `pnpm check:agent-docs` |
 | Relative Markdown links resolve, and every `#anchor` matches a real heading | `pnpm check:agent-docs` (`scripts/agent-docs/doc-links.mjs`) |
 | If the README ships a Vercel deploy button, it deploys the whole app — a root `vercel.json` declaring `web` + `api` services (one project), or buttons covering both Projects — backed by `infra/vercel/README.md` | `pnpm check:agent-docs` |

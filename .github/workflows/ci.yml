@@ -36,7 +36,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
       # No `pnpm install`: the checker is a zero-dependency stdlib script and
       # `pnpm run` resolves root scripts without node_modules. Skipping the
@@ -59,7 +59,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
       - name: Install Node
         uses: actions/setup-node@v4
@@ -97,7 +97,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
       - name: Install Node
         uses: actions/setup-node@v4

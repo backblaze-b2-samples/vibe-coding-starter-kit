@@ -31,7 +31,7 @@ const VENV_UVICORN = resolve(REPO_ROOT, "services/api/.venv/bin/uvicorn");
 
 // Required minimum versions. Bump as upstream support shifts.
 const REQUIRED_NODE_MAJOR = 20;
-const REQUIRED_PNPM_MAJOR = 9;
+const REQUIRED_PNPM_MAJOR = 10;
 // Required B2 env vars + the exact placeholder strings shipped in
 // .env.example. Keep in sync with services/api/main.py REQUIRED_B2_SETTINGS
 // and PLACEHOLDER_VALUES.

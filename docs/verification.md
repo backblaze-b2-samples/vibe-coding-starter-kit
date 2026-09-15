@@ -265,9 +265,9 @@ live there too.
 
 `pnpm verify` is the canonical credential-free non-live gate for PRs. It is composed of
 `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint, backend tests,
-structural boundary tests), then `pnpm verify:web` (frontend lint, frontend
-unit tests, frontend typecheck + build) — so the agent-doc guard runs first and
-CI can run all three checks as parallel jobs. `package.json` is the single
+structural boundary tests), then `pnpm verify:web` (generated-file drift,
+frontend lint, frontend unit tests, frontend typecheck + build) — so the
+agent-doc guard runs first and CI can run all three checks as parallel jobs. `package.json` is the single
 source of truth for the literal command chain; when it changes, update the
 plain-language list here and in `AGENTS.md` §6 (see
 [Documentation Update](dev-workflows.md#documentation-update)), not a duplicated
@@ -293,11 +293,32 @@ pnpm verify:full
 │  │  ├─ pnpm test:api
 │  │  └─ pnpm check:structure
 │  └─ pnpm verify:web
+│     ├─ pnpm gen:check
 │     ├─ pnpm lint
+│     ├─ pnpm typecheck
 │     ├─ pnpm test:web
 │     └─ pnpm build
 └─ pnpm test:e2e
 ```
+
+### Generated-file drift (`pnpm gen:check`)
+
+Runs first inside `pnpm verify:web`, and fails when a generated file no longer
+matches its source:
+
+- `node scripts/gen-api.mjs --check` — the shared types, the client route
+  registry and the query-key factory, against `docs/api/openapi.json`. Recovery:
+  `pnpm contract:export && pnpm gen:api`.
+- `node scripts/gen-docs.mjs --check` — the marker-delimited doc regions,
+  against `docs/exec-plans/sample.json`. Recovery: `pnpm gen:docs`.
+
+A *missing or unbalanced* `gen:begin` / `gen:end` marker pair is a hard error in
+both modes rather than a silently re-appended region, because losing one is
+normally the symptom of a whole-file rewrite. Restore the pair — `git checkout --
+<file>` is usually enough — and re-run `pnpm gen:docs`.
+
+Both generators are node-stdlib only: they need no `pnpm install`, no venv and
+no running backend, so they work in a fresh clone.
 
 One checkout supports one active `pnpm verify`: concurrent Next.js builds
 contend for `apps/web/.next/lock`. For parallel agents, give each run its own

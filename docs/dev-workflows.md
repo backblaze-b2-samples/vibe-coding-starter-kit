@@ -16,6 +16,9 @@ and the release process. Two companion docs carry the reference material:
 - Wait for the running stack: `pnpm wait-ready`
 - API contract export: `pnpm contract:export`
 - API contract drift check: `pnpm contract:check`
+- Regenerate the client seam (types, routes, query keys): `pnpm gen:api`
+- Regenerate the doc regions from `docs/exec-plans/sample.json`: `pnpm gen:docs`
+- Generated-file drift gate: `pnpm gen:check`
 - Canonical pre-PR suite: `pnpm verify`
 - Backend half only: `pnpm verify:api`
 - Frontend half only: `pnpm verify:web`

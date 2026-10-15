@@ -175,7 +175,7 @@ only with the reviewed workflow in [docs/verification.md](docs/verification.md#p
 
 1. Read this file first.
 2. Review [ARCHITECTURE.md](ARCHITECTURE.md) before structural changes.
-3. For non-trivial changes, create a plan in `docs/exec-plans/active/`.
+3. For non-trivial changes, create a plan in `docs/exec-plans/active/`. Plans committed here are public: write them for any reader, with no private tracker, internal path or person.
 4. Implement the smallest coherent change.
 5. Run: `pnpm verify`
 6. Update docs in the same PR (see §9).

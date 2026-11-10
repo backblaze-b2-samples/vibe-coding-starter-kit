@@ -11,7 +11,7 @@ A well-engineered full-stack foundation — dashboard, drag-and-drop upload and 
   - File Browser (`/files`) — list, preview, download, delete files
   - Dashboard (`/`) — stats cards, upload chart, recent uploads
   - Settings (`/settings`) — theme plus labelled demo preference fields
-- **services/api/** — FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, PyPDF2
+- **services/api/** — FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, pypdf
   - REST API for every operation the frontend consumes, exported to `docs/api/openapi.json`
   - Backblaze B2 (S3-compatible API) access isolated in the `repo/` layer
   - Metadata Extraction — image dimensions, EXIF, PDF info, checksums

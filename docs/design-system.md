@@ -224,6 +224,14 @@ See `/design` route for live examples. Authoring rules:
   kit's existing primitives).
 - Shared non-shadcn primitives like `EmptyState` and `DataTable` also live
   in `src/components/ui/`; treat them the same way.
+- shadcn's base stylesheet (accordion keyframes and the custom variants and
+  utilities the primitives use) is vendored as
+  `src/app/shadcn-tailwind.css` and imported by `globals.css`, so the app has
+  no `shadcn` package dependency. The CLI runs through `npx` instead. If a
+  `npx shadcn@latest` command re-adds `@import "shadcn/tailwind.css"` to
+  `globals.css` or `shadcn` to `package.json`, revert both. To pick up a newer
+  upstream stylesheet, copy `dist/tailwind.css` from that `shadcn` release
+  into the vendored file and update the version in its header.
 
 ## Accessibility
 

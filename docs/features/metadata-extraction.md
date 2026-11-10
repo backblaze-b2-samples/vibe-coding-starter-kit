@@ -39,7 +39,7 @@ Extract rich metadata (checksums, image/PDF fields) from stored objects, on dema
 - `get_file_detail()` heads the object (rejecting >`max_file_size`), downloads it via `get_object_bytes()`, and calls `extract_metadata()` with the object's real `head_object` LastModified time
 - `extract_metadata()` computes MD5 and SHA-256 hashes
 - If image: opens with Pillow, extracts dimensions and EXIF data. A failure sets `metadata_warning` instead of returning nothing — a `DecompressionBombError` (image above Pillow's decode ceiling) gets a message naming that limit, anything else a generic decode message
-- If PDF: opens with PyPDF2, extracts page count, author, title; a parse failure sets `metadata_warning`
+- If PDF: opens with pypdf, extracts page count, author, title; a parse failure sets `metadata_warning`
 - The decompression-bomb ceiling is a deliberate safety control and stays in place: oversized images are reported, never decoded
 - `uploaded_at` is passed in explicitly (the stored object's LastModified) so the panel shows the true upload time rather than the recompute wall-clock time; it defaults to now only when omitted
 - Returns `FileMetadataDetail`; the Files preview dialog fetches it lazily when the user expands "Detailed metadata"

@@ -16,7 +16,7 @@ app's own features instead of rebuilding the same shell. Storage is
 - Dashboard — stats cards, upload chart, recent uploads
 - Metadata Extraction — image dimensions, EXIF, PDF info, checksums
 - Settings — theme plus labelled demo preference fields
-- Backend with a strict layered architecture and structural tests (FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, PyPDF2)
+- Backend with a strict layered architecture and structural tests (FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, pypdf)
 - Agent-optimized docs — your AI coding agent can read the repo and start contributing immediately
 <!-- gen:end readme-header -->
 
@@ -223,7 +223,7 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 
 - TypeScript, Next.js 16, React 19, Tailwind v4, shadcn/ui, Recharts
 - TanStack Query — caching, dedup, retry, stale-while-revalidate for every fetch
-- Python 3.12+, FastAPI, boto3, Pydantic v2, Pillow, PyPDF2
+- Python 3.12+, FastAPI, boto3, Pydantic v2, Pillow, pypdf
 - Backblaze B2 (S3-compatible object storage)
 - pnpm workspaces (monorepo)
 

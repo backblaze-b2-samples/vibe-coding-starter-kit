@@ -55,7 +55,7 @@
   "b2_key_prefix": "uploads/",
   "stack": {
     "web": "Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query, Recharts",
-    "api": "FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, PyPDF2",
+    "api": "FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, pypdf",
     "storage": "Backblaze B2 (S3-compatible API)",
     "package_manager": "pnpm workspaces"
   },

@@ -24,11 +24,9 @@ onlyBuiltDependencies:
   - sharp
   - unrs-resolver
 
-# Transitive-dependency version pins (advisory remediation). pnpm 11 reads
-# `overrides` from THIS file and ignores `pnpm.overrides` in package.json, while
-# pnpm 9 reads only package.json. Both copies therefore exist and must stay
-# identical — a mismatch makes `pnpm install --frozen-lockfile` fail with
-# ERR_PNPM_LOCKFILE_CONFIG_MISMATCH on whichever major reads the stale copy.
+# Transitive-dependency version pins (advisory remediation). pnpm 10 and 11 read
+# `overrides` from this file; the `pnpm` field in package.json is no longer read
+# by pnpm 11 and must not be used.
 overrides:
   "@humanfs/node@<0.16.8": "^0.16.8"
   "brace-expansion@<1.1.21": "^1.1.21"

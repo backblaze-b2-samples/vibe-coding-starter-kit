@@ -16,6 +16,7 @@ that is Theme; the rest is a labelled demonstration.
 - `apps/web/src/lib/theme-preference.ts` — `THEME_OPTIONS`, `DEFAULT_THEME`, `isThemeOption()`, `normalizeTheme()`; the one real preference
 - `apps/web/src/lib/demo-preferences.ts` — `DemoPreferences`, `DEMO_PREFERENCES_DEFAULTS`, `loadDemoPreferences()`, `saveDemoPreferences()`; localStorage persistence for the illustrative fields
 - `apps/web/src/components/settings/settings-form.tsx` — the form; a demo banner, the real Theme control, and the demo Profile/Preferences fields
+- `apps/web/src/lib/settings-schema.ts`: the form's validation rules and messages (zod), unit-tested in `settings-schema.test.ts`
 - `apps/web/src/components/layout/theme-provider.tsx` — `next-themes` provider (the single owner of the theme)
 - `apps/web/src/components/settings/danger-zone.tsx` — destructive bucket actions (demo — no real delete runs)
 

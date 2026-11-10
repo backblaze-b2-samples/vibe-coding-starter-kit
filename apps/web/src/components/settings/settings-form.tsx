@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTheme } from "next-themes";
 import { FlaskConical } from "lucide-react";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +37,7 @@ import {
   THEME_OPTIONS,
   normalizeTheme,
 } from "@/lib/theme-preference";
+import { settingsSchema, type SettingsValues } from "@/lib/settings-schema";
 import {
   DEMO_PREFERENCES_DEFAULTS,
   loadDemoPreferences,
@@ -53,27 +53,6 @@ import {
 // banner says so, and the demo values persist to localStorage only. This used
 // to mislead: the same fields toasted "Settings saved" with no hint they were
 // inert. See docs/features/settings.md.
-const settingsSchema = z.object({
-  displayName: z
-    .string()
-    .min(2, "Display name must be at least 2 characters")
-    .max(50),
-  bio: z.string().max(160, "Bio must be 160 characters or fewer").optional(),
-  theme: z.enum(THEME_OPTIONS),
-  defaultView: z.enum(["tree", "list", "grid"]),
-  emailOnUpload: z.boolean(),
-  warnNearQuota: z.boolean(),
-  quotaThreshold: z
-    .string()
-    .regex(/^\d+$/, "Must be a number")
-    .refine((v) => {
-      const n = Number(v);
-      return n >= 50 && n <= 95;
-    }, "Must be between 50 and 95"),
-});
-
-type SettingsValues = z.infer<typeof settingsSchema>;
-
 const defaultValues: SettingsValues = {
   ...DEMO_PREFERENCES_DEFAULTS,
   theme: DEFAULT_THEME,

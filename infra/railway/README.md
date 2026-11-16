@@ -6,6 +6,10 @@ topology without creating a Railway project, deploying code, or storing
 environment values in the repository. An authorized human performs every
 external action.
 
+The copy-ready gallery name, overview, variable prompts, UTM linkbacks, and
+metrics contract live in the [Railway listing packet](LISTING.md). That packet
+does not replace the deployment, security, rollback, or cleanup rules here.
+
 ## Service Contracts
 
 Railway config-as-code applies to one service deployment at a time. Create two

@@ -37,6 +37,13 @@
       "workflow_heading": "Review Verification Runs"
     },
     {
+      "title": "Issue Intelligence",
+      "route": "/intelligence",
+      "doc": "docs/features/intelligence.md",
+      "summary": "classified and clustered GitHub issues for the sample repo (optional, operator-run)",
+      "workflow_heading": "Explore Issue Intelligence"
+    },
+    {
       "title": "Metadata Extraction",
       "route": null,
       "doc": "docs/features/metadata-extraction.md",
@@ -73,6 +80,10 @@
     { "name": "B2_BUCKET_NAME", "required": true, "secret": false, "note": "bucket unique name (**Bucket Unique Name** in the B2 console)" },
     { "name": "B2_REGION", "required": true, "secret": false, "note": "the region inside the bucket's **Endpoint** (`s3.<region>.backblazeb2.com`); the S3 endpoint is derived from it" },
     { "name": "B2_PUBLIC_URL_BASE", "required": false, "secret": false, "note": "public object base URL, when the bucket is public" },
+    { "name": "INTELLIGENCE_ENABLED", "required": false, "secret": false, "note": "set to `true` to expose the operator-only pipeline trigger routes (off by default); see `docs/features/intelligence.md`" },
+    { "name": "INTELLIGENCE_ADMIN_TOKEN", "required": false, "secret": true, "note": "bearer token the trigger routes require when enabled" },
+    { "name": "ANTHROPIC_API_KEY", "required": false, "secret": true, "note": "only for the issue-intelligence pipeline (classification and cluster labels)" },
+    { "name": "GITHUB_TOKEN", "required": false, "secret": true, "note": "optional read-only token for the issue-intelligence pipeline's GitHub requests" },
     { "name": "NEXT_PUBLIC_API_URL", "required": false, "secret": false, "note": "separate-origin deploys only; Next.js inlines it at build time" }
   ],
   "attribution_token": "b2ai-oss-start",

@@ -1,4 +1,4 @@
-from app.repo import verify_repo
+from app.repo import intelligence_storage, verify_repo
 from app.repo.b2_client import (
     check_connectivity,
     delete_file,
@@ -28,6 +28,7 @@ __all__ = [
     "get_presigned_url",
     "get_upload_stats",
     "increment_download_count",
+    "intelligence_storage",
     "invalidate_listing",
     "list_files",
     "prewarm_listing",

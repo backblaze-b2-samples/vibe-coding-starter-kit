@@ -144,6 +144,7 @@ pnpm check:structure      # structural boundary tests
 pnpm check:structure:web  # frontend structure invariants (no bare fetch, no direct react-query use outside lib/)
 pnpm test:scripts         # unit tests for the repo's own helper scripts (verify:upload helpers)
 pnpm verify:upload        # live: run the E2E suite and store the evidence in B2 (credentials; not part of verify)
+pnpm intel:ingest         # operator: run the issue-intelligence pipeline (optional deps, credentials)
 pnpm test:e2e             # this app's own Playwright smoke suite (project: chromium)
 pnpm test:verify          # throwaway app verification specs in apps/web/e2e/verify/ (project: verify)
 ```

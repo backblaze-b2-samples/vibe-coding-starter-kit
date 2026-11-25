@@ -1,6 +1,115 @@
 {
   "components": {
     "schemas": {
+      "B2RoleCount": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "count"
+        ],
+        "title": "B2RoleCount",
+        "type": "object"
+      },
+      "Body_trigger_snapshot_intelligence_snapshots_post": {
+        "properties": {
+          "repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo"
+          }
+        },
+        "title": "Body_trigger_snapshot_intelligence_snapshots_post",
+        "type": "object"
+      },
+      "CategoryCount": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "percentage": {
+            "default": 0.0,
+            "title": "Percentage",
+            "type": "number"
+          }
+        },
+        "required": [
+          "category",
+          "count",
+          "percentage"
+        ],
+        "title": "CategoryCount",
+        "type": "object"
+      },
+      "Cluster": {
+        "properties": {
+          "centroid_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Centroid Id"
+          },
+          "cluster_id": {
+            "title": "Cluster Id",
+            "type": "string"
+          },
+          "issue_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Issue Ids",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "size": {
+            "default": 0,
+            "title": "Size",
+            "type": "integer"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cluster_id",
+          "label",
+          "summary",
+          "issue_ids",
+          "size",
+          "centroid_id"
+        ],
+        "title": "Cluster",
+        "type": "object"
+      },
       "DailyUploadCount": {
         "description": "One day's upload count, for the dashboard activity chart.",
         "properties": {
@@ -394,6 +503,148 @@
         "title": "HealthStatus",
         "type": "object"
       },
+      "IssueListItem": {
+        "properties": {
+          "b2_role": {
+            "title": "B2 Role",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "cluster_id": {
+            "title": "Cluster Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "html_url": {
+            "title": "Html Url",
+            "type": "string"
+          },
+          "issue_id": {
+            "title": "Issue Id",
+            "type": "integer"
+          },
+          "issue_number": {
+            "title": "Issue Number",
+            "type": "integer"
+          },
+          "spec_depth_score": {
+            "title": "Spec Depth Score",
+            "type": "number"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issue_id",
+          "issue_number",
+          "title",
+          "html_url",
+          "state",
+          "category",
+          "b2_role",
+          "spec_depth_score",
+          "cluster_id",
+          "created_at"
+        ],
+        "title": "IssueListItem",
+        "type": "object"
+      },
+      "IssueListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IssueListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "offset",
+          "limit",
+          "items"
+        ],
+        "title": "IssueListResponse",
+        "type": "object"
+      },
+      "IssueSummary": {
+        "properties": {
+          "b2_role": {
+            "title": "B2 Role",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "cluster_id": {
+            "title": "Cluster Id",
+            "type": "string"
+          },
+          "cluster_label": {
+            "title": "Cluster Label",
+            "type": "string"
+          },
+          "html_url": {
+            "title": "Html Url",
+            "type": "string"
+          },
+          "issue_id": {
+            "title": "Issue Id",
+            "type": "integer"
+          },
+          "issue_number": {
+            "title": "Issue Number",
+            "type": "integer"
+          },
+          "spec_depth_score": {
+            "title": "Spec Depth Score",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issue_id",
+          "issue_number",
+          "title",
+          "html_url",
+          "category",
+          "b2_role",
+          "spec_depth_score",
+          "cluster_id",
+          "cluster_label"
+        ],
+        "title": "IssueSummary",
+        "type": "object"
+      },
       "PresignUploadRequest": {
         "description": "What the browser declares before uploading directly to B2.",
         "properties": {
@@ -459,6 +710,205 @@
           "expires_in"
         ],
         "title": "PresignUploadResponse",
+        "type": "object"
+      },
+      "SnapshotReport": {
+        "properties": {
+          "activity_timeline": {
+            "items": {
+              "$ref": "#/components/schemas/WeeklyActivity"
+            },
+            "title": "Activity Timeline",
+            "type": "array"
+          },
+          "b2_role_distribution": {
+            "items": {
+              "$ref": "#/components/schemas/B2RoleCount"
+            },
+            "title": "B2 Role Distribution",
+            "type": "array"
+          },
+          "category_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryCount"
+            },
+            "title": "Category Breakdown",
+            "type": "array"
+          },
+          "closed_issues": {
+            "default": 0,
+            "title": "Closed Issues",
+            "type": "integer"
+          },
+          "clusters": {
+            "items": {
+              "$ref": "#/components/schemas/Cluster"
+            },
+            "title": "Clusters",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "open_issues": {
+            "default": 0,
+            "title": "Open Issues",
+            "type": "integer"
+          },
+          "pipeline_cost": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Pipeline Cost",
+            "type": "object"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "spec_depth_histogram": {
+            "items": {
+              "$ref": "#/components/schemas/SpecDepthBucket"
+            },
+            "title": "Spec Depth Histogram",
+            "type": "array"
+          },
+          "thin_issues": {
+            "items": {
+              "$ref": "#/components/schemas/IssueSummary"
+            },
+            "title": "Thin Issues",
+            "type": "array"
+          },
+          "top_specs": {
+            "items": {
+              "$ref": "#/components/schemas/IssueSummary"
+            },
+            "title": "Top Specs",
+            "type": "array"
+          },
+          "total_issues": {
+            "default": 0,
+            "title": "Total Issues",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "repo",
+          "generated_at",
+          "total_issues",
+          "open_issues",
+          "closed_issues",
+          "clusters",
+          "category_breakdown",
+          "b2_role_distribution",
+          "activity_timeline",
+          "spec_depth_histogram",
+          "top_specs",
+          "thin_issues",
+          "pipeline_cost"
+        ],
+        "title": "SnapshotReport",
+        "type": "object"
+      },
+      "SnapshotStatus": {
+        "properties": {
+          "closed_issues": {
+            "default": 0,
+            "title": "Closed Issues",
+            "type": "integer"
+          },
+          "cluster_count": {
+            "default": 0,
+            "title": "Cluster Count",
+            "type": "integer"
+          },
+          "error": {
+            "default": "",
+            "title": "Error",
+            "type": "string"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "open_issues": {
+            "default": 0,
+            "title": "Open Issues",
+            "type": "integer"
+          },
+          "pipeline_cost": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Pipeline Cost",
+            "type": "object"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "running",
+            "enum": [
+              "running",
+              "ingested",
+              "complete",
+              "failed",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "total_issues": {
+            "default": 0,
+            "title": "Total Issues",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "repo",
+          "fetched_at",
+          "status",
+          "total_issues",
+          "open_issues",
+          "closed_issues",
+          "cluster_count",
+          "pipeline_cost",
+          "error"
+        ],
+        "title": "SnapshotStatus",
+        "type": "object"
+      },
+      "SpecDepthBucket": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "score_range": {
+            "title": "Score Range",
+            "type": "string"
+          }
+        },
+        "required": [
+          "score_range",
+          "count"
+        ],
+        "title": "SpecDepthBucket",
         "type": "object"
       },
       "UploadStats": {
@@ -667,6 +1117,41 @@
           "key"
         ],
         "title": "VerifyUploadRequest",
+        "type": "object"
+      },
+      "WeeklyActivity": {
+        "properties": {
+          "cluster_id": {
+            "title": "Cluster Id",
+            "type": "string"
+          },
+          "cluster_label": {
+            "title": "Cluster Label",
+            "type": "string"
+          },
+          "created_count": {
+            "default": 0,
+            "title": "Created Count",
+            "type": "integer"
+          },
+          "updated_count": {
+            "default": 0,
+            "title": "Updated Count",
+            "type": "integer"
+          },
+          "week": {
+            "title": "Week",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week",
+          "cluster_id",
+          "cluster_label",
+          "created_count",
+          "updated_count"
+        ],
+        "title": "WeeklyActivity",
         "type": "object"
       }
     }
@@ -1200,6 +1685,399 @@
         "summary": "Health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/intelligence/snapshots": {
+      "get": {
+        "operationId": "list_all_snapshots_intelligence_snapshots_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SnapshotStatus"
+                  },
+                  "title": "Response List All Snapshots Intelligence Snapshots Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List All Snapshots",
+        "tags": [
+          "intelligence"
+        ]
+      },
+      "post": {
+        "operationId": "trigger_snapshot_intelligence_snapshots_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_trigger_snapshot_intelligence_snapshots_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Trigger Snapshot Intelligence Snapshots Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trigger Snapshot",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/intelligence/snapshots/{snapshot_id}": {
+      "get": {
+        "operationId": "get_snapshot_report_intelligence_snapshots__snapshot_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{8}T\\d{6}Z$",
+              "title": "Snapshot Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Snapshot Report",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/intelligence/snapshots/{snapshot_id}/activity": {
+      "get": {
+        "operationId": "get_snapshot_activity_intelligence_snapshots__snapshot_id__activity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{8}T\\d{6}Z$",
+              "title": "Snapshot Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WeeklyActivity"
+                  },
+                  "title": "Response Get Snapshot Activity Intelligence Snapshots  Snapshot Id  Activity Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Snapshot Activity",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/intelligence/snapshots/{snapshot_id}/clusters": {
+      "get": {
+        "operationId": "get_snapshot_clusters_intelligence_snapshots__snapshot_id__clusters_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{8}T\\d{6}Z$",
+              "title": "Snapshot Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Cluster"
+                  },
+                  "title": "Response Get Snapshot Clusters Intelligence Snapshots  Snapshot Id  Clusters Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Snapshot Clusters",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/intelligence/snapshots/{snapshot_id}/issues": {
+      "get": {
+        "operationId": "get_snapshot_issues_intelligence_snapshots__snapshot_id__issues_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{8}T\\d{6}Z$",
+              "title": "Snapshot Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cluster_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cluster Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_spec_depth",
+            "required": false,
+            "schema": {
+              "default": 0.0,
+              "title": "Min Spec Depth",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Snapshot Issues",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/intelligence/snapshots/{snapshot_id}/reprocess": {
+      "post": {
+        "operationId": "trigger_reprocess_intelligence_snapshots__snapshot_id__reprocess_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{8}T\\d{6}Z$",
+              "title": "Snapshot Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Trigger Reprocess Intelligence Snapshots  Snapshot Id  Reprocess Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trigger Reprocess",
+        "tags": [
+          "intelligence"
         ]
       }
     },

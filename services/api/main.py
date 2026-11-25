@@ -30,6 +30,7 @@ from app.config import (  # noqa: E402
 from app.runtime import (  # noqa: E402
     files,
     health,
+    intelligence,
     metrics,
     ratelimit,
     upload,
@@ -174,4 +175,5 @@ app.include_router(health.router, tags=["health"])
 app.include_router(upload.router, tags=["upload"])
 app.include_router(files.router, tags=["files"])
 app.include_router(verify.router)
+app.include_router(intelligence.router)
 app.include_router(metrics.router, tags=["metrics"])

@@ -171,6 +171,12 @@ export const COMMANDS = [
       "Live and opt-in: run the E2E suite, then store the evidence in B2 for the `/verify` dashboard; fails if the tests or the upload fail",
   },
   {
+    script: "intel:ingest",
+    invoke: "pnpm intel:ingest",
+    group: "Test & Lint",
+    short: "operator: run the issue-intelligence pipeline (optional deps, credentials)",
+  },
+  {
     script: "test:e2e",
     invoke: "pnpm test:e2e",
     group: "Test & Lint",

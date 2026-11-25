@@ -15,6 +15,7 @@ app's own features instead of rebuilding the same shell. Storage is
 - File Browser — list, preview, download, delete files
 - Dashboard — stats cards, upload chart, recent uploads
 - Verification Runs — Playwright run history and evidence stored in B2
+- Issue Intelligence — classified and clustered GitHub issues for the sample repo (optional, operator-run)
 - Metadata Extraction — image dimensions, EXIF, PDF info, checksums
 - Settings — theme plus labelled demo preference fields
 - Backend with a strict layered architecture and structural tests (FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, pypdf)
@@ -206,6 +207,7 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 - [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
 - [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
 - [Verification Runs](docs/features/verification.md) — Playwright run history and evidence stored in B2
+- [Issue Intelligence](docs/features/intelligence.md) — classified and clustered GitHub issues for the sample repo (optional, operator-run)
 - [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
 - [Settings](docs/features/settings.md) — theme plus labelled demo preference fields
 <!-- gen:end readme-core-features -->
@@ -293,7 +295,7 @@ preview/production, `/health` checks, and rollback — is in the
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Agent table of contents — start here |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System layout, layering, data flows |
-| [docs/features/](docs/features/) | Feature docs (file upload, file browser, dashboard, verification runs, metadata extraction, settings) |
+| [docs/features/](docs/features/) | Feature docs (file upload, file browser, dashboard, verification runs, issue intelligence, metadata extraction, settings) |
 | [docs/design-system.md](docs/design-system.md) | Design tokens, primitives, loader, error/empty states |
 | [docs/app-workflows.md](docs/app-workflows.md) | User journeys |
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows, command index, releases |

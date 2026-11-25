@@ -13,7 +13,9 @@
   "serverOnly": {
     "$comment": "Operations the app shell must never call, keyed `<method> <path>`. They stay in the contract and out of the generated registry and query keys. The frontend contract test keeps its own copy of this set as a belt-and-braces check, so a set that is too LARGE here fails `pnpm test:web` loudly rather than silently dropping an endpoint.",
     "operations": {
-      "get /metrics": "Prometheus metrics are scraped server-side, not fetched by the browser."
+      "get /metrics": "Prometheus metrics are scraped server-side, not fetched by the browser.",
+      "post /intelligence/snapshots": "Spends GitHub quota and LLM tokens; operator-only (bearer token), run from the CLI or a script, never from the browser.",
+      "post /intelligence/snapshots/{snapshot_id}/reprocess": "Spends LLM tokens; operator-only (bearer token), never called from the browser."
     }
   },
 
@@ -44,7 +46,15 @@
     "post /upload/presign": { "route": "uploadPresign" },
     "post /upload/verify": { "route": "uploadVerify" },
     "get /verify/runs": { "route": "verifyRuns", "query": { "name": "verifyRuns", "segments": ["verify", "runs"] } },
-    "get /verify/runs/{run_id}": { "route": "verifyRun" }
+    "get /verify/runs/{run_id}": { "route": "verifyRun" },
+    "get /intelligence/snapshots": {
+      "route": "intelligenceSnapshots",
+      "query": { "name": "intelligenceSnapshots", "segments": ["intelligence", "snapshots"] }
+    },
+    "get /intelligence/snapshots/{snapshot_id}": { "route": "intelligenceSnapshotReport" },
+    "get /intelligence/snapshots/{snapshot_id}/issues": { "route": "intelligenceSnapshotIssues" },
+    "get /intelligence/snapshots/{snapshot_id}/clusters": { "route": "intelligenceSnapshotClusters" },
+    "get /intelligence/snapshots/{snapshot_id}/activity": { "route": "intelligenceSnapshotActivity" }
   },
 
   "escapeHatch": {

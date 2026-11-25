@@ -47,6 +47,11 @@ User journeys inside the application.
 - (describe this journey)
 - See: [Verification Runs](features/verification.md)
 
+## Explore Issue Intelligence
+
+- (describe this journey)
+- See: [Issue Intelligence](features/intelligence.md)
+
 ## Change Preferences
 
 - User navigates to `/settings`

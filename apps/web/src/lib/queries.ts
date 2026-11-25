@@ -15,9 +15,15 @@ import {
   getFileStats,
   getHealth,
   getPreviewUrl,
+  getSnapshotActivity,
+  getSnapshotClusters,
+  getSnapshotIssues,
+  getSnapshotReport,
   getUploadActivity,
   getVerifyRun,
   getVerifyRuns,
+  listSnapshots,
+  type SnapshotIssueFilters,
 } from "@/lib/api-client";
 import type {
   FileMetadata,
@@ -92,6 +98,54 @@ export function useVerifyRun(runId: string) {
     queryFn: () => getVerifyRun(runId),
     enabled: !!runId,
     staleTime: 60_000,
+  });
+}
+
+// Issue intelligence snapshots. While one is running the list polls every 3s so
+// the status flips to complete/failed without a manual refresh. Per-snapshot
+// queries nest under the list key (the generated key has no path parameter), so
+// invalidating the list reaches them too.
+export function useSnapshots() {
+  return useQuery({
+    queryKey: qk.intelligenceSnapshots(),
+    queryFn: listSnapshots,
+    refetchInterval: (query) =>
+      query.state.data?.some((s) => s.status === "running") ? 3000 : false,
+  });
+}
+
+export function useSnapshotReport(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "report"] as const,
+    queryFn: () => getSnapshotReport(snapshotId as string),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotIssues(
+  snapshotId: string | undefined,
+  filters: SnapshotIssueFilters = {},
+) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "issues", filters] as const,
+    queryFn: () => getSnapshotIssues(snapshotId as string, filters),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotClusters(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "clusters"] as const,
+    queryFn: () => getSnapshotClusters(snapshotId as string),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotActivity(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "activity"] as const,
+    queryFn: () => getSnapshotActivity(snapshotId as string),
+    enabled: !!snapshotId,
   });
 }
 

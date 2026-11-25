@@ -26,6 +26,7 @@ and the release process. Two companion docs carry the reference material:
 - Quick (backend): `pnpm test:api`
 - Frontend unit: `pnpm test:web` (vitest, excludes e2e)
 - Structure: `pnpm check:structure`
+- Frontend structure invariants: `pnpm check:structure:web`
 - Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`

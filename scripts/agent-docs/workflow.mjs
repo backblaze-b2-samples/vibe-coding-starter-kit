@@ -34,7 +34,12 @@ const JOBS_KEY = /^jobs:[ \t]*(?:#.*)?$/;
 const PACKAGE_GATES = {
   verify: ["pnpm check:agent-docs", "pnpm verify:api", "pnpm verify:web"],
   "verify:api": ["pnpm lint:api", "pnpm test:api", "pnpm check:structure"],
-  "verify:web": ["pnpm lint", "pnpm test:web", "pnpm build"],
+  "verify:web": [
+    "pnpm lint",
+    "pnpm check:structure:web",
+    "pnpm test:web",
+    "pnpm build",
+  ],
   "verify:full": ["pnpm run doctor", "pnpm verify", "pnpm test:e2e"],
 };
 
@@ -62,6 +67,7 @@ const DOCUMENTED_COMMANDS = [
   "pnpm verify:web",
   "pnpm verify:full",
   "pnpm test:verify",
+  "pnpm check:structure:web",
 ];
 
 /** Scripts that must keep pointing at the file the docs send readers to. */
@@ -70,6 +76,7 @@ const SCRIPT_ENTRY_POINTS = {
   setup: "scripts/setup.mjs",
   doctor: "scripts/doctor.mjs",
   "wait-ready": "scripts/wait-ready.mjs",
+  "check:structure:web": "scripts/check-frontend-structure.mjs",
 };
 
 /** Whole-token match, so `pnpm verify` never matches `pnpm verify:api`. */

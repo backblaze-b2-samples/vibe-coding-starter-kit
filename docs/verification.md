@@ -266,7 +266,8 @@ live there too.
 `pnpm verify` is the canonical credential-free non-live gate for PRs. It is composed of
 `pnpm check:agent-docs`, then `pnpm verify:api` (backend lint, backend tests,
 structural boundary tests), then `pnpm verify:web` (generated-file drift,
-frontend lint, frontend unit tests, frontend typecheck + build) — so the
+frontend lint, frontend structure invariants, frontend unit tests, frontend
+typecheck + build) — so the
 agent-doc guard runs first and CI can run all three checks as parallel jobs. `package.json` is the single
 source of truth for the literal command chain; when it changes, update the
 plain-language list here and in `AGENTS.md` §6 (see
@@ -295,6 +296,7 @@ pnpm verify:full
 │  └─ pnpm verify:web
 │     ├─ pnpm gen:check
 │     ├─ pnpm lint
+│     ├─ pnpm check:structure:web
 │     ├─ pnpm typecheck
 │     ├─ pnpm test:web
 │     └─ pnpm build

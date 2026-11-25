@@ -244,6 +244,7 @@ The commands you reach for day to day:
 | `pnpm gen:check` | Fail if any generated file or doc region is stale (first step of `pnpm verify:web`) |
 | `pnpm verify` | Credential-free pre-PR suite — runs `check:agent-docs`, `verify:api`, then `verify:web` |
 | `pnpm verify:full` | `pnpm verify` plus Playwright E2E; needs a live local stack, real `.env`, a free web port, and Chromium |
+| `pnpm check:structure:web` | Frontend structure invariants: network access only in `lib/api-client.ts`, query-library access only under `lib/` (part of `pnpm verify:web`) |
 | `pnpm test:verify` | Run throwaway verification specs from `apps/web/e2e/verify/` against the app, with the shared browser fixtures |
 <!-- gen:end readme-commands -->
 

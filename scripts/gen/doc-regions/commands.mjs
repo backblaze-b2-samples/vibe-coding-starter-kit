@@ -148,6 +148,14 @@ export const COMMANDS = [
     short: "structural boundary tests",
   },
   {
+    script: "check:structure:web",
+    invoke: "pnpm check:structure:web",
+    group: "Test & Lint",
+    short: "frontend structure invariants (no bare fetch, no direct react-query use outside lib/)",
+    readme:
+      "Frontend structure invariants: network access only in `lib/api-client.ts`, query-library access only under `lib/` (part of `pnpm verify:web`)",
+  },
+  {
     script: "test:e2e",
     invoke: "pnpm test:e2e",
     group: "Test & Lint",

@@ -19,7 +19,7 @@
     "wait-ready": "node scripts/wait-ready.mjs",
     "verify": "pnpm check:agent-docs && pnpm verify:api && pnpm verify:web",
     "verify:api": "pnpm lint:api && pnpm test:api && pnpm check:structure",
-    "verify:web": "pnpm gen:check && pnpm lint && pnpm typecheck && pnpm test:web && pnpm build",
+    "verify:web": "pnpm gen:check && pnpm lint && pnpm check:structure:web && pnpm typecheck && pnpm test:web && pnpm build",
     "verify:full": "pnpm run doctor && pnpm verify && pnpm test:e2e",
     "lint": "pnpm --filter @vibe-coding-starter-kit/web lint",
     "lint:api": "cd services/api && .venv/bin/ruff check .",
@@ -27,6 +27,7 @@
     "test:api": "cd services/api && .venv/bin/python -m pytest",
     "test:live:b2": "cd services/api && .venv/bin/python -m pytest live_tests/test_b2_connectivity.py -m live",
     "check:structure": "cd services/api && .venv/bin/python -m pytest tests/test_structure.py -v",
+    "check:structure:web": "node --test scripts/check-frontend-structure.test.mjs && node scripts/check-frontend-structure.mjs",
     "test:e2e": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test --project=chromium",
     "test:verify": "pnpm --filter @vibe-coding-starter-kit/web exec playwright test --project=verify"
   },

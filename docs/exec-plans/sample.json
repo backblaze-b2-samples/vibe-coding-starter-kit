@@ -30,6 +30,13 @@
       "workflow_heading": "View Dashboard"
     },
     {
+      "title": "Verification Runs",
+      "route": "/verify",
+      "doc": "docs/features/verification.md",
+      "summary": "Playwright run history and evidence stored in B2",
+      "workflow_heading": "Review Verification Runs"
+    },
+    {
       "title": "Metadata Extraction",
       "route": null,
       "doc": "docs/features/metadata-extraction.md",

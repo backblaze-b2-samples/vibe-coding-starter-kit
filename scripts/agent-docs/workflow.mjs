@@ -37,6 +37,7 @@ const PACKAGE_GATES = {
   "verify:web": [
     "pnpm lint",
     "pnpm check:structure:web",
+    "pnpm test:scripts",
     "pnpm test:web",
     "pnpm build",
   ],
@@ -68,6 +69,8 @@ const DOCUMENTED_COMMANDS = [
   "pnpm verify:full",
   "pnpm test:verify",
   "pnpm check:structure:web",
+  "pnpm test:scripts",
+  "pnpm verify:upload",
 ];
 
 /** Scripts that must keep pointing at the file the docs send readers to. */

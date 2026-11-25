@@ -158,6 +158,31 @@ export interface ValidationError {
   type: string;
 }
 
+export interface VerifyRunDetail {
+  duration: number;
+  failed: number;
+  git_sha: string;
+  passed: number;
+  results: Record<string, unknown>;
+  run_id: string;
+  screenshot_urls: string[];
+  skipped: number;
+  timestamp: string;
+  total: number;
+  trace_urls: string[];
+}
+
+export interface VerifyRunSummary {
+  duration: number;
+  failed: number;
+  git_sha: string;
+  passed: number;
+  run_id: string;
+  skipped: number;
+  timestamp: string;
+  total: number;
+}
+
 /** Sent after the direct PUT so the API can inspect the stored object. */
 export interface VerifyUploadRequest {
   key: string;

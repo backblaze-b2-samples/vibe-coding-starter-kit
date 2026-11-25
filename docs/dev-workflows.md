@@ -27,6 +27,8 @@ and the release process. Two companion docs carry the reference material:
 - Frontend unit: `pnpm test:web` (vitest, excludes e2e)
 - Structure: `pnpm check:structure`
 - Frontend structure invariants: `pnpm check:structure:web`
+- Helper-script unit tests: `pnpm test:scripts`
+- Live verification upload (needs real B2 credentials, never part of `verify`): `pnpm verify:upload`
 - Frontend typecheck: `pnpm typecheck`
 - Frontend lint: `pnpm lint`
 - Backend lint: `pnpm lint:api`

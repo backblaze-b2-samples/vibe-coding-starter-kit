@@ -1,3 +1,4 @@
+from app.repo import verify_repo
 from app.repo.b2_client import (
     check_connectivity,
     delete_file,
@@ -31,4 +32,5 @@ __all__ = [
     "list_files",
     "prewarm_listing",
     "upload_file",
+    "verify_repo",
 ]

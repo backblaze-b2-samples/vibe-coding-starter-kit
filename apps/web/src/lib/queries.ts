@@ -16,6 +16,8 @@ import {
   getHealth,
   getPreviewUrl,
   getUploadActivity,
+  getVerifyRun,
+  getVerifyRuns,
 } from "@/lib/api-client";
 import type {
   FileMetadata,
@@ -68,6 +70,28 @@ export function useUploadActivity(days = 7) {
   return useQuery({
     queryKey: qk.uploadActivity(days),
     queryFn: () => getUploadActivity(days),
+  });
+}
+
+// Verification run history. Newest runs change rarely, so a short stale time
+// avoids refetching on every navigation back to the list.
+export function useVerifyRuns() {
+  return useQuery({
+    queryKey: qk.verifyRuns(),
+    queryFn: getVerifyRuns,
+    staleTime: 30_000,
+  });
+}
+
+// One run's detail. Nested under the list key, so invalidating the list also
+// invalidates its details. Artifact links are presigned for 10 minutes, so the
+// detail goes stale well before they expire.
+export function useVerifyRun(runId: string) {
+  return useQuery({
+    queryKey: [...qk.verifyRuns(), runId] as const,
+    queryFn: () => getVerifyRun(runId),
+    enabled: !!runId,
+    staleTime: 60_000,
   });
 }
 

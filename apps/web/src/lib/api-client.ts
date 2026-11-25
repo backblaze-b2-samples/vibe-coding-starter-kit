@@ -8,6 +8,8 @@ import type {
   HealthStatus,
   PresignUploadResponse,
   UploadStats,
+  VerifyRunDetail,
+  VerifyRunSummary,
 } from "@vibe-coding-starter-kit/shared";
 
 import { API_CLIENT_ROUTES } from "./generated/api-routes";
@@ -205,6 +207,16 @@ export async function getFileStats() {
 export async function getUploadActivity(days = 7) {
   return apiFetch<DailyUploadCount[]>(
     `${API_CLIENT_ROUTES.uploadActivity.path}?days=${days}`
+  );
+}
+
+export async function getVerifyRuns() {
+  return apiFetch<VerifyRunSummary[]>(API_CLIENT_ROUTES.verifyRuns.path);
+}
+
+export async function getVerifyRun(runId: string) {
+  return apiFetch<VerifyRunDetail>(
+    API_CLIENT_ROUTES.verifyRun.path.replace("{run_id}", encodeURIComponent(runId))
   );
 }
 

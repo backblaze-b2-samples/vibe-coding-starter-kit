@@ -42,6 +42,11 @@ User journeys inside the application.
 - Empty state: "No files uploaded yet" messages
 - See: [Dashboard](features/dashboard.md)
 
+## Review Verification Runs
+
+- (describe this journey)
+- See: [Verification Runs](features/verification.md)
+
 ## Change Preferences
 
 - User navigates to `/settings`

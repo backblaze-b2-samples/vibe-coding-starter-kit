@@ -156,6 +156,21 @@ export const COMMANDS = [
       "Frontend structure invariants: network access only in `lib/api-client.ts`, query-library access only under `lib/` (part of `pnpm verify:web`)",
   },
   {
+    script: "test:scripts",
+    invoke: "pnpm test:scripts",
+    group: "Test & Lint",
+    short: "unit tests for the repo's own helper scripts (verify:upload helpers)",
+    readme: "Unit tests for the repo's helper scripts (part of `pnpm verify:web`)",
+  },
+  {
+    script: "verify:upload",
+    invoke: "pnpm verify:upload",
+    group: "Test & Lint",
+    short: "live: run the E2E suite and store the evidence in B2 (credentials; not part of verify)",
+    readme:
+      "Live and opt-in: run the E2E suite, then store the evidence in B2 for the `/verify` dashboard; fails if the tests or the upload fail",
+  },
+  {
     script: "test:e2e",
     invoke: "pnpm test:e2e",
     group: "Test & Lint",

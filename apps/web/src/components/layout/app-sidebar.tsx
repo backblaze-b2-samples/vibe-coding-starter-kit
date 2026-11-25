@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Upload, FolderOpen, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, Upload, FolderOpen, Settings, ShieldCheck, Sparkles } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,7 @@ const navItems = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Upload", href: "/upload", icon: Upload },
   { title: "Files", href: "/files", icon: FolderOpen },
+  { title: "Verification", href: "/verify", icon: ShieldCheck },
   { title: "Settings", href: "/settings", icon: Settings },
 ];
 

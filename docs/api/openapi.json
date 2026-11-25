@@ -535,6 +535,126 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "VerifyRunDetail": {
+        "properties": {
+          "duration": {
+            "title": "Duration",
+            "type": "number"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "git_sha": {
+            "title": "Git Sha",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "results": {
+            "additionalProperties": true,
+            "title": "Results",
+            "type": "object"
+          },
+          "run_id": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}--[0-9a-f]{8}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "screenshot_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Screenshot Urls",
+            "type": "array"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "trace_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Trace Urls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "timestamp",
+          "total",
+          "passed",
+          "failed",
+          "skipped",
+          "duration",
+          "git_sha",
+          "results",
+          "screenshot_urls",
+          "trace_urls"
+        ],
+        "title": "VerifyRunDetail",
+        "type": "object"
+      },
+      "VerifyRunSummary": {
+        "properties": {
+          "duration": {
+            "title": "Duration",
+            "type": "number"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "git_sha": {
+            "title": "Git Sha",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "run_id": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}--[0-9a-f]{8}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "timestamp",
+          "total",
+          "passed",
+          "failed",
+          "skipped",
+          "duration",
+          "git_sha"
+        ],
+        "title": "VerifyRunSummary",
+        "type": "object"
+      },
       "VerifyUploadRequest": {
         "description": "Sent after the direct PUT so the API can inspect the stored object.",
         "properties": {
@@ -1183,6 +1303,74 @@
         "summary": "Verify Upload Route",
         "tags": [
           "upload"
+        ]
+      }
+    },
+    "/verify/runs": {
+      "get": {
+        "operationId": "list_verify_runs_verify_runs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VerifyRunSummary"
+                  },
+                  "title": "Response List Verify Runs Verify Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Verify Runs",
+        "tags": [
+          "verify"
+        ]
+      }
+    },
+    "/verify/runs/{run_id}": {
+      "get": {
+        "operationId": "get_verify_run_verify_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}--[0-9a-f]{8}$",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Verify Run",
+        "tags": [
+          "verify"
         ]
       }
     }

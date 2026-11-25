@@ -42,7 +42,9 @@
     "get /files/{key}": { "route": "legacyFileMetadata" },
     "delete /files/{key}": { "route": "legacyFileDelete" },
     "post /upload/presign": { "route": "uploadPresign" },
-    "post /upload/verify": { "route": "uploadVerify" }
+    "post /upload/verify": { "route": "uploadVerify" },
+    "get /verify/runs": { "route": "verifyRuns", "query": { "name": "verifyRuns", "segments": ["verify", "runs"] } },
+    "get /verify/runs/{run_id}": { "route": "verifyRun" }
   },
 
   "escapeHatch": {

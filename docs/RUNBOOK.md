@@ -15,9 +15,14 @@ dependencies installed and the variables from `.env.example` set.
 `GitHub rate limit hit; sleeping Ns`, sleeps until the reset (at most 60 seconds),
 and retries. After two such waits it gives up with `GitHub rate limit exhausted`.
 
-**Snapshot state:** the run already recorded the snapshot as `running`, so the
-failure marks it `failed` (with a generic message; the detail is in the logs). No
-issues are written: the raw snapshot is written only after every page is fetched.
+**Snapshot state:** the snapshot is marked `failed` (with a generic message; the
+detail is in the logs). No issues are written: the raw snapshot is written only
+after every page is fetched. A run started through the API
+(`POST /intelligence/snapshots`) was recorded as `running` first and holds the
+one-run-at-a-time slot. A run started with `pnpm intel:ingest` does neither: it
+writes no `running` status (the snapshot appears only when it completes or
+fails) and does not take the slot, so do not start it while an API run is in
+progress.
 
 **What to do:**
 - Set `GITHUB_TOKEN` (a read-only token is enough). Authenticated requests get a
@@ -40,11 +45,18 @@ for `"rationale":"parse_error"`.
 
 **What to do:**
 - A handful of failures: acceptable; check the next run.
-- Many failures: the model may be unavailable or the prompt may be failing. An
-  HTTP error from the Anthropic API ends in the same fallback, so check the log
-  first. Then re-run the derived stages on the same raw issues:
+- Many failures: the prompt or the model's replies are the problem; check the
+  logged errors, then re-run the derived stages on the same raw issues:
   `pnpm intel:reprocess <snapshot_id>` (embeddings, classification, clustering
   and the report; no GitHub fetch).
+
+This fallback covers only replies that arrive but cannot be parsed. If the
+Anthropic API call itself fails (network error, overload, missing
+`ANTHROPIC_API_KEY`), `call_llm` retries it up to three attempts with backoff
+(logging `LLM attempt N failed` before each retry), then raises. Classification does not catch
+that, so the run stops, no classifications are written, and the snapshot is
+marked `failed`. Once the API is reachable, `pnpm intel:reprocess <snapshot_id>`
+finishes it from the stored raw issues.
 
 ## 3. Deleting a bad snapshot
 

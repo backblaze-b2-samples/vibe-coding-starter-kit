@@ -146,3 +146,24 @@ def test_reprocess_failure_marks_failed(store, monkeypatch):
     with pytest.raises(RuntimeError):
         snapshots.reprocess_snapshot(SNAP)
     assert _status(store)["status"] == "failed"
+
+
+def test_an_llm_api_error_fails_the_snapshot_instead_of_the_parse_fallback(store, monkeypatch):
+    # docs/RUNBOOK.md section 2: only an unparseable *reply* becomes `other` /
+    # `parse_error`. When the Anthropic call itself keeps failing, call_llm
+    # re-raises after its retries, classification does not catch it, and the
+    # snapshot ends `failed` with no classifications written.
+    from app.service import classification
+
+    monkeypatch.setattr(ingestion, "fetch_issues", lambda repo, max_issues: ([_issue(1)], 4000))
+    _stub_stages(monkeypatch)
+    monkeypatch.setattr(snapshots, "run_classification", classification.run_classification)
+
+    def api_down(*args, **kwargs):
+        raise RuntimeError("anthropic: 529 overloaded")
+
+    monkeypatch.setattr(classification, "call_llm", api_down)
+    with pytest.raises(RuntimeError, match="overloaded"):
+        snapshots.run_full_pipeline(SAMPLE_REPO, SNAP)
+    assert _status(store)["status"] == "failed"
+    assert not any("/classifications/" in key for key in store.objects)

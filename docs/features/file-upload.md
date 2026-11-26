@@ -110,7 +110,7 @@ See [infra/vercel/README.md](../../infra/vercel/README.md) for the deploy-time d
 - Disabled: dropzone explains that new files can be added when the current queue finishes
 
 ## Verification
-- Test files: `services/api/tests/test_upload_validation.py`, `services/api/tests/test_upload_conflict.py`, `services/api/tests/test_error_handling.py`, `apps/web/src/lib/upload-status.test.ts`
+- Test files: `services/api/tests/test_upload_validation.py`, `services/api/tests/test_upload_conflict.py`, `services/api/tests/test_error_handling.py`, `apps/web/src/lib/upload-status.test.ts`; browser states (idle, in progress, success, API error, with the presign/PUT/verify calls mocked): `apps/web/e2e/upload.spec.ts`
 - Required cases: presign validation rejections (413 oversized, 415 disallowed type / extension mismatch, 400 empty/no filename), presign returns a signed PUT, verify accepts a valid object, verify rejects + deletes on content-signature mismatch (415) and oversize (413), verify 404 on missing object, verify rejects a key outside `uploads/`, `uploads_total` metric increments on verify, status label switches to the server phase at 100%, queue summary and interrupted-upload copy
 - Focused verify command: `pnpm test:api`
 - Default pre-PR verify command: `pnpm verify`

@@ -30,7 +30,7 @@ export function UploadForm() {
   const summary = uploadQueueSummary(items);
 
   return (
-    <Card>
+    <Card data-testid="upload-form">
       <CardHeader className="border-b border-border py-4 px-5">
         <CardTitle className="card-title">Upload Files</CardTitle>
       </CardHeader>
@@ -56,6 +56,7 @@ export function UploadForm() {
               variant="outline"
               size="sm"
               onClick={clearCompleted}
+              data-testid="upload-clear-btn"
             >
               Clear finished
             </Button>

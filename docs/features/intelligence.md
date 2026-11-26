@@ -1,4 +1,4 @@
-<!-- last_verified: 2026-11-25 -->
+<!-- last_verified: 2026-11-26 -->
 # Feature: Issue Intelligence
 
 ## Purpose
@@ -49,6 +49,29 @@ intelligence/
   derived/reports/snapshot=<id>/report.json
 ```
 
+### Why it is laid out this way
+- **Snapshots are append-only.** Each run writes a new `snapshot=<id>` (UTC
+  `YYYYMMDDTHHMMSSZ`: URL-safe and sorts by time). A run never edits another
+  snapshot. `raw/` is the source of truth; everything under `derived/` can be
+  rebuilt from it with `pnpm intel:reprocess <id>`.
+- **JSONL** for issues, embeddings and classifications: one self-contained record
+  per line, easy to stream and to inspect with `jq`.
+- **`status.json`** in the raw snapshot records `running`, `complete` or `failed`
+  and the run's cost; the snapshot list reads it.
+
+## Rules for changes
+- Keep snapshots append-only; new analyses write new derived files, never edit raw.
+- Keep the embedding cache: within a snapshot, vectors are keyed by `content_hash`
+  (SHA-256 of title and body), so `intel:reprocess` reuses them instead of
+  re-embedding. A new run starts with an empty cache.
+- SDKs stay in `repo/`: `boto3` in `b2_client.py`, `anthropic` in `llm_client.py`,
+  `sentence-transformers` in `embedding_client.py`, GitHub in `github_issues.py`.
+  A new issue source implements the same `fetch_issues(repo, max_issues) -> (issues, rate_remaining)`.
+- Every run logs `pipeline_cost`; a new LLM stage must add its cost to it.
+- Privacy: analyse content, not people (no per-user aggregates), and never render
+  issue bodies in the UI, only titles and pipeline output.
+- Prompts live in `service/prompts/` so every prompt change shows up in review.
+
 ## Setup
 The ML dependencies are optional and not in `requirements.lock`:
 ```
@@ -76,6 +99,10 @@ and cost nothing). Rates are `LLM_INPUT_COST_PER_1K` / `LLM_OUTPUT_COST_PER_1K`.
 - Unparseable LLM reply: the issue is stored as `other` with confidence 0 (`parse_error`).
 - More issues than the cap: the run fails before any LLM call.
 - GitHub rate limit: waits at most twice, then fails.
+
+## Operations
+Rate limits, unparseable LLM replies, deleting a snapshot and fixing a cluster
+label: [docs/RUNBOOK.md](../RUNBOOK.md).
 
 ## Canonical files
 `services/api/app/service/snapshots.py`, `ingestion.py`, `runtime/intelligence.py`,

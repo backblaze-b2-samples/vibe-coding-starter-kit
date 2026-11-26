@@ -28,4 +28,6 @@ export const qk = {
   stats: () => [...qk.all, "stats"] as const,
   uploadActivity: (days?: number) => [...qk.all, "stats", "activity", days ?? 7] as const,
   health: () => [...qk.all, "health"] as const,
+  intelligenceSnapshots: () => [...qk.all, "intelligence", "snapshots"] as const,
+  verifyRuns: () => [...qk.all, "verify", "runs"] as const,
 };

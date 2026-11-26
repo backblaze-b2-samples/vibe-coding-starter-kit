@@ -42,10 +42,20 @@ export default defineConfig({
   // `list` so a run is readable in a terminal or an agent transcript; the HTML
   // report is still written but never auto-served — `open: "never"` is what stops
   // a headless run blocking on a report server nobody is there to close.
-  reporter: [["list"], ["html", { open: "never" }]],
+  //
+  // `pnpm verify:upload` sets PLAYWRIGHT_JSON_OUTPUT_FILE so the run also leaves
+  // a JSON report for the uploader; without it the reporters are unchanged.
+  reporter: [
+    ["list"],
+    ["html", { open: "never" }],
+    ...(process.env.PLAYWRIGHT_JSON_OUTPUT_FILE ? [["json"] as const] : []),
+  ],
   use: {
     baseURL: BASE_URL,
     trace: "on-first-retry",
+    // Failure screenshots are always kept; VERIFY_RECORD=1 keeps every one so a
+    // clean run can still be reviewed (see docs/features/verification.md).
+    screenshot: process.env.VERIFY_RECORD === "1" ? "on" : "only-on-failure",
   },
   projects: [
     {

@@ -8,6 +8,30 @@
 // contract. To change what is here, change the FastAPI route or Pydantic
 // model and re-run `pnpm contract:export && pnpm gen:api`.
 
+export interface B2RoleCount {
+  count: number;
+  role: string;
+}
+
+export interface Body_trigger_snapshot_intelligence_snapshots_post {
+  repo?: string | null;
+}
+
+export interface CategoryCount {
+  category: string;
+  count: number;
+  percentage: number;
+}
+
+export interface Cluster {
+  centroid_id: number | null;
+  cluster_id: string;
+  issue_ids: number[];
+  label: string;
+  size: number;
+  summary: string;
+}
+
 /** One day's upload count, for the dashboard activity chart. */
 export interface DailyUploadCount {
   date: string;
@@ -116,6 +140,38 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface IssueListItem {
+  b2_role: string;
+  category: string;
+  cluster_id: string;
+  created_at: string;
+  html_url: string;
+  issue_id: number;
+  issue_number: number;
+  spec_depth_score: number;
+  state: string;
+  title: string;
+}
+
+export interface IssueListResponse {
+  items: IssueListItem[];
+  limit: number;
+  offset: number;
+  total: number;
+}
+
+export interface IssueSummary {
+  b2_role: string;
+  category: string;
+  cluster_id: string;
+  cluster_label: string;
+  html_url: string;
+  issue_id: number;
+  issue_number: number;
+  spec_depth_score: number;
+  title: string;
+}
+
 /** What the browser declares before uploading directly to B2. */
 export interface PresignUploadRequest {
   content_type: string;
@@ -141,6 +197,41 @@ export interface PresignUploadResponse {
   url: string;
 }
 
+export interface SnapshotReport {
+  activity_timeline: WeeklyActivity[];
+  b2_role_distribution: B2RoleCount[];
+  category_breakdown: CategoryCount[];
+  closed_issues: number;
+  clusters: Cluster[];
+  generated_at: string;
+  open_issues: number;
+  pipeline_cost: Record<string, number>;
+  repo: string;
+  snapshot_id: string;
+  spec_depth_histogram: SpecDepthBucket[];
+  thin_issues: IssueSummary[];
+  top_specs: IssueSummary[];
+  total_issues: number;
+}
+
+export interface SnapshotStatus {
+  closed_issues: number;
+  cluster_count: number;
+  error: string;
+  fetched_at: string;
+  open_issues: number;
+  pipeline_cost: Record<string, number>;
+  repo: string;
+  snapshot_id: string;
+  status: string;
+  total_issues: number;
+}
+
+export interface SpecDepthBucket {
+  count: number;
+  score_range: string;
+}
+
 /** Aggregate bucket figures behind the dashboard stat cards. */
 export interface UploadStats {
   total_downloads: number;
@@ -158,7 +249,40 @@ export interface ValidationError {
   type: string;
 }
 
+export interface VerifyRunDetail {
+  duration: number;
+  failed: number;
+  git_sha: string;
+  passed: number;
+  results: Record<string, unknown>;
+  run_id: string;
+  screenshot_urls: string[];
+  skipped: number;
+  timestamp: string;
+  total: number;
+  trace_urls: string[];
+}
+
+export interface VerifyRunSummary {
+  duration: number;
+  failed: number;
+  git_sha: string;
+  passed: number;
+  run_id: string;
+  skipped: number;
+  timestamp: string;
+  total: number;
+}
+
 /** Sent after the direct PUT so the API can inspect the stored object. */
 export interface VerifyUploadRequest {
   key: string;
+}
+
+export interface WeeklyActivity {
+  cluster_id: string;
+  cluster_label: string;
+  created_count: number;
+  updated_count: number;
+  week: string;
 }

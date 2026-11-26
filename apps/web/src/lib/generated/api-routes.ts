@@ -35,6 +35,13 @@ export const API_CLIENT_ROUTES = {
   fileStats: { method: "get", path: "/files/stats" },
   uploadActivity: { method: "get", path: "/files/stats/activity" },
   health: { method: "get", path: "/health" },
+  intelligenceSnapshots: { method: "get", path: "/intelligence/snapshots" },
+  intelligenceSnapshotReport: { method: "get", path: "/intelligence/snapshots/{snapshot_id}" },
+  intelligenceSnapshotActivity: { method: "get", path: "/intelligence/snapshots/{snapshot_id}/activity" },
+  intelligenceSnapshotClusters: { method: "get", path: "/intelligence/snapshots/{snapshot_id}/clusters" },
+  intelligenceSnapshotIssues: { method: "get", path: "/intelligence/snapshots/{snapshot_id}/issues" },
+  verifyRuns: { method: "get", path: "/verify/runs" },
+  verifyRun: { method: "get", path: "/verify/runs/{run_id}" },
   uploadPresign: { method: "post", path: "/upload/presign" },
   uploadVerify: { method: "post", path: "/upload/verify" },
 } as const satisfies Record<string, ApiClientRoute>;

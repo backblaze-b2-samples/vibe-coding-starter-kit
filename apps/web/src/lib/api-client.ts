@@ -1,4 +1,5 @@
 import type {
+  Cluster,
   DailyUploadCount,
   DeleteFileResponse,
   FileMetadata,
@@ -6,8 +7,14 @@ import type {
   FileUploadResponse,
   FileUrlResponse,
   HealthStatus,
+  IssueListResponse,
   PresignUploadResponse,
+  SnapshotReport,
+  SnapshotStatus,
   UploadStats,
+  VerifyRunDetail,
+  VerifyRunSummary,
+  WeeklyActivity,
 } from "@vibe-coding-starter-kit/shared";
 
 import { API_CLIENT_ROUTES } from "./generated/api-routes";
@@ -205,6 +212,69 @@ export async function getFileStats() {
 export async function getUploadActivity(days = 7) {
   return apiFetch<DailyUploadCount[]>(
     `${API_CLIENT_ROUTES.uploadActivity.path}?days=${days}`
+  );
+}
+
+export async function getVerifyRuns() {
+  return apiFetch<VerifyRunSummary[]>(API_CLIENT_ROUTES.verifyRuns.path);
+}
+
+export async function getVerifyRun(runId: string) {
+  return apiFetch<VerifyRunDetail>(
+    API_CLIENT_ROUTES.verifyRun.path.replace("{run_id}", encodeURIComponent(runId))
+  );
+}
+
+// Issue intelligence. Read-only: the pipeline-trigger routes are operator-only
+// (bearer token, see docs/features/intelligence.md) and never called from here.
+function snapshotPath(
+  route: { path: string },
+  snapshotId: string,
+) {
+  return route.path.replace("{snapshot_id}", encodeURIComponent(snapshotId));
+}
+
+export async function listSnapshots() {
+  return apiFetch<SnapshotStatus[]>(API_CLIENT_ROUTES.intelligenceSnapshots.path);
+}
+
+export async function getSnapshotReport(snapshotId: string) {
+  return apiFetch<SnapshotReport>(
+    snapshotPath(API_CLIENT_ROUTES.intelligenceSnapshotReport, snapshotId)
+  );
+}
+
+export type SnapshotIssueFilters = {
+  cluster_id?: string;
+  category?: string;
+  min_spec_depth?: number;
+  limit?: number;
+  offset?: number;
+};
+
+export async function getSnapshotIssues(
+  snapshotId: string,
+  filters: SnapshotIssueFilters = {}
+) {
+  const qs = new URLSearchParams();
+  for (const [name, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== "") qs.set(name, String(value));
+  }
+  const query = qs.toString();
+  return apiFetch<IssueListResponse>(
+    `${snapshotPath(API_CLIENT_ROUTES.intelligenceSnapshotIssues, snapshotId)}${query ? `?${query}` : ""}`
+  );
+}
+
+export async function getSnapshotClusters(snapshotId: string) {
+  return apiFetch<Cluster[]>(
+    snapshotPath(API_CLIENT_ROUTES.intelligenceSnapshotClusters, snapshotId)
+  );
+}
+
+export async function getSnapshotActivity(snapshotId: string) {
+  return apiFetch<WeeklyActivity[]>(
+    snapshotPath(API_CLIENT_ROUTES.intelligenceSnapshotActivity, snapshotId)
   );
 }
 

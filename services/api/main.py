@@ -27,7 +27,15 @@ from app.config import (  # noqa: E402
     REQUIRED_B2_SETTINGS,
     settings,
 )
-from app.runtime import files, health, metrics, ratelimit, upload  # noqa: E402
+from app.runtime import (  # noqa: E402
+    files,
+    health,
+    intelligence,
+    metrics,
+    ratelimit,
+    upload,
+    verify,
+)
 from app.service.files import warm_listing_cache  # noqa: E402
 
 # --- Startup validation ---
@@ -166,4 +174,6 @@ app.add_middleware(
 app.include_router(health.router, tags=["health"])
 app.include_router(upload.router, tags=["upload"])
 app.include_router(files.router, tags=["files"])
+app.include_router(verify.router)
+app.include_router(intelligence.router)
 app.include_router(metrics.router, tags=["metrics"])

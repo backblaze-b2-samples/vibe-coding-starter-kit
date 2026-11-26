@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Upload, FolderOpen, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, Upload, FolderOpen, Settings, BrainCircuit, ShieldCheck, Sparkles } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,8 @@ const navItems = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Upload", href: "/upload", icon: Upload },
   { title: "Files", href: "/files", icon: FolderOpen },
+  { title: "Verification", href: "/verify", icon: ShieldCheck },
+  { title: "Intelligence", href: "/intelligence", icon: BrainCircuit },
   { title: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -51,7 +53,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(`${item.href}/`));
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
@@ -81,7 +85,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {utilItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(`${item.href}/`));
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton

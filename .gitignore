@@ -45,6 +45,7 @@ pnpm-debug.log*
 coverage/
 .pytest_cache/
 playwright-report/
+playwright-results/
 test-results/
 
 # Throwaway, app-specific verification specs. A verification pass writes these

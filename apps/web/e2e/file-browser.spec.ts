@@ -1,7 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
-// State-based file browser tests (from #10). Hermetic: the API is mocked with
-// page.route(), so no live API or bucket is needed.
+import { expect, json, test } from "./fixtures/mock-api";
+
+// State-based file browser tests (from #10). Hermetic: every API call is mocked
+// through the `api` fixture, and any call no mock serves is aborted and fails
+// the test (see fixtures/mock-api.ts), so no live API or bucket is touched.
 
 const FILES = [
   {
@@ -44,33 +47,6 @@ const STATS = {
   total_downloads: 0,
 };
 
-// The page (port 3000) and the API (port 8000) are different origins, so a
-// mocked response needs the CORS header a real API response would carry.
-const CORS = { "access-control-allow-origin": "*" };
-
-function json(body: unknown, status = 200) {
-  return { status, contentType: "application/json", headers: CORS, body: JSON.stringify(body) };
-}
-
-const isApi = (pathname: string) => (url: URL) => url.port === "8000" && url.pathname === pathname;
-
-async function mockFiles(page: Page, handler: Parameters<Page["route"]>[1]) {
-  await page.route(isApi("/files"), handler);
-}
-
-/** Answer DELETE /files-by-key (and its CORS preflight) with `status`. */
-async function mockDelete(page: Page, status: number, body: unknown) {
-  await page.route(isApi("/files-by-key"), (route) => {
-    if (route.request().method() === "OPTIONS") {
-      return route.fulfill({
-        status: 204,
-        headers: { ...CORS, "access-control-allow-methods": "DELETE" },
-      });
-    }
-    return route.fulfill(json(body, status));
-  });
-}
-
 /** Delete the first visible file; returns how many file rows showed before. */
 async function deleteFirstFile(page: Page): Promise<number> {
   await page.goto("/files");
@@ -85,28 +61,28 @@ async function deleteFirstFile(page: Page): Promise<number> {
 }
 
 test.describe("File browser", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.route(isApi("/health"), (route) =>
+  test.beforeEach(async ({ api }) => {
+    await api.route("/health", (route) =>
       route.fulfill(json({ status: "healthy", b2_connected: true })),
     );
-    await page.route(isApi("/files/stats"), (route) => route.fulfill(json(STATS)));
+    await api.route("/files/stats", (route) => route.fulfill(json(STATS)));
   });
 
-  test("file browser — loading", async ({ page }) => {
+  test("file browser — loading", async ({ page, api }) => {
     // Never fulfilled: keeps the loading state visible.
-    await mockFiles(page, () => {});
+    await api.route("/files", () => {});
     await page.goto("/files");
     await expect(page.getByTestId("file-browser-loading")).toBeVisible();
   });
 
-  test("file browser — empty", async ({ page }) => {
-    await mockFiles(page, (route) => route.fulfill(json([])));
+  test("file browser — empty", async ({ page, api }) => {
+    await api.route("/files", (route) => route.fulfill(json([])));
     await page.goto("/files");
     await expect(page.getByTestId("file-browser-empty")).toBeVisible();
   });
 
-  test("file browser — loaded", async ({ page }) => {
-    await mockFiles(page, (route) => route.fulfill(json(FILES)));
+  test("file browser — loaded", async ({ page, api }) => {
+    await api.route("/files", (route) => route.fulfill(json(FILES)));
     await page.goto("/files");
     await expect(page.getByTestId("file-tree")).toBeVisible();
     // The tree opens uploads/ (its two files are already most of the bucket),
@@ -116,19 +92,13 @@ test.describe("File browser", () => {
     await expect(page.getByRole("button", { name: "Preview data.csv" })).toBeVisible();
   });
 
-  test("file browser — delete success", async ({ page }) => {
+  test("file browser — delete success", async ({ page, api }) => {
     let deletedKey: string | null = null;
-    await mockFiles(page, (route) =>
+    await api.route("/files", (route) =>
       // After the delete, the refetch returns only the remaining files.
       route.fulfill(json(FILES.filter((f) => f.key !== deletedKey))),
     );
-    await page.route(isApi("/files-by-key"), (route) => {
-      if (route.request().method() === "OPTIONS") {
-        return route.fulfill({
-          status: 204,
-          headers: { ...CORS, "access-control-allow-methods": "DELETE" },
-        });
-      }
+    await api.route("/files-by-key", (route) => {
       deletedKey = new URL(route.request().url()).searchParams.get("key");
       return route.fulfill(json({ deleted: true, key: deletedKey }));
     });
@@ -140,9 +110,11 @@ test.describe("File browser", () => {
     await expect(page.getByTestId("file-row")).toHaveCount(before - 1);
   });
 
-  test("file browser — delete error", async ({ page }) => {
-    await mockFiles(page, (route) => route.fulfill(json(FILES)));
-    await mockDelete(page, 500, { detail: "Failed to delete file" });
+  test("file browser — delete error", async ({ page, api }) => {
+    await api.route("/files", (route) => route.fulfill(json(FILES)));
+    await api.route("/files-by-key", (route) =>
+      route.fulfill(json({ detail: "Failed to delete file" }, 500)),
+    );
 
     const before = await deleteFirstFile(page);
 
@@ -150,8 +122,8 @@ test.describe("File browser", () => {
     await expect(page.getByTestId("file-row")).toHaveCount(before);
   });
 
-  test("file browser — api error", async ({ page }) => {
-    await mockFiles(page, (route) => route.fulfill(json({ detail: "B2 list failed" }, 500)));
+  test("file browser — api error", async ({ page, api }) => {
+    await api.route("/files", (route) => route.fulfill(json({ detail: "B2 list failed" }, 500)));
     await page.goto("/files");
     await expect(page.getByTestId("file-browser-error")).toBeVisible();
   });

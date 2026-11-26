@@ -137,6 +137,13 @@ Keep the app-specific half in the spec: the route list, this app's control names
 and selectors, the completion predicate, the asset path, and the domain
 assertions.
 
+Committed state specs that must not touch a real API import `test` from
+`apps/web/e2e/fixtures/mock-api.ts` instead. Its `api.route("<path>", handler)`
+mocks an API path on whatever origin the API is on (`scripts/dev.sh` moves it
+off 8000 when that port is busy), and it aborts any request that leaves the web
+app without a mock and fails the test, so a spec can never send a real delete or
+upload. `apps/web/e2e/file-browser.spec.ts` and `upload-states.spec.ts` use it.
+
 ## Pre-commit
 
 The tracked [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) is an

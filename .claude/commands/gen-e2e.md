@@ -8,7 +8,7 @@ Read before doing anything:
 - apps/web/src/lib/api-client.ts (how each call is made, including the presign -> PUT -> verify upload)
 
 Then read the feature doc for the feature in $ARGUMENTS:
-- "upload"       → docs/features/file-upload.md, spec apps/web/e2e/upload.spec.ts
+- "upload"       → docs/features/file-upload.md, spec apps/web/e2e/upload-states.spec.ts
 - "file-browser" → docs/features/file-browser.md, spec apps/web/e2e/file-browser.spec.ts
 - "verification" → docs/features/verification.md, spec apps/web/e2e/verify-dashboard.spec.ts
 - (no argument)  → all three
@@ -22,11 +22,18 @@ For each state in `## UX States` and each case in `## Edge Cases` in the feature
    (not just a URL check), leave it alone.
 
 2. If the state is missing or only URL-checked, write or replace a test that:
-   a. Mocks every API call it triggers with `page.route()` — no live network
-      calls. Match the API by origin and pathname (port 8000 locally), and send
-      `access-control-allow-origin: *` on every mocked response: the page and
-      the API are different origins. Always also mock `GET /health` with
-      `{ "status": "healthy", "b2_connected": true }`.
+   a. Imports `test`, `expect` and `json` from `./fixtures/mock-api` (never
+      from `@playwright/test`) and mocks every API call it triggers with
+      `api.route("<pathname>", handler)`. That matches the path on whatever
+      origin the API is on: `scripts/dev.sh` moves the API off port 8000 when
+      8000 is busy, so never match on a port or a hardcoded API URL. The
+      fixture aborts every API request no mock served and fails the test, so
+      an unmocked call can never reach a real API or bucket; add the missing
+      mock rather than working around the guard. Use `json(body, status)`
+      for responses (it adds the CORS header the cross-origin page needs).
+      Always also mock `/health` with `{ "status": "healthy", "b2_connected": true }`.
+      A non-API URL (such as a presigned storage URL) is mocked with
+      `page.route(url, ...)` and must be a placeholder host, never a real bucket.
    b. Navigates to the feature's route.
    c. Asserts a visible element or state with `getByTestId(...)` or a role
       query. If a needed `data-testid` is missing from the component, add it

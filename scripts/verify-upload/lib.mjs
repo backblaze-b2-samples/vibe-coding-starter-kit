@@ -1,6 +1,6 @@
 // Pure helpers for scripts/verify-upload.mjs (no network, no env access).
 import { randomBytes } from "node:crypto";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { extname, join } from "node:path";
 
 const CONTENT_TYPES = {
@@ -84,4 +84,30 @@ export function summarize(results, { runId, timestamp, sha }) {
 export function finalExitCode({ testStatus, uploadOk }) {
   if (testStatus !== 0) return typeof testStatus === "number" && testStatus > 0 ? testStatus : 1;
   return uploadOk ? 0 : 1;
+}
+
+/**
+ * The one B2 attribution token (`attribution_token` in
+ * docs/exec-plans/sample.json). `pnpm gen:check` asserts it matches the API
+ * client's `user_agent_extra`, so both S3 clients identify the same way.
+ */
+export function readAttributionToken(repoRoot) {
+  const sample = JSON.parse(
+    readFileSync(join(repoRoot, "docs", "exec-plans", "sample.json"), "utf8"),
+  );
+  if (!sample.attribution_token) throw new Error("sample.json has no attribution_token");
+  return sample.attribution_token;
+}
+
+/** S3Client options for the B2 bucket, with the B2 custom user agent. */
+export function s3ClientConfig(env, attributionToken) {
+  return {
+    region: env.B2_REGION,
+    endpoint: `https://s3.${env.B2_REGION}.backblazeb2.com`,
+    credentials: {
+      accessKeyId: env.B2_APPLICATION_KEY_ID,
+      secretAccessKey: env.B2_APPLICATION_KEY,
+    },
+    customUserAgent: attributionToken,
+  };
 }

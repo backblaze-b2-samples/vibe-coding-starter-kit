@@ -1,10 +1,13 @@
 // Tests for the pure helpers behind scripts/verify-upload.mjs.
 // Run via: pnpm test:scripts
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
+
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 import {
   artifactKey,
@@ -13,8 +16,12 @@ import {
   contentTypeFor,
   finalExitCode,
   makeRunId,
+  readAttributionToken,
+  s3ClientConfig,
   summarize,
 } from "./lib.mjs";
+
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 describe("contentTypeFor", () => {
   it("maps by extension, case-insensitively", () => {
@@ -122,5 +129,45 @@ describe("finalExitCode", () => {
 
   it("treats a killed test process as a failure", () => {
     assert.notEqual(finalExitCode({ testStatus: null, uploadOk: true }), 0);
+  });
+});
+
+describe("s3ClientConfig", () => {
+  // Placeholder values only: the request never leaves the process.
+  const env = {
+    B2_REGION: "us-west-004",
+    B2_APPLICATION_KEY_ID: "test-key-id",
+    B2_APPLICATION_KEY: "test-application-key",
+  };
+
+  it("uses the same B2 attribution token as the API's boto3 client", () => {
+    const b2Client = readFileSync(join(REPO_ROOT, "services/api/app/repo/b2_client.py"), "utf8");
+    const pythonToken = /user_agent_extra\s*=\s*"([^"]+)"/.exec(b2Client)?.[1];
+    assert.ok(pythonToken, "b2_client.py sets user_agent_extra");
+    assert.equal(readAttributionToken(REPO_ROOT), pythonToken);
+  });
+
+  it("sends the attribution token in the user agent of every request", async () => {
+    const token = readAttributionToken(REPO_ROOT);
+    let sent = null;
+    const client = new S3Client({
+      ...s3ClientConfig(env, token),
+      // Stand-in transport: capture the signed request, never touch the network.
+      requestHandler: {
+        handle: async (request) => {
+          sent = request;
+          throw new Error("captured");
+        },
+      },
+      maxAttempts: 1,
+    });
+    await assert.rejects(
+      client.send(new PutObjectCommand({ Bucket: "b", Key: "k", Body: "x" })),
+      /captured/,
+    );
+    assert.ok(sent, "the request reached the transport");
+    const agents = [sent.headers["user-agent"], sent.headers["x-amz-user-agent"]].join(" ");
+    assert.match(agents, new RegExp(`\\b${token}\\b`));
+    assert.equal(sent.hostname, "s3.us-west-004.backblazeb2.com");
   });
 });

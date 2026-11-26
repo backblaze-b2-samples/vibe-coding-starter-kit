@@ -28,6 +28,8 @@ import {
   contentTypeFor,
   finalExitCode,
   makeRunId,
+  readAttributionToken,
+  s3ClientConfig,
   summarize,
 } from "./verify-upload/lib.mjs";
 
@@ -92,14 +94,7 @@ async function upload() {
   });
   const runPrefix = `verification-runs/${runId}/`;
 
-  const s3 = new S3Client({
-    region: process.env.B2_REGION,
-    endpoint: `https://s3.${process.env.B2_REGION}.backblazeb2.com`,
-    credentials: {
-      accessKeyId: process.env.B2_APPLICATION_KEY_ID,
-      secretAccessKey: process.env.B2_APPLICATION_KEY,
-    },
-  });
+  const s3 = new S3Client(s3ClientConfig(process.env, readAttributionToken(REPO_ROOT)));
   const put = (key, body, file) =>
     s3.send(
       new PutObjectCommand({

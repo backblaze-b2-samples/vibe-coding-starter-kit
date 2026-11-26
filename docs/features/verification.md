@@ -50,6 +50,8 @@ are larger and only matter when something broke or a change needs review.
 ## Flow
 1. `scripts/verify-upload.mjs` runs `pnpm test:e2e` with a JSON report path set.
 2. It builds the summary from the report and uploads `summary.json` and `results.json`.
+   Its S3 client sends the same B2 custom user agent as the API (`attribution_token`
+   in `docs/exec-plans/sample.json`, equal to `user_agent_extra` in `b2_client.py`).
 3. If a test failed, or `VERIFY_RECORD=1`, it also uploads screenshots and traces
    from `apps/web/test-results/` (recursively), with content types set by extension.
 4. It prints the run id and the `/verify/{runId}` URL, then exits with the tests'

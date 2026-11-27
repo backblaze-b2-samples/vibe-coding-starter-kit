@@ -60,10 +60,11 @@ them in a config file, commit, issue, PR, terminal transcript, or screenshot.
 <!-- gen:begin railway-variables -->
 | Service | Variable names | Classification | Notes |
 | --- | --- | --- | --- |
-| API | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | **Secret** | Restrict the B2 key to the intended bucket and least privilege. |
+| API | `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `INTELLIGENCE_ADMIN_TOKEN`, `ANTHROPIC_API_KEY`, `GITHUB_TOKEN` | **Secret** | Restrict the B2 key to the intended bucket and least privilege. |
 | API | `B2_BUCKET_NAME` | Non-secret configuration | bucket unique name (**Bucket Unique Name** in the B2 console). |
 | API | `B2_REGION` | Non-secret configuration | the region inside the bucket's **Endpoint** (`s3.<region>.backblazeb2.com`); the S3 endpoint is derived from it. |
 | API | `B2_PUBLIC_URL_BASE` | Non-secret configuration | public object base URL, when the bucket is public. |
+| API | `INTELLIGENCE_ENABLED` | Non-secret configuration | set to `true` to expose the operator-only pipeline trigger routes (off by default); see `docs/features/intelligence.md`. |
 | Web | `NEXT_PUBLIC_API_URL` | Public build-time configuration | separate-origin deploys only; Next.js inlines it at build time. |
 | API | `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX` | Non-secret configuration | Set `ENABLE_DOCS=false` in production. `ALLOWED_KEY_PREFIX=uploads/` confines key operations when the bucket is shared. |
 | API | `API_CORS_ORIGINS`, `API_CORS_ORIGIN_REGEX` | Non-secret service configuration | Set the exact web origin per environment; never a broad production origin to cover rotating previews. |

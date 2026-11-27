@@ -66,10 +66,11 @@ Set values in the Vercel Project and environment. Never put values in
 <!-- gen:begin vercel-variables -->
 | Variable names | Classification | Notes |
 | --- | --- | --- |
-| `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY` | **Secret** | Restrict the B2 key to the intended bucket and least privilege. |
+| `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `INTELLIGENCE_ADMIN_TOKEN`, `ANTHROPIC_API_KEY`, `GITHUB_TOKEN` | **Secret** | Restrict the B2 key to the intended bucket and least privilege. |
 | `B2_BUCKET_NAME` | Non-secret configuration | bucket unique name (**Bucket Unique Name** in the B2 console). |
 | `B2_REGION` | Non-secret configuration | the region inside the bucket's **Endpoint** (`s3.<region>.backblazeb2.com`); the S3 endpoint is derived from it. |
 | `B2_PUBLIC_URL_BASE` | Non-secret configuration | public object base URL, when the bucket is public. |
+| `INTELLIGENCE_ENABLED` | Non-secret configuration | set to `true` to expose the operator-only pipeline trigger routes (off by default); see `docs/features/intelligence.md`. |
 | `NEXT_PUBLIC_API_URL` | Public build-time configuration | separate-origin deploys only; Next.js inlines it at build time. |
 | `ENABLE_DOCS`, `ALLOWED_KEY_PREFIX` | Non-secret configuration | Set `ENABLE_DOCS=false` in production. `ALLOWED_KEY_PREFIX=uploads/` confines key operations when the bucket is shared. |
 | `MAX_FILE_SIZE` | Optional configuration | Uploads go directly to B2 (presigned PUT), so the platform's Function payload limit no longer applies — leave at the default or set your own cap. |

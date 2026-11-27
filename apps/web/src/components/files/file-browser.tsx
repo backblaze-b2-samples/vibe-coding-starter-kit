@@ -158,7 +158,7 @@ export function FileBrowser() {
 
   return (
     <>
-      <Card>
+      <Card data-testid="file-browser">
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 space-y-0">
           {/* Not "All Files": the endpoint returns the newest 100 objects. */}
           <CardTitle className="card-title">Recent Files</CardTitle>
@@ -179,7 +179,7 @@ export function FileBrowser() {
         </CardHeader>
         <CardContent className="p-3" aria-busy={isLoading || isFetching}>
           {isLoading ? (
-            <div className="space-y-2 px-1 py-1">
+            <div data-testid="file-browser-loading" className="space-y-2 px-1 py-1">
               {/* Visible language, not `sr-only`: this list needs a full bucket
                   listing (measured 2.8s-21s), and six pulsing bars with no
                   words gave a sighted user no way to tell a slow listing from a
@@ -190,29 +190,37 @@ export function FileBrowser() {
               ))}
             </div>
           ) : error ? (
-            <ErrorState
-              error={error}
-              title="Couldn't load files"
-              onRetry={() => refetch()}
-              className="px-4"
-            />
+            <div data-testid="file-browser-error">
+              <ErrorState
+                error={error}
+                title="Couldn't load files"
+                onRetry={() => refetch()}
+                className="px-4"
+              />
+            </div>
           ) : files.length === 0 ? (
-            <EmptyState
-              icon={FolderOpen}
-              title="This bucket is empty"
-              description="Upload some files to see them listed here."
-              action={
-                <Button asChild size="sm">
-                  <Link href="/upload">
-                    <Upload aria-hidden="true" className="h-3.5 w-3.5" />
-                    Upload files
-                  </Link>
-                </Button>
-              }
-              className="px-4"
-            />
+            <div data-testid="file-browser-empty">
+              <EmptyState
+                icon={FolderOpen}
+                title="This bucket is empty"
+                description="Upload some files to see them listed here."
+                action={
+                  <Button asChild size="sm">
+                    <Link href="/upload">
+                      <Upload aria-hidden="true" className="h-3.5 w-3.5" />
+                      Upload files
+                    </Link>
+                  </Button>
+                }
+                className="px-4"
+              />
+            </div>
           ) : (
-            <div className="space-y-0.5 overflow-hidden" aria-label="Files in bucket">
+            <div
+              data-testid="file-tree"
+              className="space-y-0.5 overflow-hidden"
+              aria-label="Files in bucket"
+            >
               {truncationNotice && (
                 <p
                   className="mb-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground"

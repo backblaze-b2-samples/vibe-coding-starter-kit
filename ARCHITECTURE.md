@@ -10,6 +10,8 @@ A well-engineered full-stack foundation — dashboard, drag-and-drop upload and 
   - File Upload (`/upload`) — drag-and-drop upload with real-time progress
   - File Browser (`/files`) — list, preview, download, delete files
   - Dashboard (`/`) — stats cards, upload chart, recent uploads
+  - Verification Runs (`/verify`) — Playwright run history and evidence stored in B2
+  - Issue Intelligence (`/intelligence`) — classified and clustered GitHub issues for the sample repo (optional, operator-run)
   - Settings (`/settings`) — theme plus labelled demo preference fields
 - **services/api/** — FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, pypdf
   - REST API for every operation the frontend consumes, exported to `docs/api/openapi.json`
@@ -169,7 +171,16 @@ still in step.
 | `GET /files/stats` | `UploadStats` | `fileStats` |
 | `GET /files/stats/activity` | `DailyUploadCount[]` | `uploadActivity` |
 | `GET /health` | `HealthStatus` | `health` |
+| `GET /intelligence/snapshots` | `SnapshotStatus[]` | `intelligenceSnapshots` |
+| `GET /intelligence/snapshots/{snapshot_id}` | `SnapshotReport` | `intelligenceSnapshotReport` |
+| `GET /intelligence/snapshots/{snapshot_id}/activity` | `WeeklyActivity[]` | `intelligenceSnapshotActivity` |
+| `GET /intelligence/snapshots/{snapshot_id}/clusters` | `Cluster[]` | `intelligenceSnapshotClusters` |
+| `GET /intelligence/snapshots/{snapshot_id}/issues` | `IssueListResponse` | `intelligenceSnapshotIssues` |
 | `GET /metrics` | — | _server-only_ |
+| `GET /verify/runs` | `VerifyRunSummary[]` | `verifyRuns` |
+| `GET /verify/runs/{run_id}` | `VerifyRunDetail` | `verifyRun` |
+| `POST /intelligence/snapshots` | — | _server-only_ |
+| `POST /intelligence/snapshots/{snapshot_id}/reprocess` | — | _server-only_ |
 | `POST /upload/presign` | `PresignUploadResponse` | `uploadPresign` |
 | `POST /upload/verify` | `FileUploadResponse` | `uploadVerify` |
 <!-- gen:end arch-api-contract -->
@@ -207,6 +218,8 @@ Generated — **never hand-edit**; change the source and re-run the command:
 - [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress
 - [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
 - [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
+- [Verification Runs](docs/features/verification.md) — Playwright run history and evidence stored in B2
+- [Issue Intelligence](docs/features/intelligence.md) — classified and clustered GitHub issues for the sample repo (optional, operator-run)
 - [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
 - [Settings](docs/features/settings.md) — theme plus labelled demo preference fields
 <!-- gen:end arch-core-features -->

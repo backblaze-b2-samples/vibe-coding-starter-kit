@@ -14,6 +14,8 @@ app's own features instead of rebuilding the same shell. Storage is
 - File Upload — drag-and-drop upload with real-time progress
 - File Browser — list, preview, download, delete files
 - Dashboard — stats cards, upload chart, recent uploads
+- Verification Runs — Playwright run history and evidence stored in B2
+- Issue Intelligence — classified and clustered GitHub issues for the sample repo (optional, operator-run)
 - Metadata Extraction — image dimensions, EXIF, PDF info, checksums
 - Settings — theme plus labelled demo preference fields
 - Backend with a strict layered architecture and structural tests (FastAPI, Python 3.12+, boto3, Pydantic v2, Pillow, pypdf)
@@ -204,6 +206,8 @@ This approach draws from [OpenAI's experience building with Codex](https://opena
 - [File Upload](docs/features/file-upload.md) — drag-and-drop upload with real-time progress
 - [File Browser](docs/features/file-browser.md) — list, preview, download, delete files
 - [Dashboard](docs/features/dashboard.md) — stats cards, upload chart, recent uploads
+- [Verification Runs](docs/features/verification.md) — Playwright run history and evidence stored in B2
+- [Issue Intelligence](docs/features/intelligence.md) — classified and clustered GitHub issues for the sample repo (optional, operator-run)
 - [Metadata Extraction](docs/features/metadata-extraction.md) — image dimensions, EXIF, PDF info, checksums
 - [Settings](docs/features/settings.md) — theme plus labelled demo preference fields
 <!-- gen:end readme-core-features -->
@@ -244,6 +248,9 @@ The commands you reach for day to day:
 | `pnpm gen:check` | Fail if any generated file or doc region is stale (first step of `pnpm verify:web`) |
 | `pnpm verify` | Credential-free pre-PR suite — runs `check:agent-docs`, `verify:api`, then `verify:web` |
 | `pnpm verify:full` | `pnpm verify` plus Playwright E2E; needs a live local stack, real `.env`, a free web port, and Chromium |
+| `pnpm check:structure:web` | Frontend structure invariants: network access only in `lib/api-client.ts`, query-library access only under `lib/` (part of `pnpm verify:web`) |
+| `pnpm test:scripts` | Unit tests for the repo's helper scripts (part of `pnpm verify:web`) |
+| `pnpm verify:upload` | Live and opt-in: run the E2E suite, then store the evidence in B2 for the `/verify` dashboard; fails if the tests or the upload fail |
 | `pnpm test:verify` | Run throwaway verification specs from `apps/web/e2e/verify/` against the app, with the shared browser fixtures |
 <!-- gen:end readme-commands -->
 
@@ -288,7 +295,7 @@ preview/production, `/health` checks, and rollback — is in the
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Agent table of contents — start here |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System layout, layering, data flows |
-| [docs/features/](docs/features/) | Feature docs (file upload, file browser, dashboard, metadata extraction, settings) |
+| [docs/features/](docs/features/) | Feature docs (file upload, file browser, dashboard, verification runs, issue intelligence, metadata extraction, settings) |
 | [docs/design-system.md](docs/design-system.md) | Design tokens, primitives, loader, error/empty states |
 | [docs/app-workflows.md](docs/app-workflows.md) | User journeys |
 | [docs/dev-workflows.md](docs/dev-workflows.md) | Engineering workflows, command index, releases |

@@ -156,6 +156,7 @@ export function FileTreeRow({
 
   return (
     <div
+      data-testid="file-row"
       className="tree-row group flex w-full min-w-0 items-center gap-1 rounded-md pr-2 text-sm transition-colors hover:bg-accent/60 focus-within:bg-accent/60"
       style={{ paddingInlineStart: `${treeIndent(depth, 32)}px` }}
     >
@@ -204,7 +205,10 @@ export function FileTreeRow({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onPreview(file)}>
+          <DropdownMenuItem
+            data-testid="file-preview-btn"
+            onClick={() => onPreview(file)}
+          >
             <Eye className="mr-2 h-4 w-4" />
             Preview
           </DropdownMenuItem>
@@ -220,6 +224,7 @@ export function FileTreeRow({
             {isDownloading ? "Preparing download…" : "Download"}
           </DropdownMenuItem>
           <DropdownMenuItem
+            data-testid="file-delete-btn"
             onClick={() => onDelete(file)}
             className="text-destructive"
           >

@@ -51,7 +51,11 @@ const OPENAPI_METHODS = new Set<RouteMethod>([
 
 // Prometheus metrics are intentionally scraped server-side, not called by the
 // app shell. Add future backend-only operations here deliberately.
-const SERVER_ONLY_OPERATIONS = new Set(["get /metrics"]);
+const SERVER_ONLY_OPERATIONS = new Set([
+  "get /metrics",
+  "post /intelligence/snapshots",
+  "post /intelligence/snapshots/{snapshot_id}/reprocess",
+]);
 
 function operationKey(method: string, path: string) {
   return `${method} ${path}`;

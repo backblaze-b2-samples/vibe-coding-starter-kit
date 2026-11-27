@@ -74,6 +74,7 @@ export function Dropzone({
         "aria-label": "Upload files",
         role: "button",
       })}
+      data-testid="dropzone"
       className={[
         "flex min-h-48 flex-col items-center justify-center rounded-md",
         "border-2 border-dashed px-4 py-8 text-center transition-colors",

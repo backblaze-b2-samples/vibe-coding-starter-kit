@@ -1,0 +1,14 @@
+# Optional dependencies for the issue-intelligence pipeline (embeddings,
+# classification, clustering). NOT part of requirements.txt / requirements.lock,
+# so `pnpm verify`, CI and the deployed API stay light: torch alone is
+# gigabytes. Everything that imports these does so lazily, and the API starts
+# and passes its tests without them.
+#
+# Exact pins on purpose. Install on top of the locked base so shared packages
+# keep their locked versions:
+#   cd services/api
+#   .venv/bin/pip install -c requirements.lock -r requirements-intelligence.txt
+anthropic==2.14.0
+numpy==2.3.4
+scikit-learn==1.9.1
+sentence-transformers==6.3.0

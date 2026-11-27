@@ -14,6 +14,9 @@ Security principles and implementation for the vibe-coding-starter-kit.
 - **No auth by design.** The file API (`/files`, `/files-by-key`, `/upload/presign`, `/upload/verify`) is unauthenticated and bucket-wide — any client can list, download, delete, and (via presign) upload objects. Acceptable for a single-tenant demo; the rate limiter guards the open endpoints.
 - **Adding auth to a clone does not close this automatically.** A login screen alone leaves an open, cross-user file API. You must both (1) require auth on every file route and (2) scope listings and reads to the caller's own prefixes — skipping either lets one signed-in user read and delete another's files. See the co-located notes in `runtime/files.py` and `service/files.py`.
 
+- **Issue-intelligence trigger routes are the exception.** `POST /intelligence/snapshots` and `.../reprocess` spend GitHub quota and LLM tokens, so they are disabled unless `INTELLIGENCE_ENABLED` is set, require `Authorization: Bearer <INTELLIGENCE_ADMIN_TOKEN>`, accept only repositories on `GITHUB_ALLOWED_REPOS`, and are capped per run. See [features/intelligence.md](features/intelligence.md).
+- **Verification evidence** (`/verify/*`) is read through presigned links valid for 10 minutes and is as public as the rest of the read API.
+
 ## Upload Validation
 
 Uploads go directly from the browser to B2, so the API validates at two points:

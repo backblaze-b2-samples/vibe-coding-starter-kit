@@ -81,6 +81,7 @@ These pieces are shared scaffolding rather than app-specific code: keep them, an
 | No bare print() | `ruff` rule T20 |
 | Import ordering | `ruff` rule I001 |
 | Frontend strict equality | `eslint` rule eqeqeq |
+| Network access (fetch, XHR, axios, beacon) only in `lib/api-client.ts`; query-library imports only under `lib/` | `pnpm check:structure:web` (part of `pnpm verify:web`) |
 | No unused vars | `eslint` + `ruff` rules |
 | This file stays agent-sized (≥ 1 KB, ≤ 20 KB, ≤ 258 lines — 250 of prose plus the 8 region-marker lines) | `pnpm check:agent-docs` (budget: `scripts/agent-docs/limits.mjs`) |
 | The generated API seam (`packages/shared/src/generated/`, `apps/web/src/lib/generated/`) matches `docs/api/openapi.json` | `pnpm gen:check` (`scripts/gen-api.mjs`) |
@@ -114,36 +115,40 @@ no git work tree, the whole group) that git cannot answer for is reported as
 <!-- gen:begin agents-commands -->
 ```bash
 # Run
-pnpm run setup         # idempotent cold-start setup (.env copy, deps, venv)
-pnpm run doctor        # preflight environment check (also runs before pnpm dev)
-pnpm dev               # start both frontend and backend
-pnpm dev:web           # frontend only
-pnpm dev:api           # backend only
-pnpm wait-ready        # block until web + API answer, then exit (no sleep/curl polling)
+pnpm run setup            # idempotent cold-start setup (.env copy, deps, venv)
+pnpm run doctor           # preflight environment check (also runs before pnpm dev)
+pnpm dev                  # start both frontend and backend
+pnpm dev:web              # frontend only
+pnpm dev:api              # backend only
+pnpm wait-ready           # block until web + API answer, then exit (no sleep/curl polling)
 
 # Generate
-pnpm contract:export   # export deterministic FastAPI OpenAPI JSON
-pnpm contract:check    # check OpenAPI artifact + frontend client routes
-pnpm gen:api           # regenerate shared types, client routes and query keys
-pnpm gen:docs          # regenerate the doc regions from docs/exec-plans/sample.json
-pnpm gen:check         # fail if any generated file or doc region is stale
+pnpm contract:export      # export deterministic FastAPI OpenAPI JSON
+pnpm contract:check       # check OpenAPI artifact + frontend client routes
+pnpm gen:api              # regenerate shared types, client routes and query keys
+pnpm gen:docs             # regenerate the doc regions from docs/exec-plans/sample.json
+pnpm gen:check            # fail if any generated file or doc region is stale
 
 # Test & Lint
-pnpm check:agent-docs  # agent instruction/documentation drift check
-pnpm verify            # credential-free canonical non-live pre-PR suite
-pnpm verify:api        # backend half of verify (lint, tests, structure)
-pnpm verify:web        # frontend half of verify (generator drift, lint, unit tests, typecheck + build)
-pnpm verify:full       # doctor + verify + Playwright E2E (requires browser + live local app prerequisites)
-pnpm lint              # frontend lint (eslint)
-pnpm typecheck         # frontend TypeScript check without producing a build
-pnpm build             # frontend type check + build
-pnpm test:web          # frontend unit tests (vitest)
-pnpm lint:api          # backend lint (ruff)
-pnpm test:api          # backend tests (pytest)
-pnpm test:live:b2      # opt-in real B2 connectivity test (requires explicit flag)
-pnpm check:structure   # structural boundary tests
-pnpm test:e2e          # this app's own Playwright smoke suite (project: chromium)
-pnpm test:verify       # throwaway app verification specs in apps/web/e2e/verify/ (project: verify)
+pnpm check:agent-docs     # agent instruction/documentation drift check
+pnpm verify               # credential-free canonical non-live pre-PR suite
+pnpm verify:api           # backend half of verify (lint, tests, structure)
+pnpm verify:web           # frontend half of verify (generator drift, lint, unit tests, typecheck + build)
+pnpm verify:full          # doctor + verify + Playwright E2E (requires browser + live local app prerequisites)
+pnpm lint                 # frontend lint (eslint)
+pnpm typecheck            # frontend TypeScript check without producing a build
+pnpm build                # frontend type check + build
+pnpm test:web             # frontend unit tests (vitest)
+pnpm lint:api             # backend lint (ruff)
+pnpm test:api             # backend tests (pytest)
+pnpm test:live:b2         # opt-in real B2 connectivity test (requires explicit flag)
+pnpm check:structure      # structural boundary tests
+pnpm check:structure:web  # frontend structure invariants (no bare fetch, no direct react-query use outside lib/)
+pnpm test:scripts         # unit tests for the repo's own helper scripts (verify:upload helpers)
+pnpm verify:upload        # live: run the E2E suite and store the evidence in B2 (credentials; not part of verify)
+pnpm intel:ingest         # operator: run the issue-intelligence pipeline (optional deps, credentials)
+pnpm test:e2e             # this app's own Playwright smoke suite (project: chromium)
+pnpm test:verify          # throwaway app verification specs in apps/web/e2e/verify/ (project: verify)
 ```
 <!-- gen:end agents-commands -->
 

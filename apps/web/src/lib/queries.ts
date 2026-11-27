@@ -15,7 +15,15 @@ import {
   getFileStats,
   getHealth,
   getPreviewUrl,
+  getSnapshotActivity,
+  getSnapshotClusters,
+  getSnapshotIssues,
+  getSnapshotReport,
   getUploadActivity,
+  getVerifyRun,
+  getVerifyRuns,
+  listSnapshots,
+  type SnapshotIssueFilters,
 } from "@/lib/api-client";
 import type {
   FileMetadata,
@@ -68,6 +76,76 @@ export function useUploadActivity(days = 7) {
   return useQuery({
     queryKey: qk.uploadActivity(days),
     queryFn: () => getUploadActivity(days),
+  });
+}
+
+// Verification run history. Newest runs change rarely, so a short stale time
+// avoids refetching on every navigation back to the list.
+export function useVerifyRuns() {
+  return useQuery({
+    queryKey: qk.verifyRuns(),
+    queryFn: getVerifyRuns,
+    staleTime: 30_000,
+  });
+}
+
+// One run's detail. Nested under the list key, so invalidating the list also
+// invalidates its details. Artifact links are presigned for 10 minutes, so the
+// detail goes stale well before they expire.
+export function useVerifyRun(runId: string) {
+  return useQuery({
+    queryKey: [...qk.verifyRuns(), runId] as const,
+    queryFn: () => getVerifyRun(runId),
+    enabled: !!runId,
+    staleTime: 60_000,
+  });
+}
+
+// Issue intelligence snapshots. While one is running the list polls every 3s so
+// the status flips to complete/failed without a manual refresh. Per-snapshot
+// queries nest under the list key (the generated key has no path parameter), so
+// invalidating the list reaches them too.
+export function useSnapshots() {
+  return useQuery({
+    queryKey: qk.intelligenceSnapshots(),
+    queryFn: listSnapshots,
+    refetchInterval: (query) =>
+      query.state.data?.some((s) => s.status === "running") ? 3000 : false,
+  });
+}
+
+export function useSnapshotReport(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "report"] as const,
+    queryFn: () => getSnapshotReport(snapshotId as string),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotIssues(
+  snapshotId: string | undefined,
+  filters: SnapshotIssueFilters = {},
+) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "issues", filters] as const,
+    queryFn: () => getSnapshotIssues(snapshotId as string, filters),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotClusters(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "clusters"] as const,
+    queryFn: () => getSnapshotClusters(snapshotId as string),
+    enabled: !!snapshotId,
+  });
+}
+
+export function useSnapshotActivity(snapshotId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.intelligenceSnapshots(), snapshotId ?? "", "activity"] as const,
+    queryFn: () => getSnapshotActivity(snapshotId as string),
+    enabled: !!snapshotId,
   });
 }
 

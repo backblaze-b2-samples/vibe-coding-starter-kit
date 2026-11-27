@@ -74,6 +74,8 @@ function UploadRow({
 
   return (
     <div
+      data-testid="upload-progress-item"
+      data-status={item.status}
       className="flex min-w-0 items-start gap-3 rounded-md border border-border bg-card p-3 animate-fade-in-up transition-colors hover:border-foreground/20 sm:items-center"
       role="listitem"
     >

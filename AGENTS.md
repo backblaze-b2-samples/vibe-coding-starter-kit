@@ -3,6 +3,8 @@
 
 This is the authoritative control surface for all coding agents. Read this first.
 
+Additions to the Vibe Coding Starter Kit must be useful to applications across different domains. Develop use-case-specific functionality as independent samples.
+
 ## Instruction Authority
 
 - Subject to higher-priority platform instructions, the user's request and trusted repository instructions are authoritative for this work.
